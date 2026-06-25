@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1220">
+<title>Power Foam ATL · 3D Areas</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111c30; --panel2:#16233c; --line:#243450;
+    --text:#e6edf7; --muted:#93a3bd; --accent:#ffb547; --accent2:#4f9cff;
+    --green:#3ecf8e; --red:#ff6b6b; --radius:12px;
+    --wall:#c9d4e0; --roof:#5b7fa6; --floor:#8a93a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#0e1b36,#091428);border-bottom:1px solid var(--line);flex-shrink:0;}
+  header .logo-wrap{height:64px;background:#fff;border-radius:11px;padding:5px 12px;display:flex;align-items:center;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  header .logo-wrap img{height:54px;width:auto;display:block}
+  header .brand{display:flex;flex-direction:column;gap:1px}
+  header h1{font-size:32px;font-weight:800;letter-spacing:.3px;color:#FFC400;text-shadow:0 1px 8px rgba(255,196,0,.3)}
+  header p{font-size:14px;color:var(--muted);margin-top:2px}
+  header .spacer{flex:1}
+  .unit-toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .unit-toggle button{background:none;border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;}
+  .unit-toggle button.active{background:var(--accent);color:#1a1300}
+  .main{display:flex;flex:1;min-height:0}
+
+  /* ---- Left controls ---- */
+  .controls{width:340px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .controls .head{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .controls .head h2{font-size:14px;font-weight:700;flex:1}
+  .btn{border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px;padding:9px 13px;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+  .btn-accent{background:var(--accent);color:#1a1300}
+  .btn-accent:hover{filter:brightness(1.08)}
+  .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{background:#1d2c47}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  .modules{flex:1;overflow-y:auto;padding:12px}
+  .modules::-webkit-scrollbar{width:9px}
+  .modules::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+  .card .card-head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#15243f;border-bottom:1px solid var(--line);}
+  .card .swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  .card .card-head input.name{background:none;border:none;color:var(--text);font-weight:700;font-size:13px;flex:1;outline:none;min-width:0;}
+  .card .card-head .area-badge{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
+  .card .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 4px}
+  .card .del:hover{color:var(--red)}
+  .card-body{padding:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .field input,.field select{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:7px 9px;font-size:13px;outline:none;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--accent2)}
+  .field.full{grid-column:1/-1}
+  .hint{font-size:11px;color:var(--muted);padding:0 12px 12px;text-align:center;line-height:1.4}
+
+  /* ---- Center 3D ---- */
+  .viewport{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 30%,#16223b,#090f1c)}
+  #scene{width:100%;height:100%;display:block;cursor:grab}
+  #scene:active{cursor:grabbing}
+  .overlay{position:absolute;pointer-events:none;font-size:11.5px;color:var(--muted)}
+  .overlay.tl{top:12px;left:14px;line-height:1.7}
+  .overlay.tl b{color:var(--text)}
+  .view-tools{position:absolute;top:12px;right:14px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+  .view-tools button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(17,28,48,.85);color:var(--text);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .view-tools button:hover{background:rgba(36,52,80,.9)}
+  .view-tools button.on{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+
+  /* ---- Selection panel (floating) ---- */
+  .sel-panel{position:absolute;bottom:54px;left:14px;background:rgba(11,18,32,.95);border:1px solid var(--line);border-radius:12px;padding:13px 15px;backdrop-filter:blur(8px);min-width:220px;display:none;pointer-events:auto;}
+  .sel-panel .sp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .sel-panel .sp-count{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;flex:1}
+  .sel-panel .sp-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:6px}
+  .sel-panel .sp-clear:hover{color:var(--red);background:rgba(255,107,107,.1)}
+  .sel-panel .sp-area{font-size:24px;font-weight:800;color:var(--accent);margin-bottom:10px;line-height:1.1}
+  .sel-panel .sp-area small{font-size:13px;font-weight:600;color:var(--muted)}
+  .zone-name-inp{width:100%;background:var(--bg);border:1px solid var(--accent);border-radius:8px;color:var(--text);padding:7px 9px;font-size:13px;outline:none;margin-bottom:6px;}
+  .save-zone-form{margin-top:4px;display:none}
+  .save-zone-form .sf-btns{display:flex;gap:6px}
+
+  .legend{position:absolute;bottom:14px;right:14px;display:flex;gap:14px;background:rgba(11,18,32,.8);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:11.5px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* ---- Right results ---- */
+  .results{width:340px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .results .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .results .head h2{font-size:14px;font-weight:700;flex:1}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;flex-shrink:0}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+  .stat .lbl{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:5px}
+  .stat .lbl i{width:9px;height:9px;border-radius:2px}
+  .stat .val{font-size:21px;font-weight:800;margin-top:5px}
+  .stat .val small{font-size:12px;color:var(--muted);font-weight:600}
+  .stat.total{grid-column:1/-1;background:linear-gradient(135deg,#1a2c4a,#16233c);border-color:#2c4368}
+  .stat.total .val{color:var(--accent);font-size:26px}
+
+  /* Tabs */
+  .tab-bar{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
+  .tab-btn{flex:1;background:none;border:none;color:var(--muted);padding:9px 4px;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+  .tab-content{display:none;flex:1;min-height:0;flex-direction:column}
+  .tab-content.active{display:flex}
+
+  /* Breakdown tab */
+  .breakdown{flex:1;overflow-y:auto;padding:0 14px 14px}
+  .breakdown::-webkit-scrollbar{width:9px}
+  .breakdown::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  table th{text-align:left;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  table th.r,table td.r{text-align:right}
+  table td{padding:6px 4px;border-bottom:1px solid #1a2740}
+  tr.mod-row td{background:#15243f;font-weight:700;color:var(--accent2)}
+  tr.sub td{font-weight:700;color:var(--text)}
+  tr.sel td{background:rgba(255,181,71,.12)}
+  tr.face:hover td{background:#15243f;cursor:pointer}
+  .face .tag{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .zdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:4px;vertical-align:middle}
+
+  /* Zones tab */
+  .zones-wrap{flex:1;overflow-y:auto;padding:12px 14px}
+  .zones-wrap::-webkit-scrollbar{width:9px}
+  .zones-wrap::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  .zones-hint{font-size:12px;color:var(--muted);text-align:center;padding:24px 12px;line-height:1.6}
+  .zones-hint b{color:var(--text);display:block;margin-bottom:4px}
+  .zone-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;border:1px solid transparent;margin-bottom:6px;background:var(--panel2);transition:.15s;}
+  .zone-row:hover{border-color:var(--line);background:#1a2b46}
+  .zone-row.z-active{border-color:rgba(255,181,71,.45);background:rgba(255,181,71,.07)}
+  .zone-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .zone-name-edit{flex:1;font-size:13px;font-weight:600;background:none;border:none;color:var(--text);outline:none;min-width:0;cursor:text}
+  .zone-area{font-size:12.5px;font-weight:700;color:var(--accent);white-space:nowrap}
+  .zone-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:5px}
+  .zone-del:hover{color:var(--red);background:rgba(255,107,107,.1)}
+  .corr-toggle{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);transition:.15s;white-space:nowrap;user-select:none}
+  .corr-toggle:hover{border-color:var(--accent2);color:var(--text)}
+  .corr-toggle.on{background:rgba(255,181,71,.12);border-color:var(--accent);color:var(--accent)}
+  .corr-toggle input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+  .zone-count-badge{background:#1d3055;border:1px solid var(--line);border-radius:20px;padding:2px 8px;font-size:11px;color:var(--accent2);font-weight:700;margin-left:4px}
+  .zones-header{display:flex;align-items:center;gap:6px;padding:2px 0 10px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+
+  .export-row{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+  .export-row .btn{flex:1;justify-content:center}
+  @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
+
+  /* ============ MOBILE ============ */
+  .mobile-nav{display:none}
+  @media(max-width:768px){
+    header{padding:6px 10px;gap:8px;flex-wrap:nowrap;min-height:0}
+    header .logo-wrap{height:38px;padding:3px 7px}
+    header .logo-wrap img{height:30px}
+    header .brand{min-width:0}
+    header h1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    header p{display:none}
+    .corr-toggle{padding:5px 8px;font-size:11px;gap:4px;border-radius:8px}
+    .unit-toggle button{padding:5px 8px;font-size:11px;font-size:0}
+    .unit-toggle button::after{font-size:12px;font-weight:700}
+    .unit-toggle button[data-u="m"]::after{content:"m"}
+    .unit-toggle button[data-u="ft"]::after{content:"ft"}
+
+    .main{flex-direction:column;position:relative;overflow:hidden}
+    .controls,.results{
+      position:absolute;inset:0;width:100%;height:100%;
+      z-index:20;border:none;border-radius:0;
+      transform:translateX(-110%);transition:transform .22s cubic-bezier(.4,0,.2,1);
+    }
+    .results{transform:translateX(110%)}
+    .controls.mob-open{transform:translateX(0)}
+    .results.mob-open{transform:translateX(0)}
+    .viewport{flex:1;width:100%;height:100%}
+
+    .mobile-nav{
+      display:flex;background:var(--panel);
+      border-top:2px solid var(--line);flex-shrink:0;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    .mobile-nav button{
+      flex:1;padding:10px 4px 8px;background:none;border:none;
+      color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      transition:color .15s;letter-spacing:.3px;
+    }
+    .mobile-nav button .ico{font-size:22px;line-height:1}
+    .mobile-nav button.active{color:var(--accent)}
+    .mobile-nav button.active .ico{filter:drop-shadow(0 0 4px rgba(255,181,71,.5))}
+
+    .sel-panel{bottom:72px;left:8px;right:8px;min-width:0}
+    .legend{bottom:72px;right:8px}
+    .view-tools button{width:44px;height:44px;font-size:19px}
+    .overlay.tl{display:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-wrap">
+    <img src="powerfoam-atl-skill/assets/PF ATL (2).png" alt="Power Foam ATL">
+  </div>
+  <div class="brand">
+    <h1>Power Foam ATL</h1>
+    <p>3D Area Calculator · Spray Foam</p>
+  </div>
+  <div class="spacer"></div>
+  <label class="corr-toggle" id="corrToggle" title="Aplica 12% extra por superficie corrugada">
+    <input type="checkbox" id="corrCheck"> +12% Corrugado
+  </label>
+  <div class="unit-toggle" id="unitToggle">
+    <button data-u="m">meters (m)</button>
+    <button data-u="ft" class="active">feet (ft)</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Controls -->
+  <aside class="controls">
+    <div class="head">
+      <h2>Building Modules</h2>
+      <button class="btn btn-accent" id="addBtn">＋ Add</button>
+    </div>
+    <div class="modules" id="modules"></div>
+    <div class="hint">Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.</div>
+  </aside>
+
+  <!-- Viewport -->
+  <section class="viewport">
+    <canvas id="scene"></canvas>
+    <div class="overlay tl">
+      <div><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
+      <div><b>Click</b> faces to select / deselect</div>
+    </div>
+    <div class="view-tools">
+      <button id="resetView" title="Center view">⌖</button>
+      <button id="zoomIn" title="Zoom in">＋</button>
+      <button id="zoomOut" title="Zoom out">－</button>
+      <button id="lblBtn" class="on" title="Toggle area labels">#</button>
+    </div>
+
+    <!-- Floating selection panel -->
+    <div class="sel-panel" id="selPanel">
+      <div class="sp-row">
+        <span class="sp-count" id="spCount">0 faces</span>
+        <button class="sp-clear" id="clearSelBtn" title="Clear selection">✕ Clear</button>
+      </div>
+      <div class="sp-area" id="spArea">0.00 <small>ft²</small></div>
+      <div id="saveZoneForm" class="save-zone-form">
+        <input class="zone-name-inp" id="zoneNameInp" placeholder="Zone name…" maxlength="40">
+        <div class="sf-btns">
+          <button class="btn btn-accent btn-sm" id="confirmZoneBtn" style="flex:1">✔ Save</button>
+          <button class="btn btn-ghost btn-sm" id="cancelZoneBtn">✕</button>
+        </div>
+      </div>
+      <button class="btn btn-accent btn-sm" id="saveZoneBtn" style="width:100%;justify-content:center">＋ Save as Zone</button>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--wall)"></i>Walls</span>
+      <span><i style="background:var(--roof)"></i>Roof</span>
+      <span><i style="background:var(--floor)"></i>Floor</span>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <aside class="results">
+    <div class="head"><h2>Area Summary</h2></div>
+    <div class="stats" id="stats"></div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="sections">Sections</button>
+      <button class="tab-btn" data-tab="zones">Zones <span class="zone-count-badge" id="zoneTabBadge">0</span></button>
+    </div>
+
+    <!-- Tab: Sections -->
+    <div class="tab-content active" id="tab-sections" style="flex-direction:column">
+      <div class="breakdown">
+        <table>
+          <thead><tr><th>Section</th><th class="r">Area</th></tr></thead>
+          <tbody id="breakBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Zones -->
+    <div class="tab-content" id="tab-zones" style="flex-direction:column">
+      <div class="zones-wrap" id="zonesWrap">
+        <div class="zones-hint"><b>No saved zones</b>Select faces in the 3D view and press<br>"Save as Zone"</div>
+      </div>
+    </div>
+
+    <div class="export-row">
+      <button class="btn btn-ghost" id="csvBtn">⬇ CSV</button>
+      <button class="btn btn-ghost" id="printBtn">🖨 Print</button>
+    </div>
+  </aside>
+</div>
+
+<nav class="mobile-nav" id="mobileNav">
+  <button data-mob="building" class="active">
+    <span class="ico">🏗</span>Building
+  </button>
+  <button data-mob="canvas">
+    <span class="ico">📐</span>3D View
+  </button>
+  <button data-mob="results">
+    <span class="ico">📊</span>Results
+  </button>
+</nav>
+
+<script>
+"use strict";
+/* ====================== CONFIG / STATE ====================== */
+const FT=0.3048, M2_FT2=0.092903;
+const COL={wall:'#c9d4e0',roof:'#5b7fa6',floor:'#8a93a0',gable:'#bcc8d6'};
+const MOD_COLORS=['#ffb547','#4f9cff','#3ecf8e','#ff6b6b','#b07cff','#ff9f4f','#5fd0d6'];
+const ZONE_COLORS=['#ff6b6b','#4fc3f7','#a5d6a7','#ffd54f','#ce93d8','#80cbc4','#ffab91','#b0bec5','#f48fb1','#80deea'];
+
+const state={
+  unit:'ft',
+  modules:[],
+  selection: new Set(),
+  zones:[],
+  activeZoneId:null,
+  showLabels:true,
+  corrugated:false,
+  cam:{az:0.78,el:0.55,r:30,tx:0,ty:0,tz:0},
+  _faces:[],
+  _faceMap: new Map(),
+};
+let nextId=1, nextZoneId=1;
+
+function newModule(opts={}){
+  return Object.assign({
+    id:nextId++,
+    name:'Module '+(state.modules.length+1),
+    w:8,l:12,h:3,
+    roof:'flat',
+    rise:1.5,
+    px:0,pz:0,
+    openings:0,
+  },opts);
+}
+
+/* ====================== UNIT CONVERSIONS ====================== */
+function L2D(m){return state.unit==='m'?m:m/FT;}
+function D2L(v){return state.unit==='m'?v:v*FT;}
+function A2D(m2){return state.unit==='m'?m2:m2/M2_FT2;}
+function D2La(v){return state.unit==='m'?v:v*M2_FT2;}
+const ULIN=()=>state.unit==='m'?'m':'ft';
+const UAREA=()=>state.unit==='m'?'m²':'ft²';
+function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function hexRgb(h){const n=parseInt(h.slice(1),16);return`${(n>>16)&255},${(n>>8)&255},${n&255}`;}
+
+/* ====================== GEOMETRY ====================== */
+function quad(a,b,c,d){return[a,b,c,d];}
+function polyArea(v){
+  let nx=0,ny=0,nz=0;
+  for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];
+    nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  return Math.sqrt(nx*nx+ny*ny+nz*nz)/2;
+}
+function centroid(v){let x=0,y=0,z=0;for(const p of v){x+=p[0];y+=p[1];z+=p[2];}return[x/v.length,y/v.length,z/v.length];}
+function normal(v){
+  let nx=0,ny=0,nz=0;
+  for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];
+    nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  const m=Math.hypot(nx,ny,nz)||1;return[nx/m,ny/m,nz/m];
+}
+
+function buildGeometry(){
+  const faces=[];
+  for(let mi=0;mi<state.modules.length;mi++){
+    const m=state.modules[mi];
+    const color=MOD_COLORS[mi%MOD_COLORS.length];
+    const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
+    const add=(key,name,cat,verts)=>{
+      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,
+                  verts,area:polyArea(verts),modColor:color});
+    };
+    add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
+    if(m.roof==='flat'){
+      add('roof','Roof','roof',quad([x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]));
+      add('wN','North Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      add('wS','South Wall','wall', quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+    }else{
+      const yr=y1+Math.max(0.01,m.rise);
+      add('rE','Roof (East slope)','roof', quad([x1,y1,z0],[x1,y1,z1],[xc,yr,z1],[xc,yr,z0]));
+      add('rW','Roof (West slope)','roof', quad([x0,y1,z0],[x0,y1,z1],[xc,yr,z1],[xc,yr,z0]));
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+      add('wN','North Wall','wall', quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      add('gN','North Gable','wall',[[x0,y1,z0],[x1,y1,z0],[xc,yr,z0]]);
+      add('wS','South Wall','wall', quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      add('gS','South Gable','wall', [[x0,y1,z1],[x1,y1,z1],[xc,yr,z1]]);
+    }
+  }
+  state._faces=faces;
+  state._faceMap=new Map(faces.map(f=>[f.id,f]));
+}
+
+function rebuildZoneAreas(){
+  for(const z of state.zones){
+    z.area=[...z.faceIds].reduce((s,fid)=>{
+      const f=state._faceMap.get(fid);return s+(f?f.area:0);
+    },0);
+  }
+}
+function cleanSelection(){
+  for(const fid of state.selection)
+    if(!state._faceMap.has(fid)) state.selection.delete(fid);
+}
+
+/* ====================== TOTALS ====================== */
+function dispFactor(cat){ return state.corrugated&&cat!=='floor'?1.12:1; }
+function totals(){
+  let wall=0,roof=0,floor=0,open=0;
+  const perMod={};
+  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,open:m.openings||0,faces:[]};
+  for(const f of state._faces){
+    if(!perMod[f.mid]) continue;
+    perMod[f.mid].faces.push(f);
+    if(f.cat==='wall'){wall+=f.area;perMod[f.mid].wall+=f.area;}
+    else if(f.cat==='roof'){roof+=f.area;perMod[f.mid].roof+=f.area;}
+    else{floor+=f.area;perMod[f.mid].floor+=f.area;}
+  }
+  for(const m of state.modules) open+=(m.openings||0);
+  const wallNet=Math.max(0,wall-open);
+  return{wall,wallNet,roof,floor,open,perMod,total:wallNet+roof+floor};
+}
+
+/* ====================== SELECTION ====================== */
+function toggleFace(fid){
+  if(fid===null) return;
+  if(state.selection.has(fid)) state.selection.delete(fid);
+  else state.selection.add(fid);
+  updateSelPanel();renderResults();draw();
+  const tr=elBreak.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
+  if(tr) tr.scrollIntoView({block:'nearest'});
+}
+function clearSelection(){
+  state.selection.clear();state.activeZoneId=null;
+  updateSelPanel();renderResults();renderZones();draw();
+}
+function selArea(){
+  return[...state.selection].reduce((s,fid)=>{
+    const f=state._faceMap.get(fid);return s+(f?f.area:0);
+  },0);
+}
+function updateSelPanel(){
+  const count=state.selection.size;
+  const panel=document.getElementById('selPanel');
+  if(count===0){panel.style.display='none';return;}
+  panel.style.display='block';
+  document.getElementById('spCount').textContent=count+' face'+(count===1?'':'s')+' selected';
+  const adjArea=[...state.selection].reduce((s,fid)=>{
+    const f=state._faceMap.get(fid);return s+(f?f.area*dispFactor(f.cat):0);
+  },0);
+  document.getElementById('spArea').innerHTML=fmt(A2D(adjArea))+' <small>'+UAREA()+'</small>';
+}
+
+/* ====================== ZONES ====================== */
+function showSaveForm(){
+  document.getElementById('saveZoneBtn').style.display='none';
+  const form=document.getElementById('saveZoneForm');
+  form.style.display='block';
+  const inp=document.getElementById('zoneNameInp');
+  inp.value='Zone '+(state.zones.length+1);
+  inp.focus();inp.select();
+}
+function hideSaveForm(){
+  document.getElementById('saveZoneForm').style.display='none';
+  document.getElementById('saveZoneBtn').style.display='';
+}
+function confirmSaveZone(){
+  if(state.selection.size===0){hideSaveForm();return;}
+  const name=(document.getElementById('zoneNameInp').value.trim())||('Zone '+(state.zones.length+1));
+  const color=ZONE_COLORS[state.zones.length%ZONE_COLORS.length];
+  const faceIds=new Set(state.selection);
+  const area=[...faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area:0);},0);
+  state.zones.push({id:nextZoneId++,name,color,faceIds,area});
+  hideSaveForm();renderZones();renderResults();draw();
+  switchTab('zones');
+}
+
+function renderZones(){
+  const wrap=document.getElementById('zonesWrap');
+  document.getElementById('zoneTabBadge').textContent=state.zones.length;
+  if(state.zones.length===0){
+    wrap.innerHTML='<div class="zones-hint"><b>No saved zones</b>Select faces in the 3D view and press<br>"Save as Zone"</div>';
+    return;
+  }
+  wrap.innerHTML='<div class="zones-header">Saved Zones <span class="zone-count-badge">'+state.zones.length+'</span></div>';
+  state.zones.forEach((z,zi)=>{
+    const div=document.createElement('div');
+    div.className='zone-row'+(state.activeZoneId===z.id?' z-active':'');
+    div.innerHTML=`
+      <span class="zone-dot" style="background:${z.color}"></span>
+      <input class="zone-name-edit" value="${esc(z.name)}" data-zi="${zi}" title="Edit name">
+      <span class="zone-area">${fmt(A2D(z.area*(state.corrugated?1.12:1)))} ${UAREA()}${state.corrugated?` <span style="font-size:9px;opacity:.7">×1.12</span>`:''}</span>
+      <button class="zone-del" data-zdel="${zi}" title="Delete zone">✕</button>`;
+    wrap.appendChild(div);
+    div.addEventListener('click',e=>{
+      if(e.target.classList.contains('zone-del')||e.target.classList.contains('zone-name-edit')) return;
+      if(state.activeZoneId===z.id){
+        state.activeZoneId=null;state.selection.clear();
+      }else{
+        state.activeZoneId=z.id;state.selection=new Set(z.faceIds);
+      }
+      updateSelPanel();renderResults();renderZones();draw();
+    });
+    div.querySelector('.zone-name-edit').addEventListener('input',e=>{z.name=e.target.value;});
+    div.querySelector('[data-zdel]').addEventListener('click',()=>{
+      if(state.activeZoneId===z.id){state.activeZoneId=null;state.selection.clear();}
+      state.zones.splice(zi,1);
+      updateSelPanel();renderResults();renderZones();draw();
+    });
+  });
+}
+
+/* ====================== RENDER: CONTROLS ====================== */
+const elModules=document.getElementById('modules');
+function renderControls(){
+  elModules.innerHTML='';
+  state.modules.forEach((m,i)=>{
+    const t=totals().perMod[m.id];
+    const tot=t?t.wall+t.roof+t.floor:0;
+    const color=MOD_COLORS[i%MOD_COLORS.length];
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`
+      <div class="card-head">
+        <span class="swatch" style="background:${color}"></span>
+        <input class="name" value="${m.name.replace(/"/g,'&quot;')}" data-i="${i}" data-k="name">
+        <span class="area-badge">${fmt(A2D(tot))} ${UAREA()}</span>
+        <button class="del" data-del="${i}" title="Remove">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="field"><label>Width (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.w).toFixed(2)}" data-i="${i}" data-k="w"></div>
+          <div class="field"><label>Length (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.l).toFixed(2)}" data-i="${i}" data-k="l"></div>
+          <div class="field"><label>Height (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.h).toFixed(2)}" data-i="${i}" data-k="h"></div>
+          <div class="field"><label>Roof type</label>
+            <select data-i="${i}" data-k="roof">
+              <option value="flat" ${m.roof==='flat'?'selected':''}>Flat</option>
+              <option value="gable" ${m.roof==='gable'?'selected':''}>Gabled</option>
+            </select></div>
+          <div class="field" style="${m.roof==='gable'?'':'display:none'}" data-rise="${i}">
+            <label>Ridge height (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
+          <div class="field"><label>Openings (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
+          <div class="field"><label>Position X (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
+          <div class="field"><label>Position Z (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
+        </div>
+      </div>`;
+    elModules.appendChild(card);
+  });
+  elModules.querySelectorAll('input,select').forEach(inp=>{
+    inp.addEventListener(inp.tagName==='SELECT'?'change':'input',()=>{
+      const i=+inp.dataset.i,k=inp.dataset.k,m=state.modules[i];
+      if(k==='name'){m.name=inp.value;refresh(false);updateBadges();}
+      else if(k==='roof'){
+        m.roof=inp.value;
+        const rf=elModules.querySelector(`[data-rise="${i}"]`);
+        if(rf)rf.style.display=inp.value==='gable'?'':'none';
+        refresh(false);
+      }
+      else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
+      else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}
+    });
+  });
+  elModules.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      state.modules.splice(+b.dataset.del,1);
+      if(state.modules.length===0) state.modules.push(newModule());
+      renderControls();refresh(true);
+    });
+  });
+}
+function updateBadges(){
+  const t=totals();
+  elModules.querySelectorAll('.card').forEach((card,i)=>{
+    const m=state.modules[i];const pm=t.perMod[m.id];
+    const cf2=state.corrugated?1.12:1;
+    const tot=pm?pm.wall*cf2+pm.roof*cf2+pm.floor:0;
+    const b=card.querySelector('.area-badge');if(b)b.textContent=fmt(A2D(tot))+' '+UAREA();
+  });
+}
+
+/* ====================== RENDER: RESULTS ====================== */
+const elStats=document.getElementById('stats'),elBreak=document.getElementById('breakBody');
+function renderResults(){
+  const t=totals();
+  const cf=state.corrugated?1.12:1;
+  elStats.innerHTML=`
+    <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>Walls (net)</div>
+      <div class="val">${fmt(A2D(t.wallNet*cf))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>Roof</div>
+      <div class="val">${fmt(A2D(t.roof*cf))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>Floor</div>
+      <div class="val">${fmt(A2D(t.floor))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl">Openings (−)</div>
+      <div class="val">${fmt(A2D(t.open))} <small>${UAREA()}</small></div></div>
+    <div class="stat total"><div class="lbl">Total surface area (walls + roof + floor)${state.corrugated?' <span style="font-size:11px;color:var(--accent)">▲12%</span>':''}</div>
+      <div class="val">${fmt(A2D(t.wallNet*cf+t.roof*cf+t.floor))} <small>${UAREA()}</small></div></div>`;
+
+  let rows='';
+  state.modules.forEach(m=>{
+    const pm=t.perMod[m.id];
+    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall*cf+pm.roof*cf+pm.floor))} ${UAREA()}</td></tr>`;
+    pm.faces.forEach(f=>{
+      const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
+      const isSel=state.selection.has(f.id);
+      const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
+        .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
+        <td><span class="tag" style="background:${c}"></span>${esc(f.name)}${zoneDots}</td>
+        <td class="r">${fmt(A2D(f.area*dispFactor(f.cat)))}</td></tr>`;
+    });
+    if(pm.open>0)
+      rows+=`<tr class="sub"><td>↳ Openings (deducted)</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
+  });
+  elBreak.innerHTML=rows;
+  elBreak.querySelectorAll('tr.face').forEach(tr=>{
+    tr.addEventListener('click',()=>toggleFace(tr.dataset.fid));
+  });
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ====================== 3D ENGINE ====================== */
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=window.devicePixelRatio||1;
+  const r=canvas.parentElement.getBoundingClientRect();
+  W=r.width;H=r.height;
+  canvas.width=W*DPR;canvas.height=H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+
+function vsub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function vnorm(a){const m=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/m,a[1]/m,a[2]/m];}
+
+function camBasis(){
+  const c=state.cam,ce=Math.cos(c.el),se=Math.sin(c.el),ca=Math.cos(c.az),sa=Math.sin(c.az);
+  const target=[c.tx,c.ty,c.tz];
+  const eye=[target[0]+c.r*ce*sa,target[1]+c.r*se,target[2]+c.r*ce*ca];
+  const f=vnorm(vsub(target,eye));
+  const r=vnorm(cross(f,[0,1,0]));
+  const up=cross(r,f);
+  const focal=(H/2)/Math.tan((50*Math.PI/180)/2);
+  return{eye,f,r,up,focal,cx:W/2,cy:H/2};
+}
+function project(p,B){
+  const d=vsub(p,B.eye),cz=dot(d,B.f);
+  if(cz<0.05)return null;
+  const cx=dot(d,B.r),cy=dot(d,B.up);
+  return{x:B.cx+(cx/cz)*B.focal,y:B.cy-(cy/cz)*B.focal,z:cz};
+}
+function shadeHex(hex,k){
+  const n=parseInt(hex.slice(1),16);
+  return`rgb(${Math.min(255,((n>>16)&255)*k)|0},${Math.min(255,((n>>8)&255)*k)|0},${Math.min(255,(n&255)*k)|0})`;
+}
+let _visible=[];
+
+function draw(){
+  if(!W)return;
+  ctx.clearRect(0,0,W,H);
+  const B=camBasis();
+  const target=[state.cam.tx,state.cam.ty,state.cam.tz];
+  const light=vnorm([0.5,0.92,0.4]);
+  drawGrid(B);
+
+  const drawables=[];
+  for(const f of state._faces){
+    const proj=f.verts.map(v=>project(v,B));
+    if(proj.some(p=>p===null))continue;
+    let n=normal(f.verts);
+    const cen=centroid(f.verts);
+    if(dot(n,vsub(cen,target))<0) n=[-n[0],-n[1],-n[2]];
+    if(dot(n,vsub(B.eye,cen))<=0) continue;
+    const depth=proj.reduce((s,p)=>s+p.z,0)/proj.length;
+    drawables.push({f,proj,n,cen,depth});
+  }
+  drawables.sort((a,b)=>b.depth-a.depth);
+
+  _visible=[];
+  const faceZone=new Map();
+  for(const z of state.zones)
+    for(const fid of z.faceIds) faceZone.set(fid,z);
+
+  for(const d of drawables){
+    const f=d.f;
+    const base=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
+    const k=0.5+0.55*Math.max(0,dot(d.n,light));
+    const isSel=state.selection.has(f.id);
+    const zone=faceZone.get(f.id);
+
+    ctx.beginPath();
+    d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath();
+
+    if(isSel){
+      ctx.fillStyle='rgba(255,181,71,0.88)';ctx.fill();
+      ctx.lineWidth=2.5;ctx.strokeStyle='#ffb547';ctx.stroke();
+    }else{
+      ctx.fillStyle=shadeHex(base,k);ctx.fill();
+      if(zone){
+        ctx.fillStyle=`rgba(${hexRgb(zone.color)},0.22)`;ctx.fill();
+        ctx.lineWidth=2.2;ctx.strokeStyle=zone.color;ctx.stroke();
+      }else{
+        ctx.lineWidth=1;ctx.strokeStyle='rgba(10,16,28,0.45)';ctx.stroke();
+      }
+    }
+    _visible.push({f,poly:d.proj,depth:d.depth});
+
+    if(state.showLabels){
+      const c=project(d.cen,B);
+      if(c&&f.area>0.3){
+        const area=fmt(A2D(f.area*dispFactor(f.cat)))+' '+UAREA();
+        if(isSel){
+          faceLbl(c.x,c.y,area,null,'#ffd98a','rgba(8,13,24,0.85)');
+        }else if(zone){
+          const zn=zone.name.length>13?zone.name.slice(0,12)+'…':zone.name;
+          faceLbl(c.x,c.y,zn,area,zone.color,`rgba(${hexRgb(zone.color)},0.18)`);
+        }else{
+          faceLbl(c.x,c.y,area,null,'#dfe8f5','rgba(8,13,24,0.72)');
+        }
+      }
+    }
+  }
+  // Zone summary banners — drawn on top of all faces
+  if(state.showLabels && state.zones.length>0){
+    for(const z of state.zones){
+      const vf=drawables.filter(d=>z.faceIds.has(d.f.id));
+      if(!vf.length) continue;
+      const pts=vf.flatMap(d=>d.proj);
+      const minY=Math.min(...pts.map(p=>p.y));
+      const avgX=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      zoneLbl(avgX,minY-24,z.name,fmt(A2D(z.area*(state.corrugated?1.12:1)))+' '+UAREA(),z.color);
+    }
+  }
+  // Dimension annotations
+  if(state.showLabels) drawDims(B);
+}
+function faceLbl(cx,cy,line1,line2,textColor,bgColor){
+  ctx.font='600 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';
+  const w1=ctx.measureText(line1).width;
+  let w2=0;if(line2){ctx.font='600 10px Segoe UI';w2=ctx.measureText(line2).width;}
+  const tw=Math.max(w1,w2),h=line2?30:18;
+  ctx.fillStyle=bgColor;rRect(cx-tw/2-6,cy-h/2,tw+12,h,5);ctx.fill();
+  ctx.font='600 11px Segoe UI';ctx.fillStyle=textColor;
+  ctx.textBaseline=line2?'top':'middle';
+  ctx.fillText(line1,cx,line2?cy-h/2+3:cy);
+  if(line2){ctx.font='600 10px Segoe UI';ctx.fillStyle=textColor;ctx.textBaseline='top';ctx.fillText(line2,cx,cy-h/2+17);}
+}
+function zoneLbl(cx,cy,name,area,color){
+  ctx.font='700 12px Segoe UI';ctx.textAlign='center';
+  const nw=ctx.measureText(name).width;
+  ctx.font='600 11px Segoe UI';
+  const aw=ctx.measureText(area).width;
+  const tw=Math.max(nw,aw)+24,th=40;
+  // shadow
+  ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=8;
+  ctx.fillStyle='rgba(8,13,24,0.92)';rRect(cx-tw/2,cy-th/2,tw,th,10);ctx.fill();
+  ctx.shadowBlur=0;
+  // colored top stripe
+  ctx.strokeStyle=color;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-tw/2+10,cy-th/2+1.5);ctx.lineTo(cx+tw/2-10,cy-th/2+1.5);ctx.stroke();
+  // zone name
+  ctx.font='700 12px Segoe UI';ctx.fillStyle=color;ctx.textBaseline='top';
+  ctx.fillText(name,cx,cy-th/2+7);
+  // area
+  ctx.font='600 11px Segoe UI';ctx.fillStyle='#e6edf7';
+  ctx.fillText(area,cx,cy-th/2+23);
+}
+/* ---- CAD dimension line ---- */
+function dim3d(A,B3,off,txt,Cam){
+  const o=off;
+  const a =project([A[0]+o[0], A[1]+o[1], A[2]+o[2]],Cam);
+  const b =project([B3[0]+o[0],B3[1]+o[1],B3[2]+o[2]],Cam);
+  const ae=project(A, Cam);
+  const be=project(B3,Cam);
+  if(!a||!b||!ae||!be) return;
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+  if(len<22) return;                        // too short to label
+  const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+  const ux=dx/len,uy=dy/len, px=-uy*5,py=ux*5;
+  ctx.save();
+  // extension lines (dashed)
+  ctx.strokeStyle='rgba(130,190,255,0.55)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(ae.x,ae.y); ctx.lineTo(a.x,a.y);
+  ctx.moveTo(be.x,be.y); ctx.lineTo(b.x,b.y);
+  ctx.stroke();
+  // dimension line (solid)
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(130,190,255,0.75)'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  // tick marks at ends
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(a.x+px,a.y+py); ctx.lineTo(a.x-px,a.y-py);
+  ctx.moveTo(b.x+px,b.y+py); ctx.lineTo(b.x-px,b.y-py);
+  ctx.stroke();
+  // label
+  ctx.font='600 10.5px Segoe UI'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const tw=ctx.measureText(txt).width+10;
+  ctx.fillStyle='rgba(8,14,28,0.92)';
+  ctx.fillRect(mx-tw/2,my-8,tw,16);
+  ctx.fillStyle='#8ec4ff'; ctx.fillText(txt,mx,my);
+  ctx.restore();
+}
+
+function drawDims(B){
+  for(const m of state.modules){
+    const x0=m.px, x1=m.px+m.w, z0=m.pz, z1=m.pz+m.l, y1=m.h;
+    // offset: scale with building so labels don't sit on the surface
+    const od=Math.max(1.8,(m.w+m.l)*0.07);
+    const u=ULIN();
+    const lbl=v=>fmt(L2D(v))+' '+u;
+    // Width  → front bottom edge, offset toward viewer (+z)
+    dim3d([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w),B);
+    // Length → right bottom edge, offset to the right (+x)
+    dim3d([x1,0,z0],[x1,0,z1], [od,0,0],      lbl(m.l),B);
+    // Height → right-front vertical edge, offset corner (+x+z)
+    dim3d([x1,0,z1],[x1,y1,z1],[od*.7,0,od*.7],lbl(m.h),B);
+    // Gable ridge height → center-front vertical from eave to peak
+    if(m.roof==='gable'){
+      const xc=(x0+x1)/2, yr=y1+m.rise;
+      dim3d([xc,y1,z1],[xc,yr,z1],[od*.7,0,od*.7],lbl(m.rise)+' ridge',B);
+    }
+  }
+}
+function rRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function drawGrid(B){
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+  for(const m of state.modules){minX=Math.min(minX,m.px);maxX=Math.max(maxX,m.px+m.w);minZ=Math.min(minZ,m.pz);maxZ=Math.max(maxZ,m.pz+m.l);}
+  if(!isFinite(minX))return;
+  const pad=Math.max(4,(maxX-minX+maxZ-minZ)/4);
+  const x0=Math.floor(minX-pad),x1=Math.ceil(maxX+pad),z0=Math.floor(minZ-pad),z1=Math.ceil(maxZ+pad);
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(95,130,180,0.16)';
+  for(let x=x0;x<=x1;x++) seg([x,0,z0],[x,0,z1],B);
+  for(let z=z0;z<=z1;z++) seg([x0,0,z],[x1,0,z],B);
+}
+function seg(a,b,B){
+  const p=project(a,B),q=project(b,B);
+  if(!p||!q)return;
+  ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+}
+
+function pointInPoly(px,py,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+    if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))inside=!inside;
+  }
+  return inside;
+}
+function pickAt(px,py){
+  for(let i=_visible.length-1;i>=0;i--)
+    if(pointInPoly(px,py,_visible[i].poly))return _visible[i].f.id;
+  return null;
+}
+
+/* ====================== 3D INTERACTION ====================== */
+let drag=null;
+canvas.addEventListener('pointerdown',e=>{
+  drag={x:e.clientX,y:e.clientY,az:state.cam.az,el:state.cam.el,moved:false};
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+  state.cam.az=drag.az-dx*0.008;
+  state.cam.el=Math.max(-1.45,Math.min(1.45,drag.el+dy*0.008));
+  draw();
+});
+canvas.addEventListener('pointerup',e=>{
+  if(drag&&!drag.moved){
+    const r=canvas.getBoundingClientRect();
+    toggleFace(pickAt(e.clientX-r.left,e.clientY-r.top));
+  }
+  drag=null;
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  state.cam.r=Math.max(3,Math.min(400,state.cam.r*(e.deltaY>0?1.1:0.9)));
+  draw();
+},{passive:false});
+let pinch=null;
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===2)pinch=dist2(e.touches);},{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===2&&pinch){const d=dist2(e.touches);state.cam.r=Math.max(3,Math.min(400,state.cam.r*pinch/d));pinch=d;draw();}
+},{passive:true});
+canvas.addEventListener('touchend',()=>{pinch=null;});
+function dist2(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);}
+
+function frameView(){
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,maxY=0;
+  for(const m of state.modules){
+    minX=Math.min(minX,m.px);maxX=Math.max(maxX,m.px+m.w);
+    minZ=Math.min(minZ,m.pz);maxZ=Math.max(maxZ,m.pz+m.l);
+    maxY=Math.max(maxY,m.h+(m.roof==='gable'?m.rise:0));
+  }
+  if(!isFinite(minX))return;
+  state.cam.tx=(minX+maxX)/2;state.cam.ty=maxY/2;state.cam.tz=(minZ+maxZ)/2;
+  const diag=Math.hypot(maxX-minX,maxY,maxZ-minZ);
+  const aspectPad=W&&H?Math.max(1,H/Math.max(1,W))*0.35:0;
+  state.cam.r=Math.max(6,diag*(2.0+aspectPad));
+}
+
+/* ====================== TABS ====================== */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+name));
+}
+document.querySelector('.tab-bar').addEventListener('click',e=>{
+  const b=e.target.closest('.tab-btn');if(!b)return;
+  switchTab(b.dataset.tab);
+});
+
+/* ====================== GLOBAL REFRESH ====================== */
+function refresh(reframe){
+  buildGeometry();rebuildZoneAreas();cleanSelection();
+  if(reframe)frameView();
+  renderResults();renderZones();updateBadges();updateSelPanel();draw();
+}
+
+/* ====================== TOOLBAR ====================== */
+document.getElementById('addBtn').addEventListener('click',()=>{
+  const last=state.modules[state.modules.length-1];
+  state.modules.push(newModule({px:last?last.px+last.w+1:0}));
+  renderControls();refresh(true);
+});
+document.getElementById('corrCheck').addEventListener('change',e=>{
+  state.corrugated=e.target.checked;
+  document.getElementById('corrToggle').classList.toggle('on',state.corrugated);
+  renderResults();renderZones();updateBadges();updateSelPanel();draw();
+});
+document.getElementById('unitToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  state.unit=b.dataset.u;
+  document.querySelectorAll('#unitToggle button').forEach(x=>x.classList.toggle('active',x===b));
+  renderControls();refresh(false);updateSelPanel();
+});
+document.getElementById('resetView').addEventListener('click',()=>{state.cam.az=0.78;state.cam.el=0.55;frameView();draw();});
+document.getElementById('zoomIn').addEventListener('click',()=>{state.cam.r=Math.max(3,state.cam.r*0.85);draw();});
+document.getElementById('zoomOut').addEventListener('click',()=>{state.cam.r=Math.min(400,state.cam.r*1.15);draw();});
+document.getElementById('lblBtn').addEventListener('click',e=>{
+  state.showLabels=!state.showLabels;e.currentTarget.classList.toggle('on',state.showLabels);draw();
+});
+document.getElementById('clearSelBtn').addEventListener('click',clearSelection);
+document.getElementById('saveZoneBtn').addEventListener('click',showSaveForm);
+document.getElementById('confirmZoneBtn').addEventListener('click',confirmSaveZone);
+document.getElementById('cancelZoneBtn').addEventListener('click',hideSaveForm);
+document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
+  if(e.key==='Enter')confirmSaveZone();
+  if(e.key==='Escape')hideSaveForm();
+});
+document.getElementById('csvBtn').addEventListener('click',exportCSV);
+document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+function exportCSV(){
+  const t=totals();
+  let rows=[['Module','Section','Type','Area ('+UAREA()+')']];
+  for(const f of state._faces){
+    const type=f.cat==='wall'?'Wall':f.cat==='roof'?'Roof':'Floor';
+    rows.push([f.mname,f.name,type,A2D(f.area).toFixed(2)]);
+  }
+  rows.push([]);
+  rows.push(['','','Walls (net)',A2D(t.wallNet).toFixed(2)]);
+  rows.push(['','','Roof',A2D(t.roof).toFixed(2)]);
+  rows.push(['','','Floor',A2D(t.floor).toFixed(2)]);
+  rows.push(['','','Openings',A2D(t.open).toFixed(2)]);
+  rows.push(['','','TOTAL',A2D(t.total).toFixed(2)]);
+  if(state.zones.length>0){
+    rows.push([]);
+    rows.push(['=== SAVED ZONES ===','','','']);
+    for(const z of state.zones){
+      rows.push([z.name,'','Zone total',A2D(z.area).toFixed(2)]);
+      for(const fid of z.faceIds){
+        const f=state._faceMap.get(fid);if(!f)continue;
+        rows.push(['↳'+z.name,f.mname+' · '+f.name,'',A2D(f.area).toFixed(2)]);
+      }
+    }
+  }
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='building_areas.csv';a.click();
+}
+
+/* ====================== INIT ====================== */
+state.modules.push(newModule({name:'Main Body',w:10,l:14,h:3.2,roof:'gable',rise:2.2}));
+buildGeometry();
+renderControls();
+frameView();
+renderResults();
+renderZones();
+resize();
+
+/* ====================== MOBILE NAV ====================== */
+(function(){
+  const MOBILE=()=>window.innerWidth<=768;
+  const ctrlEl=document.querySelector('.controls');
+  const resEl=document.querySelector('.results');
+  const navBtns=document.querySelectorAll('#mobileNav button');
+
+  function setMobTab(tab){
+    ctrlEl.classList.toggle('mob-open',tab==='building');
+    resEl.classList.toggle('mob-open',tab==='results');
+    navBtns.forEach(b=>b.classList.toggle('active',b.dataset.mob===tab));
+    if(tab==='canvas') setTimeout(()=>draw(),50);
+  }
+
+  navBtns.forEach(b=>b.addEventListener('click',()=>setMobTab(b.dataset.mob)));
+
+  if(MOBILE()) setMobTab('building');
+  window.addEventListener('resize',()=>{
+    if(!MOBILE()){
+      ctrlEl.classList.remove('mob-open');
+      resEl.classList.remove('mob-open');
+    } else {
+      setMobTab('building');
+    }
+    resize();
+  });
+
+  /* Hint text for mobile */
+  const hint=document.querySelector('.overlay.tl');
+  if(hint&&MOBILE()){
+    hint.style.display='none';
+  }
+})();
+</script>
+</body>
+</html>

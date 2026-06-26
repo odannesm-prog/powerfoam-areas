@@ -147,9 +147,29 @@
   .export-row .btn{flex:1;justify-content:center}
   @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
 
-  /* ============ MOBILE ============ */
-  .mobile-nav{display:none}
+  /* ============ MOBILE NAV — siempre visible, oculto solo en desktop ============ */
   .mob-hint{display:none}
+  .mobile-nav{
+    display:flex;background:var(--panel);
+    border-top:2px solid var(--line);flex-shrink:0;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mobile-nav button{
+    flex:1;padding:11px 4px 9px;background:none;border:none;
+    color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    transition:color .15s;letter-spacing:.3px;
+  }
+  .mobile-nav button .ico{font-size:24px;line-height:1}
+  .mobile-nav button.active{color:var(--accent)}
+  .mobile-nav button.active .ico{filter:drop-shadow(0 0 5px rgba(255,181,71,.5))}
+
+  /* Ocultar en desktop y restaurar layout */
+  @media(min-width:1025px){
+    .mobile-nav{display:none}
+  }
+
+  /* ============ MOBILE LAYOUT (≤1024px) ============ */
   @media(max-width:1024px){
     /* ---- Header ---- */
     header{padding:7px 12px;gap:10px;flex-wrap:nowrap;min-height:0}
@@ -183,9 +203,7 @@
     .card-body{padding:16px}
     .grid2{gap:12px}
     .field label{font-size:12px;letter-spacing:.2px}
-    .field input,.field select{
-      min-height:48px;font-size:16px;padding:12px 14px;border-radius:10px;
-    }
+    .field input,.field select{min-height:48px;font-size:16px;padding:12px 14px;border-radius:10px}
     .card .card-head{padding:14px 14px}
     .card .del{width:40px;height:40px;font-size:20px;display:flex;align-items:center;justify-content:center}
     .hint{font-size:12px;padding:12px 16px 16px}
@@ -221,22 +239,6 @@
     .sel-panel{bottom:76px;left:8px;right:8px;min-width:0;padding:14px 16px}
     .sel-panel .sp-area{font-size:28px}
     .legend{bottom:76px;right:8px;padding:7px 10px;font-size:11px;gap:10px}
-
-    /* ---- Bottom nav ---- */
-    .mobile-nav{
-      display:flex;background:var(--panel);
-      border-top:2px solid var(--line);flex-shrink:0;
-      padding-bottom:env(safe-area-inset-bottom,0px);
-    }
-    .mobile-nav button{
-      flex:1;padding:11px 4px 9px;background:none;border:none;
-      color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;
-      display:flex;flex-direction:column;align-items:center;gap:5px;
-      transition:color .15s;letter-spacing:.3px;
-    }
-    .mobile-nav button .ico{font-size:24px;line-height:1}
-    .mobile-nav button.active{color:var(--accent)}
-    .mobile-nav button.active .ico{filter:drop-shadow(0 0 5px rgba(255,181,71,.5))}
   }
 </style>
 </head>

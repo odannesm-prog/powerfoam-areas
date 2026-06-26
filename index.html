@@ -149,19 +149,21 @@
 
   /* ============ MOBILE ============ */
   .mobile-nav{display:none}
+  .mob-hint{display:none}
   @media(max-width:768px){
-    header{padding:6px 10px;gap:8px;flex-wrap:nowrap;min-height:0}
-    header .logo-wrap{height:38px;padding:3px 7px}
-    header .logo-wrap img{height:30px}
-    header .brand{min-width:0}
-    header h1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    header p{display:none}
-    .corr-toggle{padding:5px 8px;font-size:11px;gap:4px;border-radius:8px}
-    .unit-toggle button{padding:5px 8px;font-size:11px;font-size:0}
-    .unit-toggle button::after{font-size:12px;font-weight:700}
+    /* ---- Header ---- */
+    header{padding:7px 12px;gap:10px;flex-wrap:nowrap;min-height:0}
+    header .logo-wrap{height:40px;padding:4px 8px;flex-shrink:0}
+    header .logo-wrap img{height:32px}
+    header .brand{display:none}
+    .corr-toggle{padding:8px 12px;font-size:12px;gap:5px;border-radius:9px;white-space:nowrap}
+    .unit-toggle{border-radius:9px}
+    .unit-toggle button{width:40px;height:36px;padding:0;font-size:0;display:flex;align-items:center;justify-content:center}
+    .unit-toggle button::after{font-size:13px;font-weight:800}
     .unit-toggle button[data-u="m"]::after{content:"m"}
     .unit-toggle button[data-u="ft"]::after{content:"ft"}
 
+    /* ---- Layout ---- */
     .main{flex-direction:column;position:relative;overflow:hidden}
     .controls,.results{
       position:absolute;inset:0;width:100%;height:100%;
@@ -173,25 +175,68 @@
     .results.mob-open{transform:translateX(0)}
     .viewport{flex:1;width:100%;height:100%}
 
+    /* ---- Controls panel ---- */
+    .controls .head{padding:14px 16px 12px}
+    .controls .head h2{font-size:16px}
+    .btn{min-height:46px;font-size:14px;padding:10px 16px}
+    .btn-sm{min-height:38px;font-size:13px;padding:8px 12px}
+    .card-body{padding:16px}
+    .grid2{gap:12px}
+    .field label{font-size:12px;letter-spacing:.2px}
+    .field input,.field select{
+      min-height:48px;font-size:16px;padding:12px 14px;border-radius:10px;
+    }
+    .card .card-head{padding:14px 14px}
+    .card .del{width:40px;height:40px;font-size:20px;display:flex;align-items:center;justify-content:center}
+    .hint{font-size:12px;padding:12px 16px 16px}
+
+    /* ---- Results panel ---- */
+    .results .head{padding:14px 16px}
+    .stats{padding:14px;gap:12px}
+    .stat{padding:14px}
+    .stat .val{font-size:24px}
+    .stat.total .val{font-size:28px}
+    .tab-btn{padding:12px 4px;font-size:13px}
+    table{font-size:13px}
+    table th{font-size:11px;padding:8px 4px}
+    table td{padding:8px 4px}
+    .export-row{padding:14px 16px;gap:10px}
+
+    /* ---- Zone list ---- */
+    .zone-row{padding:9px 10px}
+    .zone-area{font-size:13px}
+
+    /* ---- 3D view ---- */
+    .view-tools{top:10px;right:10px;gap:6px}
+    .view-tools button{width:48px;height:48px;font-size:20px;border-radius:12px}
+    .overlay.tl{display:none}
+    .mob-hint{
+      display:block;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+      background:rgba(11,18,32,.75);border:1px solid var(--line);border-radius:20px;
+      padding:6px 14px;font-size:11.5px;color:var(--muted);white-space:nowrap;
+      pointer-events:none;backdrop-filter:blur(4px);
+    }
+
+    /* ---- Selection panel ---- */
+    .sel-panel{bottom:76px;left:8px;right:8px;min-width:0;padding:14px 16px}
+    .sel-panel .sp-area{font-size:28px}
+    .legend{bottom:76px;right:8px;padding:7px 10px;font-size:11px;gap:10px}
+
+    /* ---- Bottom nav ---- */
     .mobile-nav{
       display:flex;background:var(--panel);
       border-top:2px solid var(--line);flex-shrink:0;
       padding-bottom:env(safe-area-inset-bottom,0px);
     }
     .mobile-nav button{
-      flex:1;padding:10px 4px 8px;background:none;border:none;
-      color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;
-      display:flex;flex-direction:column;align-items:center;gap:4px;
+      flex:1;padding:11px 4px 9px;background:none;border:none;
+      color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:5px;
       transition:color .15s;letter-spacing:.3px;
     }
-    .mobile-nav button .ico{font-size:22px;line-height:1}
+    .mobile-nav button .ico{font-size:24px;line-height:1}
     .mobile-nav button.active{color:var(--accent)}
-    .mobile-nav button.active .ico{filter:drop-shadow(0 0 4px rgba(255,181,71,.5))}
-
-    .sel-panel{bottom:72px;left:8px;right:8px;min-width:0}
-    .legend{bottom:72px;right:8px}
-    .view-tools button{width:44px;height:44px;font-size:19px}
-    .overlay.tl{display:none}
+    .mobile-nav button.active .ico{filter:drop-shadow(0 0 5px rgba(255,181,71,.5))}
   }
 </style>
 </head>
@@ -232,6 +277,7 @@
       <div><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
       <div><b>Click</b> faces to select / deselect</div>
     </div>
+    <div class="mob-hint">Drag to rotate · Pinch to zoom · Tap faces</div>
     <div class="view-tools">
       <button id="resetView" title="Center view">⌖</button>
       <button id="zoomIn" title="Zoom in">＋</button>

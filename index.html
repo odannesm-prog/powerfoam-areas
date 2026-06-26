@@ -17,7 +17,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
   header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#0e1b36,#091428);border-bottom:1px solid var(--line);flex-shrink:0;}
   header .logo-wrap{height:64px;background:#fff;border-radius:11px;padding:5px 12px;display:flex;align-items:center;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.5)}
   header .logo-wrap img{height:54px;width:auto;display:block}
@@ -1059,7 +1059,11 @@ resize();
 
 /* ====================== MOBILE NAV ====================== */
 (function(){
-  const MOBILE=()=>window.innerWidth<=768;
+  /* Fix height on phones where 100vh includes browser chrome */
+  function fixHeight(){document.body.style.height=window.innerHeight+'px';}
+  if(!CSS.supports('height','100dvh')){fixHeight();window.addEventListener('resize',fixHeight);}
+
+  const MOBILE=()=>window.innerWidth<=1024;
   const ctrlEl=document.querySelector('.controls');
   const resEl=document.querySelector('.results');
   const navBtns=document.querySelectorAll('#mobileNav button');

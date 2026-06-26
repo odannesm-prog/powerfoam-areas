@@ -493,7 +493,12 @@ function toggleFace(fid){
   else state.selection.add(fid);
   updateSelPanel();renderResults();draw();
   const tr=elBreak.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
-  if(tr) tr.scrollIntoView({block:'nearest'});
+  // Solo hacer scroll si el panel Results esta visible; en movil esta fuera de
+  // pantalla y scrollIntoView desplazaria el viewport revelando otra ventana.
+  if(tr){
+    const resVisible=window.innerWidth>1024||document.querySelector('.results').classList.contains('mob-open');
+    if(resVisible) tr.scrollIntoView({block:'nearest'});
+  }
 }
 function clearSelection(){
   state.selection.clear();state.activeZoneId=null;

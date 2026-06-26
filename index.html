@@ -61,7 +61,7 @@
 
   /* ---- Center 3D ---- */
   .viewport{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 30%,#16223b,#090f1c)}
-  #scene{width:100%;height:100%;display:block;cursor:grab}
+  #scene{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
   #scene:active{cursor:grabbing}
   .overlay{position:absolute;pointer-events:none;font-size:11.5px;color:var(--muted)}
   .overlay.tl{top:12px;left:14px;line-height:1.7}
@@ -922,18 +922,21 @@ function pickAt(px,py){
 }
 
 /* ====================== 3D INTERACTION ====================== */
-let drag=null;
+let drag=null,rafPending=false;
+function scheduleDraw(){if(!rafPending){rafPending=true;requestAnimationFrame(()=>{rafPending=false;draw();});}}
 canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();
   drag={x:e.clientX,y:e.clientY,az:state.cam.az,el:state.cam.el,moved:false};
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove',e=>{
+  e.preventDefault();
   if(!drag)return;
   const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
   if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
   state.cam.az=drag.az-dx*0.008;
   state.cam.el=Math.max(-1.45,Math.min(1.45,drag.el+dy*0.008));
-  draw();
+  scheduleDraw();
 });
 canvas.addEventListener('pointerup',e=>{
   if(drag&&!drag.moved){
@@ -945,15 +948,17 @@ canvas.addEventListener('pointerup',e=>{
 canvas.addEventListener('wheel',e=>{
   e.preventDefault();
   state.cam.r=Math.max(3,Math.min(400,state.cam.r*(e.deltaY>0?1.1:0.9)));
-  draw();
+  scheduleDraw();
 },{passive:false});
 let pinch=null;
-canvas.addEventListener('touchstart',e=>{if(e.touches.length===2)pinch=dist2(e.touches);},{passive:true});
-canvas.addEventListener('touchmove',e=>{
-  if(e.touches.length===2&&pinch){const d=dist2(e.touches);state.cam.r=Math.max(3,Math.min(400,state.cam.r*pinch/d));pinch=d;draw();}
-},{passive:true});
-canvas.addEventListener('touchend',()=>{pinch=null;});
 function dist2(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);}
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){e.preventDefault();pinch=dist2(e.touches);}
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===2&&pinch){e.preventDefault();const d=dist2(e.touches);state.cam.r=Math.max(3,Math.min(400,state.cam.r*pinch/d));pinch=d;scheduleDraw();}
+},{passive:false});
+canvas.addEventListener('touchend',()=>{pinch=null;});
 
 function frameView(){
   let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,maxY=0;

@@ -604,8 +604,9 @@ function renderControls(){
     elModules.appendChild(card);
   });
   elModules.querySelectorAll('input,select').forEach(inp=>{
-    inp.addEventListener(inp.tagName==='SELECT'?'change':'input',()=>{
+    function handleChange(){
       const i=+inp.dataset.i,k=inp.dataset.k,m=state.modules[i];
+      if(!m)return;
       if(k==='name'){m.name=inp.value;refresh(false);updateBadges();}
       else if(k==='roof'){
         m.roof=inp.value;
@@ -615,7 +616,9 @@ function renderControls(){
       }
       else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
       else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}
-    });
+    }
+    inp.addEventListener('input',handleChange);
+    inp.addEventListener('change',handleChange);
   });
   elModules.querySelectorAll('[data-del]').forEach(b=>{
     b.addEventListener('click',()=>{

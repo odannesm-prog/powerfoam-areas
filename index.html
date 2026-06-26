@@ -33,6 +33,9 @@
   .unit-toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .unit-toggle button{background:none;border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;}
   .unit-toggle button.active{background:var(--accent);color:#1a1300}
+  .lang-toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lang-toggle button{background:none;border:none;color:var(--muted);padding:8px 12px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;transition:.15s;}
+  .lang-toggle button.active{background:var(--accent2);color:#fff}
   .main{display:flex;flex:1;min-height:0}
 
   /* ---- Left controls ---- */
@@ -254,15 +257,19 @@
   </div>
   <div class="brand">
     <h1>Power Foam ATL</h1>
-    <p>3D Area Calculator · Spray Foam</p>
+    <p data-i18n="subtitle">3D Area Calculator · Spray Foam</p>
   </div>
   <div class="spacer"></div>
-  <label class="corr-toggle" id="corrToggle" title="Aplica 12% extra por superficie corrugada">
-    <input type="checkbox" id="corrCheck"> +12% Corrugado
+  <label class="corr-toggle" id="corrToggle" data-i18n-title="corrTitle" title="Applies 12% extra for corrugated surface">
+    <input type="checkbox" id="corrCheck"> <span data-i18n="corr">+12% Corrugated</span>
   </label>
   <div class="unit-toggle" id="unitToggle">
-    <button data-u="m">meters (m)</button>
-    <button data-u="ft" class="active">feet (ft)</button>
+    <button data-u="m" data-i18n="unitM">meters (m)</button>
+    <button data-u="ft" class="active" data-i18n="unitFt">feet (ft)</button>
+  </div>
+  <div class="lang-toggle" id="langToggle" title="Language / Idioma">
+    <button data-lang="en">EN</button>
+    <button data-lang="es">ES</button>
   </div>
 </header>
 
@@ -270,68 +277,68 @@
   <!-- Controls -->
   <aside class="controls">
     <div class="head">
-      <h2>Building Modules</h2>
-      <button class="btn btn-accent" id="addBtn">＋ Add</button>
+      <h2 data-i18n="buildingModules">Building Modules</h2>
+      <button class="btn btn-accent" id="addBtn" data-i18n="addBtn">＋ Add</button>
     </div>
     <div class="modules" id="modules"></div>
-    <div class="hint">Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.</div>
+    <div class="hint" data-i18n-html="hint">Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.</div>
   </aside>
 
   <!-- Viewport -->
   <section class="viewport">
     <canvas id="scene"></canvas>
     <div class="overlay tl">
-      <div><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
-      <div><b>Click</b> faces to select / deselect</div>
+      <div data-i18n-html="ovDrag"><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
+      <div data-i18n-html="ovClick"><b>Click</b> faces to select / deselect</div>
     </div>
-    <div class="mob-hint">Drag to rotate · Pinch to zoom · Tap faces</div>
+    <div class="mob-hint" data-i18n="mobHint">Drag to rotate · Pinch to zoom · Tap faces</div>
     <div class="view-tools">
-      <button id="resetView" title="Center view">⌖</button>
-      <button id="zoomIn" title="Zoom in">＋</button>
-      <button id="zoomOut" title="Zoom out">－</button>
-      <button id="lblBtn" class="on" title="Toggle area labels">#</button>
+      <button id="resetView" data-i18n-title="tCenter" title="Center view">⌖</button>
+      <button id="zoomIn" data-i18n-title="tZoomIn" title="Zoom in">＋</button>
+      <button id="zoomOut" data-i18n-title="tZoomOut" title="Zoom out">－</button>
+      <button id="lblBtn" class="on" data-i18n-title="tLabels" title="Toggle area labels">#</button>
     </div>
 
     <!-- Floating selection panel -->
     <div class="sel-panel" id="selPanel">
       <div class="sp-row">
         <span class="sp-count" id="spCount">0 faces</span>
-        <button class="sp-clear" id="clearSelBtn" title="Clear selection">✕ Clear</button>
+        <button class="sp-clear" id="clearSelBtn" data-i18n="clearBtn" data-i18n-title="tClearSel" title="Clear selection">✕ Clear</button>
       </div>
       <div class="sp-area" id="spArea">0.00 <small>ft²</small></div>
       <div id="saveZoneForm" class="save-zone-form">
-        <input class="zone-name-inp" id="zoneNameInp" placeholder="Zone name…" maxlength="40">
+        <input class="zone-name-inp" id="zoneNameInp" data-i18n-ph="zoneNamePh" placeholder="Zone name…" maxlength="40">
         <div class="sf-btns">
-          <button class="btn btn-accent btn-sm" id="confirmZoneBtn" style="flex:1">✔ Save</button>
+          <button class="btn btn-accent btn-sm" id="confirmZoneBtn" data-i18n="saveBtn" style="flex:1">✔ Save</button>
           <button class="btn btn-ghost btn-sm" id="cancelZoneBtn">✕</button>
         </div>
       </div>
-      <button class="btn btn-accent btn-sm" id="saveZoneBtn" style="width:100%;justify-content:center">＋ Save as Zone</button>
+      <button class="btn btn-accent btn-sm" id="saveZoneBtn" data-i18n="saveAsZoneBtn" style="width:100%;justify-content:center">＋ Save as Zone</button>
     </div>
 
     <div class="legend">
-      <span><i style="background:var(--wall)"></i>Walls</span>
-      <span><i style="background:var(--roof)"></i>Roof</span>
-      <span><i style="background:var(--floor)"></i>Floor</span>
+      <span><i style="background:var(--wall)"></i><span data-i18n="walls">Walls</span></span>
+      <span><i style="background:var(--roof)"></i><span data-i18n="roof">Roof</span></span>
+      <span><i style="background:var(--floor)"></i><span data-i18n="floor">Floor</span></span>
     </div>
   </section>
 
   <!-- Results -->
   <aside class="results">
-    <div class="head"><h2>Area Summary</h2></div>
+    <div class="head"><h2 data-i18n="areaSummary">Area Summary</h2></div>
     <div class="stats" id="stats"></div>
 
     <!-- Tabs -->
     <div class="tab-bar">
-      <button class="tab-btn active" data-tab="sections">Sections</button>
-      <button class="tab-btn" data-tab="zones">Zones <span class="zone-count-badge" id="zoneTabBadge">0</span></button>
+      <button class="tab-btn active" data-tab="sections" data-i18n="sections">Sections</button>
+      <button class="tab-btn" data-tab="zones"><span data-i18n="zones">Zones</span> <span class="zone-count-badge" id="zoneTabBadge">0</span></button>
     </div>
 
     <!-- Tab: Sections -->
     <div class="tab-content active" id="tab-sections" style="flex-direction:column">
       <div class="breakdown">
         <table>
-          <thead><tr><th>Section</th><th class="r">Area</th></tr></thead>
+          <thead><tr><th data-i18n="section">Section</th><th class="r" data-i18n="area">Area</th></tr></thead>
           <tbody id="breakBody"></tbody>
         </table>
       </div>
@@ -339,32 +346,113 @@
 
     <!-- Tab: Zones -->
     <div class="tab-content" id="tab-zones" style="flex-direction:column">
-      <div class="zones-wrap" id="zonesWrap">
-        <div class="zones-hint"><b>No saved zones</b>Select faces in the 3D view and press<br>"Save as Zone"</div>
-      </div>
+      <div class="zones-wrap" id="zonesWrap"></div>
     </div>
 
     <div class="export-row">
       <button class="btn btn-ghost" id="csvBtn">⬇ CSV</button>
-      <button class="btn btn-ghost" id="printBtn">🖨 Print</button>
+      <button class="btn btn-ghost" id="printBtn" data-i18n="printBtn">🖨 Print</button>
     </div>
   </aside>
 </div>
 
 <nav class="mobile-nav" id="mobileNav">
   <button data-mob="building" class="active">
-    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polyline points="2,9 12,2 22,9"/><rect x="2" y="9" width="20" height="13"/><line x1="7" y1="9" x2="7" y2="22"/><line x1="17" y1="9" x2="17" y2="22"/><rect x="9" y="15" width="6" height="7"/></svg></span>Building
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polyline points="2,9 12,2 22,9"/><rect x="2" y="9" width="20" height="13"/><line x1="7" y1="9" x2="7" y2="22"/><line x1="17" y1="9" x2="17" y2="22"/><rect x="9" y="15" width="6" height="7"/></svg></span><span data-i18n="navBuilding">Building</span>
   </button>
   <button data-mob="canvas">
-    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polygon points="12,2 21,7 12,12 3,7"/><polyline points="3,7 3,17 12,22 21,17 21,7"/><line x1="12" y1="12" x2="12" y2="22"/></svg></span>3D View
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polygon points="12,2 21,7 12,12 3,7"/><polyline points="3,7 3,17 12,22 21,17 21,7"/><line x1="12" y1="12" x2="12" y2="22"/></svg></span><span data-i18n="nav3d">3D View</span>
   </button>
   <button data-mob="results">
-    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="11" width="3.5" height="8"/><rect x="10.25" y="6" width="3.5" height="13"/><rect x="15.5" y="14" width="3.5" height="5"/></svg></span>Results
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="11" width="3.5" height="8"/><rect x="10.25" y="6" width="3.5" height="13"/><rect x="15.5" y="14" width="3.5" height="5"/></svg></span><span data-i18n="navResults">Results</span>
   </button>
 </nav>
 
 <script>
 "use strict";
+/* ====================== I18N (EN / ES) ====================== */
+const I18N={
+  subtitle:{en:'3D Area Calculator · Spray Foam',es:'Calculadora de Áreas 3D · Spray Foam'},
+  corr:{en:'+12% Corrugated',es:'+12% Corrugado'},
+  corrTitle:{en:'Applies 12% extra for corrugated surface',es:'Aplica 12% extra por superficie corrugada'},
+  unitM:{en:'meters (m)',es:'metros (m)'},
+  unitFt:{en:'feet (ft)',es:'pies (ft)'},
+  buildingModules:{en:'Building Modules',es:'Módulos del Edificio'},
+  addBtn:{en:'＋ Add',es:'＋ Agregar'},
+  hint:{en:'Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.',es:'Cada módulo es un volumen rectangular. Usa <b>posición X/Z</b> para formar plantas en L, T o compuestas.'},
+  ovDrag:{en:'<b>Drag</b> to rotate · <b>scroll</b> to zoom',es:'<b>Arrastra</b> para rotar · <b>scroll</b> para zoom'},
+  ovClick:{en:'<b>Click</b> faces to select / deselect',es:'<b>Clic</b> en caras para seleccionar / deseleccionar'},
+  mobHint:{en:'Drag to rotate · Pinch to zoom · Tap faces',es:'Arrastra para rotar · Pellizca para zoom · Toca caras'},
+  tCenter:{en:'Center view',es:'Centrar vista'},
+  tZoomIn:{en:'Zoom in',es:'Acercar'},
+  tZoomOut:{en:'Zoom out',es:'Alejar'},
+  tLabels:{en:'Toggle area labels',es:'Mostrar/ocultar etiquetas'},
+  tClearSel:{en:'Clear selection',es:'Limpiar selección'},
+  clearBtn:{en:'✕ Clear',es:'✕ Limpiar'},
+  zoneNamePh:{en:'Zone name…',es:'Nombre de zona…'},
+  saveBtn:{en:'✔ Save',es:'✔ Guardar'},
+  saveAsZoneBtn:{en:'＋ Save as Zone',es:'＋ Guardar como Zona'},
+  walls:{en:'Walls',es:'Muros'},
+  roof:{en:'Roof',es:'Techo'},
+  floor:{en:'Floor',es:'Piso'},
+  areaSummary:{en:'Area Summary',es:'Resumen de Áreas'},
+  sections:{en:'Sections',es:'Secciones'},
+  zones:{en:'Zones',es:'Zonas'},
+  section:{en:'Section',es:'Sección'},
+  area:{en:'Area',es:'Área'},
+  printBtn:{en:'🖨 Print',es:'🖨 Imprimir'},
+  navBuilding:{en:'Building',es:'Edificio'},
+  nav3d:{en:'3D View',es:'Vista 3D'},
+  navResults:{en:'Results',es:'Resultados'},
+  removeTitle:{en:'Remove',es:'Eliminar'},
+  width:{en:'Width',es:'Ancho'},
+  length:{en:'Length',es:'Largo'},
+  height:{en:'Height',es:'Alto'},
+  roofType:{en:'Roof type',es:'Tipo de techo'},
+  flat:{en:'Flat',es:'Plano'},
+  gabled:{en:'Gabled',es:'A dos aguas'},
+  ridgeHeight:{en:'Ridge height',es:'Altura de cumbrera'},
+  openings:{en:'Openings',es:'Aberturas'},
+  posX:{en:'Position X',es:'Posición X'},
+  posZ:{en:'Position Z',es:'Posición Z'},
+  module:{en:'Module',es:'Módulo'},
+  mainBody:{en:'Main Body',es:'Cuerpo Principal'},
+  zone:{en:'Zone',es:'Zona'},
+  faceSel1:{en:'face selected',es:'cara seleccionada'},
+  faceSelN:{en:'faces selected',es:'caras seleccionadas'},
+  wallsNet:{en:'Walls (net)',es:'Muros (neto)'},
+  openingsNeg:{en:'Openings (−)',es:'Aberturas (−)'},
+  totalSurface:{en:'Total surface area (walls + roof + floor)',es:'Área total de superficie (muros + techo + piso)'},
+  openingsDeducted:{en:'↳ Openings (deducted)',es:'↳ Aberturas (descontadas)'},
+  noZones:{en:'No saved zones',es:'Sin zonas guardadas'},
+  selectFacesHint:{en:'Select faces in the 3D view and press',es:'Selecciona caras en la vista 3D y presiona'},
+  savedZones:{en:'Saved Zones',es:'Zonas Guardadas'},
+  csvType:{en:'Type',es:'Tipo'},
+  zoneTotal:{en:'Zone total',es:'Total de zona'},
+  typeWall:{en:'Wall',es:'Muro'}
+};
+const FACE_ES={
+  'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
+  'East Wall':'Muro Este','West Wall':'Muro Oeste','Roof (East slope)':'Techo (vertiente Este)',
+  'Roof (West slope)':'Techo (vertiente Oeste)','North Gable':'Hastial Norte','South Gable':'Hastial Sur'
+};
+let LANG=(localStorage.getItem('pf_lang')==='es')?'es':'en';
+function t(k){const e=I18N[k];return e?(e[LANG]||e.en):k;}
+function tf(name){return LANG==='es'?(FACE_ES[name]||name):name;}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{el.title=t(el.dataset.i18nTitle);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
+  document.querySelectorAll('#langToggle button').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG));
+}
+function setLang(l){
+  LANG=(l==='es')?'es':'en';
+  localStorage.setItem('pf_lang',LANG);
+  applyLang();
+  renderControls();renderResults();renderZones();updateSelPanel();
+}
 /* ====================== CONFIG / STATE ====================== */
 const FT=0.3048, M2_FT2=0.092903;
 const COL={wall:'#c9d4e0',roof:'#5b7fa6',floor:'#8a93a0',gable:'#bcc8d6'};
@@ -388,7 +476,7 @@ let nextId=1, nextZoneId=1;
 function newModule(opts={}){
   return Object.assign({
     id:nextId++,
-    name:'Module '+(state.modules.length+1),
+    name:t('module')+' '+(state.modules.length+1),
     w:8,l:12,h:3,
     roof:'flat',
     rise:1.5,
@@ -514,7 +602,7 @@ function updateSelPanel(){
   const panel=document.getElementById('selPanel');
   if(count===0){panel.style.display='none';return;}
   panel.style.display='block';
-  document.getElementById('spCount').textContent=count+' face'+(count===1?'':'s')+' selected';
+  document.getElementById('spCount').textContent=count+' '+t(count===1?'faceSel1':'faceSelN');
   const adjArea=[...state.selection].reduce((s,fid)=>{
     const f=state._faceMap.get(fid);return s+(f?f.area*dispFactor(f.cat):0);
   },0);
@@ -527,7 +615,7 @@ function showSaveForm(){
   const form=document.getElementById('saveZoneForm');
   form.style.display='block';
   const inp=document.getElementById('zoneNameInp');
-  inp.value='Zone '+(state.zones.length+1);
+  inp.value=t('zone')+' '+(state.zones.length+1);
   inp.focus();inp.select();
 }
 function hideSaveForm(){
@@ -536,7 +624,7 @@ function hideSaveForm(){
 }
 function confirmSaveZone(){
   if(state.selection.size===0){hideSaveForm();return;}
-  const name=(document.getElementById('zoneNameInp').value.trim())||('Zone '+(state.zones.length+1));
+  const name=(document.getElementById('zoneNameInp').value.trim())||(t('zone')+' '+(state.zones.length+1));
   const color=ZONE_COLORS[state.zones.length%ZONE_COLORS.length];
   const faceIds=new Set(state.selection);
   const area=[...faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area:0);},0);
@@ -549,10 +637,10 @@ function renderZones(){
   const wrap=document.getElementById('zonesWrap');
   document.getElementById('zoneTabBadge').textContent=state.zones.length;
   if(state.zones.length===0){
-    wrap.innerHTML='<div class="zones-hint"><b>No saved zones</b>Select faces in the 3D view and press<br>"Save as Zone"</div>';
+    wrap.innerHTML='<div class="zones-hint"><b>'+t('noZones')+'</b>'+t('selectFacesHint')+'<br>"'+t('saveAsZoneBtn').replace('＋ ','')+'"</div>';
     return;
   }
-  wrap.innerHTML='<div class="zones-header">Saved Zones <span class="zone-count-badge">'+state.zones.length+'</span></div>';
+  wrap.innerHTML='<div class="zones-header">'+t('savedZones')+' <span class="zone-count-badge">'+state.zones.length+'</span></div>';
   state.zones.forEach((z,zi)=>{
     const div=document.createElement('div');
     div.className='zone-row'+(state.activeZoneId===z.id?' z-active':'');
@@ -585,8 +673,8 @@ const elModules=document.getElementById('modules');
 function renderControls(){
   elModules.innerHTML='';
   state.modules.forEach((m,i)=>{
-    const t=totals().perMod[m.id];
-    const tot=t?t.wall+t.roof+t.floor:0;
+    const pm0=totals().perMod[m.id];
+    const tot=pm0?pm0.wall+pm0.roof+pm0.floor:0;
     const color=MOD_COLORS[i%MOD_COLORS.length];
     const card=document.createElement('div');card.className='card';
     card.innerHTML=`
@@ -594,23 +682,23 @@ function renderControls(){
         <span class="swatch" style="background:${color}"></span>
         <input class="name" value="${m.name.replace(/"/g,'&quot;')}" data-i="${i}" data-k="name">
         <span class="area-badge">${fmt(A2D(tot))} ${UAREA()}</span>
-        <button class="del" data-del="${i}" title="Remove">✕</button>
+        <button class="del" data-del="${i}" title="${t('removeTitle')}">✕</button>
       </div>
       <div class="card-body">
         <div class="grid2">
-          <div class="field"><label>Width (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.w).toFixed(2)}" data-i="${i}" data-k="w"></div>
-          <div class="field"><label>Length (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.l).toFixed(2)}" data-i="${i}" data-k="l"></div>
-          <div class="field"><label>Height (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.h).toFixed(2)}" data-i="${i}" data-k="h"></div>
-          <div class="field"><label>Roof type</label>
+          <div class="field"><label>${t('width')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.w).toFixed(2)}" data-i="${i}" data-k="w"></div>
+          <div class="field"><label>${t('length')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.l).toFixed(2)}" data-i="${i}" data-k="l"></div>
+          <div class="field"><label>${t('height')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.h).toFixed(2)}" data-i="${i}" data-k="h"></div>
+          <div class="field"><label>${t('roofType')}</label>
             <select data-i="${i}" data-k="roof">
-              <option value="flat" ${m.roof==='flat'?'selected':''}>Flat</option>
-              <option value="gable" ${m.roof==='gable'?'selected':''}>Gabled</option>
+              <option value="flat" ${m.roof==='flat'?'selected':''}>${t('flat')}</option>
+              <option value="gable" ${m.roof==='gable'?'selected':''}>${t('gabled')}</option>
             </select></div>
           <div class="field" style="${m.roof==='gable'?'':'display:none'}" data-rise="${i}">
-            <label>Ridge height (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
-          <div class="field"><label>Openings (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
-          <div class="field"><label>Position X (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
-          <div class="field"><label>Position Z (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
+            <label>${t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
+          <div class="field"><label>${t('openings')} (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
+          <div class="field"><label>${t('posX')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
+          <div class="field"><label>${t('posZ')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
         </div>
       </div>`;
     elModules.appendChild(card);
@@ -653,23 +741,23 @@ function updateBadges(){
 /* ====================== RENDER: RESULTS ====================== */
 const elStats=document.getElementById('stats'),elBreak=document.getElementById('breakBody');
 function renderResults(){
-  const t=totals();
+  const S=totals();
   const cf=state.corrugated?1.12:1;
   elStats.innerHTML=`
-    <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>Walls (net)</div>
-      <div class="val">${fmt(A2D(t.wallNet*cf))} <small>${UAREA()}</small></div></div>
-    <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>Roof</div>
-      <div class="val">${fmt(A2D(t.roof*cf))} <small>${UAREA()}</small></div></div>
-    <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>Floor</div>
-      <div class="val">${fmt(A2D(t.floor))} <small>${UAREA()}</small></div></div>
-    <div class="stat"><div class="lbl">Openings (−)</div>
-      <div class="val">${fmt(A2D(t.open))} <small>${UAREA()}</small></div></div>
-    <div class="stat total"><div class="lbl">Total surface area (walls + roof + floor)${state.corrugated?' <span style="font-size:11px;color:var(--accent)">▲12%</span>':''}</div>
-      <div class="val">${fmt(A2D(t.wallNet*cf+t.roof*cf+t.floor))} <small>${UAREA()}</small></div></div>`;
+    <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
+      <div class="val">${fmt(A2D(S.wallNet*cf))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>${t('roof')}</div>
+      <div class="val">${fmt(A2D(S.roof*cf))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>${t('floor')}</div>
+      <div class="val">${fmt(A2D(S.floor))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
+      <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
+    <div class="stat total"><div class="lbl">${t('totalSurface')}${state.corrugated?' <span style="font-size:11px;color:var(--accent)">▲12%</span>':''}</div>
+      <div class="val">${fmt(A2D(S.wallNet*cf+S.roof*cf+S.floor))} <small>${UAREA()}</small></div></div>`;
 
   let rows='';
   state.modules.forEach(m=>{
-    const pm=t.perMod[m.id];
+    const pm=S.perMod[m.id];
     rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall*cf+pm.roof*cf+pm.floor))} ${UAREA()}</td></tr>`;
     pm.faces.forEach(f=>{
       const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
@@ -677,11 +765,11 @@ function renderResults(){
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
         .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
-        <td><span class="tag" style="background:${c}"></span>${esc(f.name)}${zoneDots}</td>
+        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
         <td class="r">${fmt(A2D(f.area*dispFactor(f.cat)))}</td></tr>`;
     });
     if(pm.open>0)
-      rows+=`<tr class="sub"><td>↳ Openings (deducted)</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
+      rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
   });
   elBreak.innerHTML=rows;
   elBreak.querySelectorAll('tr.face').forEach(tr=>{
@@ -1036,26 +1124,26 @@ document.getElementById('csvBtn').addEventListener('click',exportCSV);
 document.getElementById('printBtn').addEventListener('click',()=>window.print());
 
 function exportCSV(){
-  const t=totals();
-  let rows=[['Module','Section','Type','Area ('+UAREA()+')']];
+  const S=totals();
+  let rows=[[t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']];
   for(const f of state._faces){
-    const type=f.cat==='wall'?'Wall':f.cat==='roof'?'Roof':'Floor';
-    rows.push([f.mname,f.name,type,A2D(f.area).toFixed(2)]);
+    const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
+    rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
   }
   rows.push([]);
-  rows.push(['','','Walls (net)',A2D(t.wallNet).toFixed(2)]);
-  rows.push(['','','Roof',A2D(t.roof).toFixed(2)]);
-  rows.push(['','','Floor',A2D(t.floor).toFixed(2)]);
-  rows.push(['','','Openings',A2D(t.open).toFixed(2)]);
-  rows.push(['','','TOTAL',A2D(t.total).toFixed(2)]);
+  rows.push(['','',t('wallsNet'),A2D(S.wallNet).toFixed(2)]);
+  rows.push(['','',t('roof'),A2D(S.roof).toFixed(2)]);
+  rows.push(['','',t('floor'),A2D(S.floor).toFixed(2)]);
+  rows.push(['','',t('openings'),A2D(S.open).toFixed(2)]);
+  rows.push(['','','TOTAL',A2D(S.total).toFixed(2)]);
   if(state.zones.length>0){
     rows.push([]);
-    rows.push(['=== SAVED ZONES ===','','','']);
+    rows.push(['=== '+t('savedZones').toUpperCase()+' ===','','','']);
     for(const z of state.zones){
-      rows.push([z.name,'','Zone total',A2D(z.area).toFixed(2)]);
+      rows.push([z.name,'',t('zoneTotal'),A2D(z.area).toFixed(2)]);
       for(const fid of z.faceIds){
         const f=state._faceMap.get(fid);if(!f)continue;
-        rows.push(['↳'+z.name,f.mname+' · '+f.name,'',A2D(f.area).toFixed(2)]);
+        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',A2D(f.area).toFixed(2)]);
       }
     }
   }
@@ -1066,8 +1154,13 @@ function exportCSV(){
 }
 
 /* ====================== INIT ====================== */
-state.modules.push(newModule({name:'Main Body',w:10,l:14,h:3.2,roof:'gable',rise:2.2}));
+document.getElementById('langToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  setLang(b.dataset.lang);
+});
+state.modules.push(newModule({name:t('mainBody'),w:10,l:14,h:3.2,roof:'gable',rise:2.2}));
 buildGeometry();
+applyLang();
 renderControls();
 frameView();
 renderResults();

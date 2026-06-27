@@ -373,8 +373,8 @@
 /* ====================== I18N (EN / ES) ====================== */
 const I18N={
   subtitle:{en:'3D Area Calculator · Spray Foam',es:'Calculadora de Áreas 3D · Spray Foam'},
-  corr:{en:'+12% Corrugated',es:'+12% Corrugado'},
-  corrTitle:{en:'Applies 12% extra for corrugated surface',es:'Aplica 12% extra por superficie corrugada'},
+  corr:{en:'Corrugated (+12%/+22%)',es:'Corrugado (+12%/+22%)'},
+  corrTitle:{en:'Flat panels +12% · Quonset arch +22%',es:'Lámina plana +12% · Arco Quonset +22%'},
   unitM:{en:'meters (m)',es:'metros (m)'},
   unitFt:{en:'feet (ft)',es:'pies (ft)'},
   buildingModules:{en:'Building Modules',es:'Módulos del Edificio'},
@@ -846,9 +846,10 @@ function renderResults(){
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
         .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      const corrBdg=state.corrugated&&f.cat!=='floor'?' <span style="font-size:10px;color:var(--accent);font-weight:700">+12%</span>':'';
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
         <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
-        <td class="r">${fmt(A2D(f.area*corrFactor(f)))}</td></tr>`;
+        <td class="r">${fmt(A2D(f.area*corrFactor(f)))}${corrBdg}</td></tr>`;
     });
     // Arco: una sola fila con el area total (en vez de 12 paneles)
     const archFaces=pm.faces.filter(isArchPanel);
@@ -858,9 +859,10 @@ function renderResults(){
       const azones=new Set();
       archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
       const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      const archCorrBdg=state.corrugated?' <span style="font-size:10px;color:var(--accent);font-weight:700">+22%</span>':'';
       rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
         <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
-        <td class="r">${fmt(A2D(archAreaD))}</td></tr>`;
+        <td class="r">${fmt(A2D(archAreaD))}${archCorrBdg}</td></tr>`;
     }
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;

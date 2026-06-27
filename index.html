@@ -825,13 +825,7 @@ function renderResults(){
   state.modules.forEach(m=>{
     const pm=S.perMod[m.id];
     rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall*cf+pm.roof*cf+pm.floor))} ${UAREA()}</td></tr>`;
-
-    // Group arch panels by module
-    const archFaces=pm.faces.filter(f=>/^Arch Panel \d+$/.test(f.name));
-    const otherFaces=pm.faces.filter(f=>!/^Arch Panel \d+$/.test(f.name));
-
-    // Render non-arch faces normally
-    otherFaces.forEach(f=>{
+    pm.faces.forEach(f=>{
       const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
@@ -839,21 +833,6 @@ function renderResults(){
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
         <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
         <td class="r">${fmt(A2D(f.area*dispFactor(f.cat)))}</td></tr>`;
-    });
-
-    // Group arch panels into single row (if any)
-    if(archFaces.length>0){
-      const archArea=archFaces.reduce((s,f)=>s+f.area,0);
-      const allArchSel=archFaces.every(f=>state.selection.has(f.id));
-      const archZoneDots=new Set();
-      archFaces.forEach(f=>{
-        state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>archZoneDots.add(z));
-      });
-      const archZoneStr=[...archZoneDots]
-        .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
-      rows+=`<tr class="face${allArchSel?' sel':''}" data-fid="${archFaces[0].id}" title="Arch group — tap to select all panels">
-        <td><span class="tag" style="background:${COL.roof}"></span>Roof (Arch)${archZoneStr}</td>
-        <td class="r">${fmt(A2D(archArea*dispFactor('roof')))}</td></tr>`;
     });
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;

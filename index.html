@@ -1068,8 +1068,12 @@ function draw(){
       d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
       ctx.closePath();
       ctx.clip();
-      // Direction: walls=vertical(Y), roof/arch=along building length(Z)
-      const wDir=f.cat==='wall'?[0,1,0]:[0,0,1];
+      // Direction: walls=vertical, arch=along Z, roofs=eave-parallel (perpendicular to slope)
+      // Eave direction: horizontal rotation of face normal → normalize(-n[2], 0, n[0])
+      let wDir;
+      if(f.cat==='wall'){wDir=[0,1,0];}
+      else if(isArchPanel(f)){wDir=[0,0,1];}
+      else{const ex=-d.n[2],ez=d.n[0],el=Math.hypot(ex,ez);wDir=el>0.05?[ex/el,0,ez/el]:[0,0,1];}
       const pA=project(d.cen,B);
       const pB=project([d.cen[0]+wDir[0],d.cen[1]+wDir[1],d.cen[2]+wDir[2]],B);
       if(pA&&pB){

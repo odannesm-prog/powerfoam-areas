@@ -1068,12 +1068,17 @@ function draw(){
       d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
       ctx.closePath();
       ctx.clip();
-      // Direction: walls=vertical(Y), arch=along length(Z), roofs=up-the-slope
-      // Up-the-slope = project world-up [0,1,0] onto face plane: u - dot(u,n)*n
+      // Direction: walls=vertical(Y), arch=tangential around arch, roofs=up-the-slope
+      // Arch tangential: perpendicular to radial normal in XY plane → [-n[1], n[0], 0]
+      // This makes corrugation follow the arch curve (classic Quonset look)
+      // Up-the-slope for flat roofs: project world-up [0,1,0] onto face plane: u - dot(u,n)*n
       let wDir;
       if(f.cat==='wall'){wDir=[0,1,0];}
-      else if(isArchPanel(f)){wDir=[0,0,1];}
-      else{
+      else if(isArchPanel(f)){
+        // Tangent direction around arch circumference = perpendicular to outward radial normal
+        const tl=Math.hypot(d.n[0],d.n[1]);
+        wDir=tl>0.05?[-d.n[1]/tl,d.n[0]/tl,0]:[0,0,1];
+      }else{
         const nu=d.n[1]; // dot([0,1,0], n) = n[1]
         const ux=-nu*d.n[0],uy=1-nu*d.n[1],uz=-nu*d.n[2],ul=Math.hypot(ux,uy,uz);
         wDir=ul>0.05?[ux/ul,uy/ul,uz/ul]:[0,0,1];

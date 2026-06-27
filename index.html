@@ -440,7 +440,8 @@ const FACE_ES={
   'East Wall':'Muro Este','West Wall':'Muro Oeste','Roof (East slope)':'Techo (vertiente Este)',
   'Roof (West slope)':'Techo (vertiente Oeste)','North Gable':'Hastial Norte','South Gable':'Hastial Sur',
   'North End Wall':'Hastial Norte','South End Wall':'Hastial Sur',
-  'East Side Wall':'Muro Lateral Este','West Side Wall':'Muro Lateral Oeste'
+  'East Side Wall':'Muro Lateral Este','West Side Wall':'Muro Lateral Oeste',
+  'Roof (Arch)':'Techo (Arco)'
 };
 let LANG=(localStorage.getItem('pf_lang')==='es')?'es':'en';
 function t(k){const e=I18N[k];return e?(e[LANG]||e.en):k;}
@@ -826,6 +827,7 @@ function renderResults(){
     const pm=S.perMod[m.id];
     rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall*cf+pm.roof*cf+pm.floor))} ${UAREA()}</td></tr>`;
     pm.faces.forEach(f=>{
+      if(/^Arch Panel \d+$/.test(f.name)) return; // paneles del arco se agrupan abajo
       const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
@@ -834,6 +836,18 @@ function renderResults(){
         <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
         <td class="r">${fmt(A2D(f.area*dispFactor(f.cat)))}</td></tr>`;
     });
+    // Arco: una sola fila con el area total (en vez de 12 paneles)
+    const archFaces=pm.faces.filter(f=>/^Arch Panel \d+$/.test(f.name));
+    if(archFaces.length>0){
+      const archArea=archFaces.reduce((s,f)=>s+f.area,0);
+      const allSel=archFaces.every(f=>state.selection.has(f.id));
+      const azones=new Set();
+      archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
+      const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
+        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
+        <td class="r">${fmt(A2D(archArea*dispFactor('roof')))}</td></tr>`;
+    }
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
   });
@@ -935,7 +949,7 @@ function draw(){
     }
     _visible.push({f,poly:d.proj,depth:d.depth});
 
-    if(state.showLabels){
+    if(state.showLabels && !/^Arch Panel \d+$/.test(f.name)){
       const c=project(d.cen,B);
       if(c&&f.area>0.3){
         const area=fmt(A2D(f.area*dispFactor(f.cat)))+' '+UAREA();
@@ -948,6 +962,24 @@ function draw(){
           faceLbl(c.x,c.y,area,null,'#dfe8f5','rgba(8,13,24,0.72)');
         }
       }
+    }
+  }
+  // Arco: una sola etiqueta de area total por modulo (en vez de 12 paneles)
+  if(state.showLabels){
+    for(const m of state.modules){
+      if(m.roof!=='arch') continue;
+      const af=drawables.filter(d=>d.f.mid===m.id && /^Arch Panel \d+$/.test(d.f.name));
+      if(!af.length) continue;
+      const archArea=state._faces
+        .filter(f=>f.mid===m.id && /^Arch Panel \d+$/.test(f.name))
+        .reduce((s,f)=>s+f.area,0);
+      const pts=af.flatMap(d=>d.proj);
+      const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      const area=fmt(A2D(archArea*dispFactor('roof')))+' '+UAREA();
+      const sel=state._faces.some(f=>f.mid===m.id && /^Arch Panel \d+$/.test(f.name) && state.selection.has(f.id));
+      if(sel) faceLbl(cx,cy,area,null,'#ffd98a','rgba(8,13,24,0.9)');
+      else faceLbl(cx,cy,area,null,'#dfe8f5','rgba(8,13,24,0.82)');
     }
   }
   // Zone summary banners — drawn on top of all faces

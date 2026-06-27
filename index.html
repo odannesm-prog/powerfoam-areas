@@ -606,21 +606,36 @@ function cleanSelection(){
 }
 
 /* ====================== TOTALS ====================== */
-function dispFactor(cat){ return state.corrugated&&cat!=='floor'?1.12:1; }
+const CORR_FLAT=1.12, CORR_ARCH=1.22; // +12% lámina plana corrugada, +22% arco Quonset profundo
+function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
+// Factor de corrugado por cara: piso=1, arco=1.22, resto=1.12 (solo si corrugado activo)
+function corrFactor(f){
+  if(!state.corrugated||f.cat==='floor') return 1;
+  return isArchPanel(f)?CORR_ARCH:CORR_FLAT;
+}
+// Compat: factor por categoría (sin distinguir arco). Usar corrFactor(f) cuando haya cara.
+function dispFactor(cat){ return state.corrugated&&cat!=='floor'?CORR_FLAT:1; }
 function totals(){
-  let wall=0,roof=0,floor=0,open=0;
+  let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0;
   const perMod={};
-  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,open:m.openings||0,faces:[]};
+  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,wallD:0,roofD:0,open:m.openings||0,faces:[]};
   for(const f of state._faces){
     if(!perMod[f.mid]) continue;
     perMod[f.mid].faces.push(f);
-    if(f.cat==='wall'){wall+=f.area;perMod[f.mid].wall+=f.area;}
-    else if(f.cat==='roof'){roof+=f.area;perMod[f.mid].roof+=f.area;}
+    const cf=corrFactor(f);
+    if(f.cat==='wall'){wall+=f.area;wallD+=f.area*cf;perMod[f.mid].wall+=f.area;perMod[f.mid].wallD+=f.area*cf;}
+    else if(f.cat==='roof'){roof+=f.area;roofD+=f.area*cf;perMod[f.mid].roof+=f.area;perMod[f.mid].roofD+=f.area*cf;}
     else{floor+=f.area;perMod[f.mid].floor+=f.area;}
   }
   for(const m of state.modules) open+=(m.openings||0);
   const wallNet=Math.max(0,wall-open);
-  return{wall,wallNet,roof,floor,open,perMod,total:wallNet+roof+floor};
+  const wallNetD=Math.max(0,wallD-open); // aberturas son planas, se restan en crudo
+  return{wall,wallNet,wallNetD,roof,roofD,floor,open,perMod,
+         total:wallNet+roof+floor, totalD:wallNetD+roofD+floor};
+}
+// Area de zona ajustada por corrugado (suma cara por cara con su factor)
+function zoneDispArea(z){
+  return [...z.faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);},0);
 }
 
 /* ====================== SELECTION ====================== */
@@ -663,7 +678,7 @@ function updateSelPanel(){
   panel.style.display='block';
   document.getElementById('spCount').textContent=count+' '+t(count===1?'faceSel1':'faceSelN');
   const adjArea=[...state.selection].reduce((s,fid)=>{
-    const f=state._faceMap.get(fid);return s+(f?f.area*dispFactor(f.cat):0);
+    const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);
   },0);
   document.getElementById('spArea').innerHTML=fmt(A2D(adjArea))+' <small>'+UAREA()+'</small>';
 }
@@ -706,7 +721,7 @@ function renderZones(){
     div.innerHTML=`
       <span class="zone-dot" style="background:${z.color}"></span>
       <input class="zone-name-edit" value="${esc(z.name)}" data-zi="${zi}" title="Edit name">
-      <span class="zone-area">${fmt(A2D(z.area*(state.corrugated?1.12:1)))} ${UAREA()}${state.corrugated?` <span style="font-size:9px;opacity:.7">×1.12</span>`:''}</span>
+      <span class="zone-area">${fmt(A2D(zoneDispArea(z)))} ${UAREA()}${state.corrugated?` <span style="font-size:9px;opacity:.7">corr.</span>`:''}</span>
       <button class="zone-del" data-zdel="${zi}" title="Delete zone">✕</button>`;
     wrap.appendChild(div);
     div.addEventListener('click',e=>{
@@ -796,11 +811,10 @@ function renderControls(){
   });
 }
 function updateBadges(){
-  const t=totals();
+  const T=totals();
   elModules.querySelectorAll('.card').forEach((card,i)=>{
-    const m=state.modules[i];const pm=t.perMod[m.id];
-    const cf2=state.corrugated?1.12:1;
-    const tot=pm?pm.wall*cf2+pm.roof*cf2+pm.floor:0;
+    const m=state.modules[i];const pm=T.perMod[m.id];
+    const tot=pm?pm.wallD+pm.roofD+pm.floor:0;
     const b=card.querySelector('.area-badge');if(b)b.textContent=fmt(A2D(tot))+' '+UAREA();
   });
 }
@@ -809,44 +823,44 @@ function updateBadges(){
 const elStats=document.getElementById('stats'),elBreak=document.getElementById('breakBody');
 function renderResults(){
   const S=totals();
-  const cf=state.corrugated?1.12:1;
+  const corrBadge=state.corrugated?' <span style="font-size:11px;color:var(--accent)">corrugado</span>':'';
   elStats.innerHTML=`
     <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
-      <div class="val">${fmt(A2D(S.wallNet*cf))} <small>${UAREA()}</small></div></div>
+      <div class="val">${fmt(A2D(S.wallNetD))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>${t('roof')}</div>
-      <div class="val">${fmt(A2D(S.roof*cf))} <small>${UAREA()}</small></div></div>
+      <div class="val">${fmt(A2D(S.roofD))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>${t('floor')}</div>
       <div class="val">${fmt(A2D(S.floor))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
       <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
-    <div class="stat total"><div class="lbl">${t('totalSurface')}${state.corrugated?' <span style="font-size:11px;color:var(--accent)">▲12%</span>':''}</div>
-      <div class="val">${fmt(A2D(S.wallNet*cf+S.roof*cf+S.floor))} <small>${UAREA()}</small></div></div>`;
+    <div class="stat total"><div class="lbl">${t('totalSurface')}${corrBadge}</div>
+      <div class="val">${fmt(A2D(S.totalD))} <small>${UAREA()}</small></div></div>`;
 
   let rows='';
   state.modules.forEach(m=>{
     const pm=S.perMod[m.id];
-    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall*cf+pm.roof*cf+pm.floor))} ${UAREA()}</td></tr>`;
+    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wallD+pm.roofD+pm.floor))} ${UAREA()}</td></tr>`;
     pm.faces.forEach(f=>{
-      if(/^Arch Panel \d+$/.test(f.name)) return; // paneles del arco se agrupan abajo
+      if(isArchPanel(f)) return; // paneles del arco se agrupan abajo
       const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
         .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
         <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
-        <td class="r">${fmt(A2D(f.area*dispFactor(f.cat)))}</td></tr>`;
+        <td class="r">${fmt(A2D(f.area*corrFactor(f)))}</td></tr>`;
     });
     // Arco: una sola fila con el area total (en vez de 12 paneles)
-    const archFaces=pm.faces.filter(f=>/^Arch Panel \d+$/.test(f.name));
+    const archFaces=pm.faces.filter(isArchPanel);
     if(archFaces.length>0){
-      const archArea=archFaces.reduce((s,f)=>s+f.area,0);
+      const archAreaD=archFaces.reduce((s,f)=>s+f.area*corrFactor(f),0);
       const allSel=archFaces.every(f=>state.selection.has(f.id));
       const azones=new Set();
       archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
       const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
       rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
         <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
-        <td class="r">${fmt(A2D(archArea*dispFactor('roof')))}</td></tr>`;
+        <td class="r">${fmt(A2D(archAreaD))}</td></tr>`;
     }
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
@@ -949,10 +963,10 @@ function draw(){
     }
     _visible.push({f,poly:d.proj,depth:d.depth});
 
-    if(state.showLabels && !/^Arch Panel \d+$/.test(f.name)){
+    if(state.showLabels && !isArchPanel(f)){
       const c=project(d.cen,B);
       if(c&&f.area>0.3){
-        const area=fmt(A2D(f.area*dispFactor(f.cat)))+' '+UAREA();
+        const area=fmt(A2D(f.area*corrFactor(f)))+' '+UAREA();
         if(isSel){
           faceLbl(c.x,c.y,area,null,'#ffd98a','rgba(8,13,24,0.85)');
         }else if(zone){
@@ -968,16 +982,16 @@ function draw(){
   if(state.showLabels){
     for(const m of state.modules){
       if(m.roof!=='arch') continue;
-      const af=drawables.filter(d=>d.f.mid===m.id && /^Arch Panel \d+$/.test(d.f.name));
+      const af=drawables.filter(d=>d.f.mid===m.id && isArchPanel(d.f));
       if(!af.length) continue;
-      const archArea=state._faces
-        .filter(f=>f.mid===m.id && /^Arch Panel \d+$/.test(f.name))
-        .reduce((s,f)=>s+f.area,0);
+      const archAreaD=state._faces
+        .filter(f=>f.mid===m.id && isArchPanel(f))
+        .reduce((s,f)=>s+f.area*corrFactor(f),0);
       const pts=af.flatMap(d=>d.proj);
       const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
       const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-      const area=fmt(A2D(archArea*dispFactor('roof')))+' '+UAREA();
-      const sel=state._faces.some(f=>f.mid===m.id && /^Arch Panel \d+$/.test(f.name) && state.selection.has(f.id));
+      const area=fmt(A2D(archAreaD))+' '+UAREA();
+      const sel=state._faces.some(f=>f.mid===m.id && isArchPanel(f) && state.selection.has(f.id));
       if(sel) faceLbl(cx,cy,area,null,'#ffd98a','rgba(8,13,24,0.9)');
       else faceLbl(cx,cy,area,null,'#dfe8f5','rgba(8,13,24,0.82)');
     }
@@ -990,7 +1004,7 @@ function draw(){
       const pts=vf.flatMap(d=>d.proj);
       const minY=Math.min(...pts.map(p=>p.y));
       const avgX=pts.reduce((s,p)=>s+p.x,0)/pts.length;
-      zoneLbl(avgX,minY-24,z.name,fmt(A2D(z.area*(state.corrugated?1.12:1)))+' '+UAREA(),z.color);
+      zoneLbl(avgX,minY-24,z.name,fmt(A2D(zoneDispArea(z)))+' '+UAREA(),z.color);
     }
   }
   // Dimension annotations

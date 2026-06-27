@@ -1055,7 +1055,7 @@ function draw(){
       if(zone){
         ctx.fillStyle=`rgba(${hexRgb(zone.color)},0.22)`;ctx.fill();
         ctx.lineWidth=2.2;ctx.strokeStyle=zone.color;ctx.stroke();
-      }else{
+      }else if(!isArchPanel(f)){
         ctx.lineWidth=1;ctx.strokeStyle='rgba(10,16,28,0.45)';ctx.stroke();
       }
     }

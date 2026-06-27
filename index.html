@@ -625,8 +625,18 @@ function totals(){
 /* ====================== SELECTION ====================== */
 function toggleFace(fid){
   if(fid===null) return;
-  if(state.selection.has(fid)) state.selection.delete(fid);
-  else state.selection.add(fid);
+  const _f=state._faceMap.get(fid);
+  if(_f && /^Arch Panel \d+$/.test(_f.name)){
+    // Arch group — select/deselect all panels of this module at once
+    const archIds=[...state._faceMap.values()]
+      .filter(ff=>ff.mid===_f.mid&&/^Arch Panel \d+$/.test(ff.name))
+      .map(ff=>ff.id);
+    const wasOn=state.selection.has(fid);
+    archIds.forEach(id=>wasOn?state.selection.delete(id):state.selection.add(id));
+  } else {
+    if(state.selection.has(fid)) state.selection.delete(fid);
+    else state.selection.add(fid);
+  }
   updateSelPanel();renderResults();draw();
   const tr=elBreak.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
   // Solo hacer scroll si el panel Results esta visible; en movil esta fuera de

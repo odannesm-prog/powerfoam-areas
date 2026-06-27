@@ -965,6 +965,48 @@ function draw(){
     }
     _visible.push({f,poly:d.proj,depth:d.depth});
 
+    // Corrugation texture — parallel ridges clipped to face polygon
+    if(state.corrugated && f.cat!=='floor'){
+      ctx.save();
+      ctx.beginPath();
+      d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+      ctx.closePath();
+      ctx.clip();
+      // Direction: walls=vertical(Y), roof/arch=along building length(Z)
+      const wDir=f.cat==='wall'?[0,1,0]:[0,0,1];
+      const pA=project(d.cen,B);
+      const pB=project([d.cen[0]+wDir[0],d.cen[1]+wDir[1],d.cen[2]+wDir[2]],B);
+      if(pA&&pB){
+        const dx=pB.x-pA.x, dy=pB.y-pA.y, len=Math.hypot(dx,dy);
+        if(len>0.5){
+          const ux=dx/len, uy=dy/len; // along ridge
+          const px=-uy, py=ux;         // across ridges
+          const xs=d.proj.map(p=>p.x), ys=d.proj.map(p=>p.y);
+          const cx=(Math.min(...xs)+Math.max(...xs))/2;
+          const cy=(Math.min(...ys)+Math.max(...ys))/2;
+          const span=(Math.max(...xs)-Math.min(...xs))*Math.abs(px)+(Math.max(...ys)-Math.min(...ys))*Math.abs(py);
+          const step=Math.max(5,Math.min(20,span/14));
+          const drawLn=(ox,oy)=>{
+            const ts=[];
+            if(Math.abs(ux)>0.01){ts.push((Math.min(...xs)-ox)/ux,(Math.max(...xs)-ox)/ux);}
+            if(Math.abs(uy)>0.01){ts.push((Math.min(...ys)-oy)/uy,(Math.max(...ys)-oy)/uy);}
+            if(ts.length<2)return;
+            const t0=Math.min(...ts),t1=Math.max(...ts);
+            ctx.beginPath();ctx.moveTo(ox+ux*t0,oy+uy*t0);ctx.lineTo(ox+ux*t1,oy+uy*t1);ctx.stroke();
+          };
+          // Shadow lines
+          ctx.strokeStyle=isSel?'rgba(100,50,0,0.28)':'rgba(0,0,0,0.22)';
+          ctx.lineWidth=1.0;
+          for(let s=0;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);if(s)drawLn(cx-px*s,cy-py*s);}
+          // Highlight lines (offset half step)
+          ctx.strokeStyle=isSel?'rgba(255,220,80,0.20)':'rgba(255,255,255,0.16)';
+          ctx.lineWidth=0.6;
+          for(let s=step/2;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);drawLn(cx-px*s,cy-py*s);}
+        }
+      }
+      ctx.restore();
+    }
+
     if(state.showLabels && !isArchPanel(f)){
       const c=project(d.cen,B);
       if(c&&f.area>0.3){

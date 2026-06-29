@@ -67,6 +67,18 @@
   .field.full{grid-column:1/-1}
   .hint{font-size:11px;color:var(--muted);padding:0 12px 12px;text-align:center;line-height:1.4}
 
+  /* ---- Project info (client + address) ---- */
+  .proj-info{padding:12px 12px 0;display:flex;flex-direction:column;gap:9px}
+  .proj-info .field input{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;outline:none;width:100%}
+  .proj-info .field input:focus{border-color:var(--accent2)}
+  .addr-row{display:flex;gap:6px;align-items:stretch}
+  .addr-row input{flex:1;min-width:0}
+  .icon-btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:pointer;font-size:16px;width:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .icon-btn:hover{background:#1d2c47;border-color:var(--accent2)}
+  .icon-btn.locating{opacity:.55;pointer-events:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .icon-btn.locating{animation:pulse 1s ease-in-out infinite}
+
   /* ---- Center 3D ---- */
   .viewport{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 30%,#16223b,#090f1c)}
   #scene{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
@@ -280,6 +292,20 @@
       <h2 data-i18n="buildingModules">Building Modules</h2>
       <button class="btn btn-accent" id="addBtn" data-i18n="addBtn">＋ Add</button>
     </div>
+    <div class="proj-info">
+      <div class="field">
+        <label data-i18n="client">Client</label>
+        <input id="projClient" data-i18n-ph="clientPh" placeholder="Client name" maxlength="80" autocomplete="off">
+      </div>
+      <div class="field">
+        <label data-i18n="address">Address</label>
+        <div class="addr-row">
+          <input id="projAddr" data-i18n-ph="addressPh" placeholder="Project address" maxlength="200" autocomplete="off">
+          <button class="icon-btn" id="gpsBtn" data-i18n-title="gpsTitle" title="Capture from GPS">📍</button>
+          <button class="icon-btn" id="mapBtn" data-i18n-title="mapTitle" title="Show in Google Maps">🗺️</button>
+        </div>
+      </div>
+    </div>
     <div class="modules" id="modules"></div>
     <div class="hint" data-i18n-html="hint">Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.</div>
   </aside>
@@ -440,7 +466,24 @@ const I18N={
   monitor:{en:'Monitor',es:'Monitor (Clerestory)'},
   lowWallHt:{en:'Low wall height',es:'Altura muro bajo'},
   highWallHt:{en:'High wall height',es:'Altura muro alto'},
-  rise:{en:'Rise',es:'Alzada'}
+  rise:{en:'Rise',es:'Alzada'},
+  sawtooth:{en:'Sawtooth',es:'Diente de Sierra'},
+  panelType:{en:'Panel type',es:'Tipo de panel'},
+  panelCorr:{en:'Corrugated / R-Panel',es:'Corrugado / R-Panel'},
+  panelSeam:{en:'Standing Seam',es:'Standing Seam'},
+  spfWarn:{en:'⚠ Standing-seam roof: SPF not recommended — it restricts thermal panel movement. Apply on walls only.',es:'⚠ Techo standing seam: SPF no recomendado — restringe el movimiento térmico del panel. Aplicar solo en muros.'},
+  spfApplic:{en:'SPF-applicable area',es:'Área aplicable a SPF'},
+  noSpf:{en:'no SPF',es:'sin SPF'},
+  client:{en:'Client',es:'Cliente'},
+  clientPh:{en:'Client name',es:'Nombre del cliente'},
+  address:{en:'Address',es:'Dirección'},
+  addressPh:{en:'Project address',es:'Dirección del proyecto'},
+  gpsTitle:{en:'Capture address from GPS',es:'Capturar dirección desde GPS'},
+  mapTitle:{en:'Show in Google Maps',es:'Ver en Google Maps'},
+  gpsNoSupport:{en:'GPS is not available on this device',es:'GPS no disponible en este dispositivo'},
+  gpsDenied:{en:'Location permission denied',es:'Permiso de ubicación denegado'},
+  gpsError:{en:'Could not get location',es:'No se pudo obtener la ubicación'},
+  mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'}
 };
 const FACE_ES={
   'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
@@ -466,6 +509,10 @@ function tf(name){
     if(FACE_ES[name]) return FACE_ES[name];
     const m=name.match(/^Arch Panel (\d+)$/);
     if(m) return 'Panel de Arco '+m[1];
+    const ms=name.match(/^Sawtooth Slope (\d+)$/);
+    if(ms) return 'Vertiente Diente '+ms[1];
+    const mc=name.match(/^Clerestory Glazing (\d+)$/);
+    if(mc) return 'Acristalado '+mc[1];
     return name;
   }
   return name;
@@ -498,6 +545,7 @@ const state={
   activeZoneId:null,
   showLabels:true,
   corrugated:false,
+  project:{client:'',address:'',lat:null,lng:null},
   cam:{az:0.78,el:0.55,r:30,tx:0,ty:0,tz:0},
   _faces:[],
   _faceMap: new Map(),
@@ -510,6 +558,7 @@ function newModule(opts={}){
     name:t('module')+' '+(state.modules.length+1),
     w:8,l:12,h:3,
     roof:'flat',
+    panel:'corrugated',
     rise:1.5,
     px:0,pz:0,
     openings:0,
@@ -550,7 +599,7 @@ function buildGeometry(){
     const color=MOD_COLORS[mi%MOD_COLORS.length];
     const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
     const add=(key,name,cat,verts,areaOvr)=>{
-      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,
+      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,panel:m.panel||'corrugated',
                   verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
     };
     add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
@@ -646,6 +695,36 @@ function buildGeometry(){
         [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[xmR,yr,z0],[xmR,yr+monH*0.4,z0],[xc,yTop,z0],[xmL,yr+monH*0.4,z0],[xmL,yr,z0],[x0,y1,z0]]);
       add('wS','South Wall','wall',[
         [x1,y0,z1],[x0,y0,z1],[x0,y1,z1],[xmL,yr,z1],[xmL,yr+monH*0.4,z1],[xc,yTop,z1],[xmR,yr+monH*0.4,z1],[xmR,yr,z1],[x1,y1,z1]]);
+    }else if(m.roof==='sawtooth'){
+      // Sawtooth / Diente de sierra: N teeth repeating along the length (z).
+      // Each tooth = a gentle roof slope (low→high) ending in a vertical glazed
+      // riser. All risers face +z. Classic factory roof for north-light glazing.
+      const yr=y1+Math.max(0.01,m.rise);
+      const N=Math.max(2,Math.min(10,Math.round(m.l/Math.max(m.w,0.01))));
+      const d=m.l/N;
+      for(let i=0;i<N;i++){
+        const za=z0+i*d, zb=za+d;
+        // Sloped roof panel (rises from y1 at za to yr at zb)
+        add('saw_'+i,'Sawtooth Slope '+(i+1),'roof',
+          [[x0,y1,za],[x1,y1,za],[x1,yr,zb],[x0,yr,zb]]);
+        // Internal vertical glazed riser between this tooth and the next (not the last)
+        if(i<N-1)
+          add('clr_'+i,'Clerestory Glazing '+(i+1),'wall',
+            [[x0,y1,zb],[x1,y1,zb],[x1,yr,zb],[x0,yr,zb]]);
+      }
+      // North end wall (z=z0): low rectangle y0..y1
+      add('wN','North End Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      // South end wall (z=z1): full rectangle y0..yr (includes last riser face)
+      add('wS','South End Wall','wall',quad([x0,y0,z1],[x1,y0,z1],[x1,yr,z1],[x0,yr,z1]));
+      // Side walls: sawtooth-profile polygons (planar at x0 / x1)
+      const topW=[[x0,y1,z0]], topE=[[x1,y1,z0]];
+      for(let i=1;i<=N;i++){
+        const zT=z0+i*d;
+        topW.push([x0,yr,zT]); topE.push([x1,yr,zT]);
+        if(i<N){ topW.push([x0,y1,zT]); topE.push([x1,y1,zT]); }
+      }
+      add('wW','West Side Wall','wall',[...topW,[x0,y0,z1],[x0,y0,z0]]);
+      add('wE','East Side Wall','wall',[[x1,y0,z0],[x1,y0,z1],...topE.slice().reverse()]);
     }else if(m.roof==='arch'){
       // Arch / Quonset — semicircular cross-section
       // r = arch radius = width/2; yb = side wall height (0 = Q-Model, >0 = S-Model)
@@ -701,14 +780,22 @@ function cleanSelection(){
 const CORR_FLAT=1.12, CORR_ARCH=1.22; // +12% lámina plana corrugada, +22% arco Quonset profundo
 function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
 // Factor de corrugado por cara: piso=1, arco=1.22, resto=1.12 (solo si corrugado activo)
+// Standing seam = lámina lisa de costura alzada → sin superficie extra (factor 1).
 function corrFactor(f){
   if(!state.corrugated||f.cat==='floor') return 1;
+  if(f.panel==='standingseam') return 1;
   return isArchPanel(f)?CORR_ARCH:CORR_FLAT;
+}
+// SPF aplicable: NO recomendado en techos standing seam (restringe el movimiento
+// térmico del panel flotante). Muros, pisos y techos atornillados/corrugados: sí.
+function spfApplicable(f){
+  if(f.cat==='roof' && f.panel==='standingseam') return false;
+  return true;
 }
 // Compat: factor por categoría (sin distinguir arco). Usar corrFactor(f) cuando haya cara.
 function dispFactor(cat){ return state.corrugated&&cat!=='floor'?CORR_FLAT:1; }
 function totals(){
-  let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0;
+  let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0,roofExclD=0;
   const perMod={};
   for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,wallD:0,roofD:0,open:m.openings||0,faces:[]};
   for(const f of state._faces){
@@ -716,14 +803,16 @@ function totals(){
     perMod[f.mid].faces.push(f);
     const cf=corrFactor(f);
     if(f.cat==='wall'){wall+=f.area;wallD+=f.area*cf;perMod[f.mid].wall+=f.area;perMod[f.mid].wallD+=f.area*cf;}
-    else if(f.cat==='roof'){roof+=f.area;roofD+=f.area*cf;perMod[f.mid].roof+=f.area;perMod[f.mid].roofD+=f.area*cf;}
+    else if(f.cat==='roof'){roof+=f.area;roofD+=f.area*cf;perMod[f.mid].roof+=f.area;perMod[f.mid].roofD+=f.area*cf;
+      if(!spfApplicable(f)) roofExclD+=f.area*cf;}
     else{floor+=f.area;perMod[f.mid].floor+=f.area;}
   }
   for(const m of state.modules) open+=(m.openings||0);
   const wallNet=Math.max(0,wall-open);
   const wallNetD=Math.max(0,wallD-open); // aberturas son planas, se restan en crudo
-  return{wall,wallNet,wallNetD,roof,roofD,floor,open,perMod,
-         total:wallNet+roof+floor, totalD:wallNetD+roofD+floor};
+  const totalD=wallNetD+roofD+floor;
+  return{wall,wallNet,wallNetD,roof,roofD,floor,open,perMod,roofExclD,
+         total:wallNet+roof+floor, totalD, spfTotalD:Math.max(0,totalD-roofExclD)};
 }
 // Area de zona ajustada por corrugado (suma cara por cara con su factor)
 function zoneDispArea(z){
@@ -863,10 +952,16 @@ function renderControls(){
               <option value="hip" ${m.roof==='hip'?'selected':''}>${t('hip')}</option>
               <option value="gambrel" ${m.roof==='gambrel'?'selected':''}>${t('gambrel')}</option>
               <option value="monitor" ${m.roof==='monitor'?'selected':''}>${t('monitor')}</option>
+              <option value="sawtooth" ${m.roof==='sawtooth'?'selected':''}>${t('sawtooth')}</option>
               <option value="arch" ${m.roof==='arch'?'selected':''}>${t('arch')}</option>
             </select></div>
-          <div class="field" style="${['gable','singleslope','hip','gambrel','monitor'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
-            <label>${m.roof==='singleslope'||m.roof==='hip'?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
+          <div class="field"><label>${t('panelType')}</label>
+            <select data-i="${i}" data-k="panel">
+              <option value="corrugated" ${m.panel!=='standingseam'?'selected':''}>${t('panelCorr')}</option>
+              <option value="standingseam" ${m.panel==='standingseam'?'selected':''}>${t('panelSeam')}</option>
+            </select></div>
+          <div class="field" style="${['gable','singleslope','hip','gambrel','monitor','sawtooth'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
+            <label>${['singleslope','hip','sawtooth'].includes(m.roof)?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
           <div class="field" style="${m.roof==='arch'?'':'display:none'}" data-archpeak="${i}">
             <label>${t('archPeak')} (${ULIN()})</label>
             <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--muted);font-family:monospace">${L2D(m.h+m.w/2).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(r=${L2D(m.w/2).toFixed(2)})</span></div>
@@ -874,6 +969,7 @@ function renderControls(){
           <div class="field"><label>${t('openings')} (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
           <div class="field"><label>${t('posX')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
           <div class="field"><label>${t('posZ')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
+          ${m.panel==='standingseam'?`<div class="field full" style="font-size:11px;color:var(--accent);background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.3);border-radius:8px;padding:8px 10px;line-height:1.45">${t('spfWarn')}</div>`:''}
         </div>
       </div>`;
     elModules.appendChild(card);
@@ -885,12 +981,9 @@ function renderControls(){
       if(k==='name'){m.name=inp.value;refresh(false);updateBadges();}
       else if(k==='roof'){
         m.roof=inp.value;
-        const rf=elModules.querySelector(`[data-rise="${i}"]`);
-        if(rf)rf.style.display=['gable','singleslope','hip','gambrel','monitor'].includes(inp.value)?'':'none';
-        const ap=elModules.querySelector(`[data-archpeak="${i}"]`);
-        if(ap)ap.style.display=inp.value==='arch'?'':'none';
-        refresh(false);
+        renderControls();refresh(false);
       }
+      else if(k==='panel'){m.panel=inp.value;renderControls();refresh(false);}
       else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
       else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);}
       else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}
@@ -930,7 +1023,9 @@ function renderResults(){
     <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
       <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
     <div class="stat total"><div class="lbl">${t('totalSurface')}${corrBadge}</div>
-      <div class="val">${fmt(A2D(S.totalD))} <small>${UAREA()}</small></div></div>`;
+      <div class="val">${fmt(A2D(S.totalD))} <small>${UAREA()}</small></div></div>
+    ${S.roofExclD>0.01?`<div class="stat total" style="background:linear-gradient(135deg,#15331f,#16231b);border-color:#2c5a3a"><div class="lbl"><i style="background:var(--green)"></i>${t('spfApplic')}</div>
+      <div class="val" style="color:var(--green)">${fmt(A2D(S.spfTotalD))} <small>${UAREA()}</small></div></div>`:''}`;
 
   let rows='';
   state.modules.forEach(m=>{
@@ -942,9 +1037,11 @@ function renderResults(){
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
         .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
-      const corrBdg=state.corrugated&&f.cat!=='floor'?' <span style="font-size:10px;color:var(--accent);font-weight:700">+12%</span>':'';
+      const cfp=Math.round((corrFactor(f)-1)*100);
+      const corrBdg=cfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${cfp}%</span>`:'';
+      const spfBdg=!spfApplicable(f)?` <span style="font-size:9px;color:var(--red);font-weight:700;border:1px solid var(--red);border-radius:4px;padding:0 3px;white-space:nowrap">⚠ ${t('noSpf')}</span>`:'';
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
-        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
+        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}${spfBdg}</td>
         <td class="r">${fmt(A2D(f.area*corrFactor(f)))}${corrBdg}</td></tr>`;
     });
     // Arco: una sola fila con el area total (en vez de 12 paneles)
@@ -955,9 +1052,11 @@ function renderResults(){
       const azones=new Set();
       archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
       const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
-      const archCorrBdg=state.corrugated?' <span style="font-size:10px;color:var(--accent);font-weight:700">+22%</span>':'';
+      const acfp=Math.round((corrFactor(archFaces[0])-1)*100);
+      const archCorrBdg=acfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${acfp}%</span>`:'';
+      const archSpfBdg=!spfApplicable(archFaces[0])?` <span style="font-size:9px;color:var(--red);font-weight:700;border:1px solid var(--red);border-radius:4px;padding:0 3px;white-space:nowrap">⚠ ${t('noSpf')}</span>`:'';
       rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
-        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
+        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}${archSpfBdg}</td>
         <td class="r">${fmt(A2D(archAreaD))}${archCorrBdg}</td></tr>`;
     }
     if(pm.open>0)
@@ -1332,7 +1431,11 @@ function frameView(){
   for(const m of state.modules){
     minX=Math.min(minX,m.px);maxX=Math.max(maxX,m.px+m.w);
     minZ=Math.min(minZ,m.pz);maxZ=Math.max(maxZ,m.pz+m.l);
-    maxY=Math.max(maxY,m.h+(m.roof==='gable'?m.rise:m.roof==='arch'?m.w/2:0));
+    let extra=0;
+    if(m.roof==='arch') extra=m.w/2;
+    else if(m.roof==='monitor') extra=m.rise*1.6;
+    else if(['gable','singleslope','hip','gambrel','sawtooth'].includes(m.roof)) extra=m.rise;
+    maxY=Math.max(maxY,m.h+extra);
   }
   if(!isFinite(minX))return;
   state.cam.tx=(minX+maxX)/2;state.cam.ty=maxY/2;state.cam.tz=(minZ+maxZ)/2;
@@ -1392,9 +1495,61 @@ document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
 document.getElementById('csvBtn').addEventListener('click',exportCSV);
 document.getElementById('printBtn').addEventListener('click',()=>window.print());
 
+/* ====================== PROJECT INFO (client + address + GPS) ====================== */
+function saveProject(){try{localStorage.setItem('pf_project',JSON.stringify(state.project));}catch(e){}}
+function loadProject(){
+  try{const p=JSON.parse(localStorage.getItem('pf_project')||'{}');
+    state.project.client=p.client||'';state.project.address=p.address||'';
+    state.project.lat=(typeof p.lat==='number')?p.lat:null;
+    state.project.lng=(typeof p.lng==='number')?p.lng:null;
+  }catch(e){}
+  const c=document.getElementById('projClient'),a=document.getElementById('projAddr');
+  if(c)c.value=state.project.client;if(a)a.value=state.project.address;
+}
+function captureGPS(){
+  const btn=document.getElementById('gpsBtn'),addrInp=document.getElementById('projAddr');
+  if(!navigator.geolocation){alert(t('gpsNoSupport'));return;}
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    state.project.lat=lat;state.project.lng=lng;
+    const fallback=lat.toFixed(6)+', '+lng.toFixed(6);
+    // Reverse-geocode via OpenStreetMap Nominatim (free, no key). Falls back to coords offline.
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lng,
+          {headers:{'Accept':'application/json'}})
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(d=>{const addr=(d&&d.display_name)?d.display_name:fallback;
+        state.project.address=addr;addrInp.value=addr;saveProject();})
+      .catch(()=>{state.project.address=fallback;addrInp.value=fallback;saveProject();})
+      .finally(()=>btn.classList.remove('locating'));
+  },err=>{
+    btn.classList.remove('locating');
+    alert(err&&err.code===1?t('gpsDenied'):t('gpsError'));
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+function openInMaps(){
+  const p=state.project;let url;
+  if(p.lat!=null&&p.lng!=null) url='https://www.google.com/maps?q='+p.lat+','+p.lng;
+  else if((p.address||'').trim()) url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address.trim());
+  else{alert(t('mapNoAddr'));return;}
+  window.open(url,'_blank','noopener');
+}
+document.getElementById('projClient').addEventListener('input',e=>{state.project.client=e.target.value;saveProject();});
+document.getElementById('projAddr').addEventListener('input',e=>{
+  state.project.address=e.target.value;
+  // manual edits invalidate stored GPS coords so Maps uses the typed text
+  state.project.lat=null;state.project.lng=null;saveProject();
+});
+document.getElementById('gpsBtn').addEventListener('click',captureGPS);
+document.getElementById('mapBtn').addEventListener('click',openInMaps);
+
 function exportCSV(){
   const S=totals();
-  let rows=[[t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']];
+  let rows=[];
+  if((state.project.client||'').trim()) rows.push([t('client'),state.project.client]);
+  if((state.project.address||'').trim()) rows.push([t('address'),state.project.address]);
+  if(rows.length) rows.push([]);
+  rows.push([t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']);
   for(const f of state._faces){
     const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
     rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
@@ -1430,6 +1585,7 @@ document.getElementById('langToggle').addEventListener('click',e=>{
 state.modules.push(newModule({name:t('mainBody'),w:10,l:14,h:3.2,roof:'gable',rise:2.2}));
 buildGeometry();
 applyLang();
+loadProject();
 renderControls();
 frameView();
 renderResults();

@@ -78,6 +78,23 @@
   .icon-btn.locating{opacity:.55;pointer-events:none}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   .icon-btn.locating{animation:pulse 1s ease-in-out infinite}
+  .icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .client-row{display:flex;gap:6px;align-items:stretch}
+  .client-row input{flex:1;min-width:0}
+  .client-id{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:5px}
+  .client-id b{color:var(--accent2);font-family:monospace;font-weight:700;letter-spacing:.3px}
+
+  /* ---- Share sheet ---- */
+  .share-sheet{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(4,8,16,.6);backdrop-filter:blur(3px)}
+  .share-sheet.open{display:flex}
+  .share-sheet .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:calc(100% - 32px);max-width:380px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .share-sheet .sheet h3{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .share-opt{display:flex;align-items:center;gap:13px;padding:13px 12px;border-radius:11px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-weight:600;width:100%;margin-bottom:9px;transition:.15s;text-align:left}
+  .share-opt:hover{background:#1d2c47;border-color:var(--accent2)}
+  .share-opt .si{font-size:21px;line-height:1;width:26px;text-align:center;flex-shrink:0}
+  .share-opt small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
+  .share-cancel{width:100%;text-align:center;padding:12px;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;margin-top:2px}
+  .share-cancel:hover{color:var(--text)}
 
   /* ---- Center 3D ---- */
   .viewport{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 30%,#16223b,#090f1c)}
@@ -295,7 +312,11 @@
     <div class="proj-info">
       <div class="field">
         <label data-i18n="client">Client</label>
-        <input id="projClient" data-i18n-ph="clientPh" placeholder="Client name" maxlength="80" autocomplete="off">
+        <div class="client-row">
+          <input id="projClient" data-i18n-ph="clientPh" placeholder="Client name" maxlength="80" autocomplete="off">
+          <button class="icon-btn danger" id="clearClientBtn" data-i18n-title="clearClientTitle" title="Clear client">🗑</button>
+        </div>
+        <div class="client-id" id="clientIdRow" style="display:none"><span data-i18n="clientId">Client ID</span>: <b id="clientIdVal"></b></div>
       </div>
       <div class="field">
         <label data-i18n="address">Address</label>
@@ -376,10 +397,25 @@
     </div>
 
     <div class="export-row">
+      <button class="btn btn-accent" id="shareBtn" data-i18n="shareBtn">📤 Share</button>
       <button class="btn btn-ghost" id="csvBtn">⬇ CSV</button>
       <button class="btn btn-ghost" id="printBtn" data-i18n="printBtn">🖨 Print</button>
     </div>
   </aside>
+</div>
+
+<!-- Share sheet -->
+<div class="share-sheet" id="shareSheet">
+  <div class="sheet">
+    <h3>📤 <span data-i18n="shareTitle">Share results</span></h3>
+    <button class="share-opt" id="shOptNative" style="display:none"><span class="si">📱</span><span><span data-i18n="shareNative">Share…</span><small data-i18n="shareNativeSub">WhatsApp, Messages, Mail…</small></span></button>
+    <button class="share-opt" id="shOptWa"><span class="si">🟢</span><span>WhatsApp</span></button>
+    <button class="share-opt" id="shOptSms"><span class="si">💬</span><span data-i18n="shareSms">Message / SMS</span></button>
+    <button class="share-opt" id="shOptEmail"><span class="si">✉️</span><span data-i18n="shareEmail">Email</span></button>
+    <button class="share-opt" id="shOptNfc" style="display:none"><span class="si">📡</span><span><span data-i18n="shareNfc">NFC tag</span><small data-i18n="shareNfcSub">Tap a tag to write</small></span></button>
+    <button class="share-opt" id="shOptCopy"><span class="si">📋</span><span data-i18n="shareCopy">Copy text</span></button>
+    <button class="share-cancel" id="shCancel" data-i18n="cancel">Cancel</button>
+  </div>
 </div>
 
 <nav class="mobile-nav" id="mobileNav">
@@ -485,7 +521,26 @@ const I18N={
   gpsError:{en:'Could not get location',es:'No se pudo obtener la ubicación'},
   gpsTimeout:{en:'GPS timed out. Make sure Location Services are ON for Safari and try outdoors.',es:'El GPS tardó demasiado. Verifica que Localización esté activada para Safari e intenta al aire libre.'},
   gpsInsecure:{en:'GPS needs a secure (https) connection',es:'El GPS requiere conexión segura (https)'},
-  mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'}
+  mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'},
+  clientId:{en:'Client ID',es:'ID de Cliente'},
+  clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
+  clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
+  shareBtn:{en:'📤 Share',es:'📤 Compartir'},
+  shareTitle:{en:'Share results',es:'Compartir resultados'},
+  shareNative:{en:'Share…',es:'Compartir…'},
+  shareNativeSub:{en:'WhatsApp, Messages, Mail…',es:'WhatsApp, Mensajes, Correo…'},
+  shareSms:{en:'Message / SMS',es:'Mensaje / SMS'},
+  shareEmail:{en:'Email',es:'Correo'},
+  shareNfc:{en:'NFC tag',es:'Etiqueta NFC'},
+  shareNfcSub:{en:'Tap a tag to write',es:'Acerca una etiqueta para escribir'},
+  shareCopy:{en:'Copy text',es:'Copiar texto'},
+  cancel:{en:'Cancel',es:'Cancelar'},
+  copied:{en:'Copied to clipboard',es:'Copiado al portapapeles'},
+  nfcNoSupport:{en:'NFC writing is only available on Android Chrome',es:'Escribir NFC solo está disponible en Android Chrome'},
+  nfcPrompt:{en:'Tap an NFC tag now…',es:'Acerca una etiqueta NFC ahora…'},
+  nfcWritten:{en:'✓ Written to NFC tag',es:'✓ Escrito en la etiqueta NFC'},
+  nfcError:{en:'Could not write the NFC tag',es:'No se pudo escribir la etiqueta NFC'},
+  shareSubject:{en:'Power Foam ATL — Area report',es:'Power Foam ATL — Reporte de áreas'}
 };
 const FACE_ES={
   'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
@@ -547,7 +602,7 @@ const state={
   activeZoneId:null,
   showLabels:true,
   corrugated:false,
-  project:{client:'',address:'',lat:null,lng:null},
+  project:{client:'',address:'',lat:null,lng:null,id:''},
   cam:{az:0.78,el:0.55,r:30,tx:0,ty:0,tz:0},
   _faces:[],
   _faceMap: new Map(),
@@ -1502,11 +1557,33 @@ function saveProject(){try{localStorage.setItem('pf_project',JSON.stringify(stat
 function loadProject(){
   try{const p=JSON.parse(localStorage.getItem('pf_project')||'{}');
     state.project.client=p.client||'';state.project.address=p.address||'';
+    state.project.id=p.id||'';
     state.project.lat=(typeof p.lat==='number')?p.lat:null;
     state.project.lng=(typeof p.lng==='number')?p.lng:null;
   }catch(e){}
   const c=document.getElementById('projClient'),a=document.getElementById('projAddr');
   if(c)c.value=state.project.client;if(a)a.value=state.project.address;
+  updateClientId();
+}
+// ID de cliente para seguimiento: PF-AAMMDD-XXXX
+function genClientId(){
+  const d=new Date(),p2=n=>String(n).padStart(2,'0');
+  const stamp=String(d.getFullYear()).slice(2)+p2(d.getMonth()+1)+p2(d.getDate());
+  const rnd=Math.random().toString(36).slice(2,6).toUpperCase();
+  return 'PF-'+stamp+'-'+rnd;
+}
+function updateClientId(){
+  const row=document.getElementById('clientIdRow'),val=document.getElementById('clientIdVal');
+  if(!row||!val)return;
+  if(state.project.id){val.textContent=state.project.id;row.style.display='flex';}
+  else{row.style.display='none';}
+}
+function clearClient(){
+  if((state.project.client||state.project.address||state.project.id)&&!confirm(t('clearClientConfirm')))return;
+  state.project={client:'',address:'',lat:null,lng:null,id:''};
+  document.getElementById('projClient').value='';
+  document.getElementById('projAddr').value='';
+  updateClientId();saveProject();
 }
 function captureGPS(){
   const btn=document.getElementById('gpsBtn'),addrInp=document.getElementById('projAddr');
@@ -1540,17 +1617,25 @@ function captureGPS(){
   navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,true),
     {enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
+// iOS Safari blocks window.open() with a features string as a popup → anchor click is reliable.
+function openUrl(url){
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+}
 function openInMaps(){
   const p=state.project;let url;
   if(p.lat!=null&&p.lng!=null) url='https://www.google.com/maps?q='+p.lat+','+p.lng;
   else if((p.address||'').trim()) url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address.trim());
   else{alert(t('mapNoAddr'));return;}
-  // iOS Safari blocks window.open() with a features string as a popup → use an anchor click.
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';
-  document.body.appendChild(a);a.click();a.remove();
+  openUrl(url);
 }
-document.getElementById('projClient').addEventListener('input',e=>{state.project.client=e.target.value;saveProject();});
+document.getElementById('projClient').addEventListener('input',e=>{
+  state.project.client=e.target.value;
+  // auto-assign a tracking ID the first time a client name is entered
+  if(e.target.value.trim()&&!state.project.id){state.project.id=genClientId();updateClientId();}
+  saveProject();
+});
 document.getElementById('projAddr').addEventListener('input',e=>{
   state.project.address=e.target.value;
   // manual edits invalidate stored GPS coords so Maps uses the typed text
@@ -1558,11 +1643,85 @@ document.getElementById('projAddr').addEventListener('input',e=>{
 });
 document.getElementById('gpsBtn').addEventListener('click',captureGPS);
 document.getElementById('mapBtn').addEventListener('click',openInMaps);
+document.getElementById('clearClientBtn').addEventListener('click',clearClient);
+
+/* ====================== SHARE RESULTS (native / WhatsApp / SMS / email / NFC / copy) ====================== */
+function buildShareText(){
+  const S=totals(),p=state.project,U=UAREA(),L=v=>fmt(A2D(v));
+  const lines=['Power Foam ATL — '+t('areaSummary')];
+  if(p.client||p.id) lines.push(t('client')+': '+(p.client||'-')+(p.id?'  ['+p.id+']':''));
+  if(p.address) lines.push(t('address')+': '+p.address);
+  lines.push('────────────');
+  lines.push(t('wallsNet')+': '+L(S.wallNetD)+' '+U);
+  lines.push(t('roof')+': '+L(S.roofD)+' '+U);
+  lines.push(t('floor')+': '+L(S.floor)+' '+U);
+  lines.push(t('totalSurface').replace(/\s*\(.*$/,'')+': '+L(S.totalD)+' '+U);
+  if(S.roofExclD>0.01) lines.push(t('spfApplic')+': '+L(S.spfTotalD)+' '+U);
+  if(state.zones.length){
+    lines.push('────────────');
+    state.zones.forEach(z=>lines.push('• '+z.name+': '+L(zoneDispArea(z))+' '+U));
+  }
+  if(p.lat!=null&&p.lng!=null) lines.push('📍 https://www.google.com/maps?q='+p.lat+','+p.lng);
+  return lines.join('\n');
+}
+function openShareSheet(){
+  document.getElementById('shOptNative').style.display=navigator.share?'flex':'none';
+  document.getElementById('shOptNfc').style.display=('NDEFReader' in window)?'flex':'none';
+  document.getElementById('shareSheet').classList.add('open');
+}
+function closeShareSheet(){document.getElementById('shareSheet').classList.remove('open');}
+async function shareNative(){
+  const text=buildShareText();
+  try{await navigator.share({title:t('shareSubject'),text});}catch(e){}
+  closeShareSheet();
+}
+function shareWhatsApp(){openUrl('https://wa.me/?text='+encodeURIComponent(buildShareText()));closeShareSheet();}
+function shareSms(){
+  // sms: body param syntax differs slightly across platforms; this form works on both iOS & Android
+  openUrl('sms:?&body='+encodeURIComponent(buildShareText()));closeShareSheet();
+}
+function shareEmail(){
+  openUrl('mailto:?subject='+encodeURIComponent(t('shareSubject'))+'&body='+encodeURIComponent(buildShareText()));
+  closeShareSheet();
+}
+async function shareNFC(){
+  if(!('NDEFReader' in window)){alert(t('nfcNoSupport'));return;}
+  try{
+    alert(t('nfcPrompt'));
+    const w=new NDEFReader();
+    await w.write({records:[{recordType:'text',data:buildShareText()}]});
+    alert(t('nfcWritten'));
+  }catch(e){alert(t('nfcError'));}
+  closeShareSheet();
+}
+function copyShare(){
+  const text=buildShareText();
+  const done=()=>{alert(t('copied'));closeShareSheet();};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>{fallbackCopy(text);done();});
+  }else{fallbackCopy(text);done();}
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  ta.remove();
+}
+document.getElementById('shareBtn').addEventListener('click',openShareSheet);
+document.getElementById('shareSheet').addEventListener('click',e=>{if(e.target.id==='shareSheet')closeShareSheet();});
+document.getElementById('shCancel').addEventListener('click',closeShareSheet);
+document.getElementById('shOptNative').addEventListener('click',shareNative);
+document.getElementById('shOptWa').addEventListener('click',shareWhatsApp);
+document.getElementById('shOptSms').addEventListener('click',shareSms);
+document.getElementById('shOptEmail').addEventListener('click',shareEmail);
+document.getElementById('shOptNfc').addEventListener('click',shareNFC);
+document.getElementById('shOptCopy').addEventListener('click',copyShare);
 
 function exportCSV(){
   const S=totals();
   let rows=[];
   if((state.project.client||'').trim()) rows.push([t('client'),state.project.client]);
+  if((state.project.id||'').trim()) rows.push([t('clientId'),state.project.id]);
   if((state.project.address||'').trim()) rows.push([t('address'),state.project.address]);
   if(rows.length) rows.push([]);
   rows.push([t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']);

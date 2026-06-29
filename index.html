@@ -483,6 +483,8 @@ const I18N={
   gpsNoSupport:{en:'GPS is not available on this device',es:'GPS no disponible en este dispositivo'},
   gpsDenied:{en:'Location permission denied',es:'Permiso de ubicación denegado'},
   gpsError:{en:'Could not get location',es:'No se pudo obtener la ubicación'},
+  gpsTimeout:{en:'GPS timed out. Make sure Location Services are ON for Safari and try outdoors.',es:'El GPS tardó demasiado. Verifica que Localización esté activada para Safari e intenta al aire libre.'},
+  gpsInsecure:{en:'GPS needs a secure (https) connection',es:'El GPS requiere conexión segura (https)'},
   mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'}
 };
 const FACE_ES={
@@ -1509,8 +1511,10 @@ function loadProject(){
 function captureGPS(){
   const btn=document.getElementById('gpsBtn'),addrInp=document.getElementById('projAddr');
   if(!navigator.geolocation){alert(t('gpsNoSupport'));return;}
+  // iOS Safari only serves geolocation on a secure (HTTPS) context.
+  if(window.isSecureContext===false){alert(t('gpsInsecure'));return;}
   btn.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(pos=>{
+  const onOk=pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
     state.project.lat=lat;state.project.lng=lng;
     const fallback=lat.toFixed(6)+', '+lng.toFixed(6);
@@ -1522,17 +1526,29 @@ function captureGPS(){
         state.project.address=addr;addrInp.value=addr;saveProject();})
       .catch(()=>{state.project.address=fallback;addrInp.value=fallback;saveProject();})
       .finally(()=>btn.classList.remove('locating'));
-  },err=>{
+  };
+  const onErr=(err,canRetry)=>{
+    // iOS often times out on high-accuracy GPS → retry once with coarse/cached location
+    if(canRetry && err && err.code===3){
+      navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,false),
+        {enableHighAccuracy:false,timeout:25000,maximumAge:60000});
+      return;
+    }
     btn.classList.remove('locating');
-    alert(err&&err.code===1?t('gpsDenied'):t('gpsError'));
-  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+    alert(err&&err.code===1?t('gpsDenied'):err&&err.code===3?t('gpsTimeout'):t('gpsError'));
+  };
+  navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,true),
+    {enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
 function openInMaps(){
   const p=state.project;let url;
   if(p.lat!=null&&p.lng!=null) url='https://www.google.com/maps?q='+p.lat+','+p.lng;
   else if((p.address||'').trim()) url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address.trim());
   else{alert(t('mapNoAddr'));return;}
-  window.open(url,'_blank','noopener');
+  // iOS Safari blocks window.open() with a features string as a popup → use an anchor click.
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
 }
 document.getElementById('projClient').addEventListener('input',e=>{state.project.client=e.target.value;saveProject();});
 document.getElementById('projAddr').addEventListener('input',e=>{

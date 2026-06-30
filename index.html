@@ -746,7 +746,7 @@ function A2D(m2){return state.unit==='m'?m2:m2/M2_FT2;}
 function D2La(v){return state.unit==='m'?v:v*M2_FT2;}
 const ULIN=()=>state.unit==='m'?'m':'ft';
 const UAREA=()=>state.unit==='m'?'m²':'ft²';
-function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){return Math.round(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function hexRgb(h){const n=parseInt(h.slice(1),16);return`${(n>>16)&255},${(n>>8)&255},${n&255}`;}
 
 /* ====================== GEOMETRY ====================== */
@@ -1570,7 +1570,7 @@ function drawDims(B){
     // offset: scale with building so labels don't sit on the surface
     const od=Math.max(1.8,(m.w+m.l)*0.07);
     const u=ULIN();
-    const lbl=v=>fmt(L2D(v))+' '+u;
+    const lbl=v=>L2D(v).toLocaleString('en-US',{maximumFractionDigits:1})+' '+u;
     // Width  → front bottom edge, offset toward viewer (+z)
     dim3d([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w),B);
     // Length → right bottom edge, offset to the right (+x)
@@ -2117,34 +2117,35 @@ function exportCSV(){
   rows.push(hasCorr
     ? [t('module'),t('section'),t('csvType'),aHdr,'+%',cHdr]
     : [t('module'),t('section'),t('csvType'),aHdr]);
+  const R=v=>String(Math.round(A2D(v))); // área redondeada para CSV
   for(const f of state._faces){
     const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
     if(hasCorr){
       const cfp=Math.round((corrFactor(f)-1)*100);
-      rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2),cfp>0?'+'+cfp+'%':'—',A2D(f.area*corrFactor(f)).toFixed(2)]);
+      rows.push([f.mname,tf(f.name),type,R(f.area),cfp>0?'+'+cfp+'%':'—',R(f.area*corrFactor(f))]);
     }else{
-      rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
+      rows.push([f.mname,tf(f.name),type,R(f.area)]);
     }
   }
   rows.push([]);
-  rows.push(['','',t('wallsNet'),A2D(S.wallNet).toFixed(2),'',hasCorr?A2D(S.wallNetD).toFixed(2):'']);
-  rows.push(['','',t('roof'),A2D(S.roof).toFixed(2),'',hasCorr?A2D(S.roofD).toFixed(2):'']);
-  rows.push(['','',t('floor'),A2D(S.floor).toFixed(2),'',hasCorr?A2D(S.floor).toFixed(2):'']);
-  rows.push(['','',t('openings'),A2D(S.open).toFixed(2)]);
+  rows.push(['','',t('wallsNet'),R(S.wallNet),'',hasCorr?R(S.wallNetD):'']);
+  rows.push(['','',t('roof'),R(S.roof),'',hasCorr?R(S.roofD):'']);
+  rows.push(['','',t('floor'),R(S.floor),'',hasCorr?R(S.floor):'']);
+  rows.push(['','',t('openings'),R(S.open)]);
   if(hasCorr){
     rows.push(['','',t('corrFactorLbl'),cs.label]);
-    rows.push(['','','TOTAL',A2D(S.total).toFixed(2),'',A2D(S.totalD).toFixed(2)]);
+    rows.push(['','','TOTAL',R(S.total),'',R(S.totalD)]);
   }else{
-    rows.push(['','','TOTAL',A2D(S.total).toFixed(2)]);
+    rows.push(['','','TOTAL',R(S.total)]);
   }
   if(state.zones.length>0){
     rows.push([]);
     rows.push(['=== '+t('savedZones').toUpperCase()+' ===','','','']);
     for(const z of state.zones){
-      rows.push([z.name,'',t('zoneTotal'),A2D(z.area).toFixed(2)]);
+      rows.push([z.name,'',t('zoneTotal'),R(z.area)]);
       for(const fid of z.faceIds){
         const f=state._faceMap.get(fid);if(!f)continue;
-        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',A2D(f.area).toFixed(2)]);
+        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',R(f.area)]);
       }
     }
   }

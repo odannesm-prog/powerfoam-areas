@@ -585,6 +585,7 @@ const I18N={
   panelType:{en:'Panel type',es:'Tipo de panel'},
   panelCorr:{en:'Corrugated / R-Panel',es:'Corrugado / R-Panel'},
   panelSeam:{en:'Standing Seam',es:'Standing Seam'},
+  corrPctLabel:{en:'Corrugation %',es:'Corrugación %'},
   spfWarn:{en:'⚠ Standing-seam roof: SPF not recommended — it restricts thermal panel movement. Apply on walls only.',es:'⚠ Techo standing seam: SPF no recomendado — restringe el movimiento térmico del panel. Aplicar solo en muros.'},
   spfApplic:{en:'SPF-applicable area',es:'Área aplicable a SPF'},
   noSpf:{en:'no SPF',es:'sin SPF'},
@@ -729,6 +730,7 @@ function newModule(opts={}){
     w:8,l:12,h:3,
     roof:'flat',
     panel:'corrugated',
+    corrPct:12,
     rise:1.5,
     px:0,pz:0,
     openings:0,
@@ -770,6 +772,7 @@ function buildGeometry(){
     const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
     const add=(key,name,cat,verts,areaOvr)=>{
       faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,panel:m.panel||'corrugated',
+                  corrPct:m.corrPct??12,
                   verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
     };
     add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
@@ -947,14 +950,11 @@ function cleanSelection(){
 }
 
 /* ====================== TOTALS ====================== */
-const CORR_FLAT=1.12, CORR_ARCH=1.22; // +12% lámina plana corrugada, +22% arco Quonset profundo
-function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
-// Factor de corrugado por cara: piso=1, arco=1.22, resto=1.12 (solo si corrugado activo)
-// Standing seam = lámina lisa de costura alzada → sin superficie extra (factor 1).
+// Factor de corrugado por cara: piso=1, standing seam=1, resto=(1 + corrPct/100)
 function corrFactor(f){
   if(!state.corrugated||f.cat==='floor') return 1;
   if(f.panel==='standingseam') return 1;
-  return isArchPanel(f)?CORR_ARCH:CORR_FLAT;
+  return 1+(f.corrPct??12)/100;
 }
 // SPF aplicable: NO recomendado en techos standing seam (restringe el movimiento
 // térmico del panel flotante). Muros, pisos y techos atornillados/corrugados: sí.
@@ -1128,6 +1128,14 @@ function renderControls(){
               <option value="corrugated" ${m.panel!=='standingseam'?'selected':''}>${t('panelCorr')}</option>
               <option value="standingseam" ${m.panel==='standingseam'?'selected':''}>${t('panelSeam')}</option>
             </select></div>
+          <div class="field" style="${m.panel==='standingseam'?'display:none':''}"><label>${t('corrPctLabel')}</label>
+            <select data-i="${i}" data-k="corrPct">
+              <option value="10" ${(m.corrPct??12)===10?'selected':''}>R-panel low rib (+10%)</option>
+              <option value="12" ${(m.corrPct??12)===12?'selected':''}>PBR / standard (+12%)</option>
+              <option value="15" ${(m.corrPct??12)===15?'selected':''}>Deep rib (+15%)</option>
+              <option value="20" ${(m.corrPct??12)===20?'selected':''}>Heavy corrugated (+20%)</option>
+              <option value="22" ${(m.corrPct??12)===22?'selected':''}>Arch / Quonset (+22%)</option>
+            </select></div>
           <div class="field" style="${['gable','singleslope','hip','gambrel','monitor','sawtooth'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
             <label>${['singleslope','hip','sawtooth'].includes(m.roof)?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
           <div class="field" style="${m.roof==='arch'?'':'display:none'}" data-archpeak="${i}">
@@ -1152,6 +1160,7 @@ function renderControls(){
         renderControls();refresh(false);
       }
       else if(k==='panel'){m.panel=inp.value;renderControls();refresh(false);}
+      else if(k==='corrPct'){m.corrPct=+inp.value;refresh(false);}
       else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
       else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);}
       else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}

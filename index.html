@@ -567,7 +567,9 @@ const I18N={
   nfcWritten:{en:'✓ Written to NFC tag',es:'✓ Escrito en la etiqueta NFC'},
   nfcError:{en:'Could not write the NFC tag',es:'No se pudo escribir la etiqueta NFC'},
   nfcReadyTitle:{en:'Ready to write',es:'Listo para escribir'},
-  nfcReadyMsg:{en:'Approach an NFC tag to the back of the phone now.\nThe tag will open the location in Maps when tapped.',es:'Acerca una etiqueta NFC a la parte trasera del teléfono ahora.\nAl tocar la etiqueta abrirá la ubicación en Maps.'},
+  nfcReadyMsg:{en:'Approach an NFC tag to the back of the phone.\nIf the tag has content it will be erased and rewritten.',es:'Acerca una etiqueta NFC a la parte trasera del teléfono.\nSi la etiqueta tiene contenido será borrado y reescrito.'},
+  nfcWritingTitle:{en:'Writing…',es:'Escribiendo…'},
+  nfcWritingMsg:{en:'Keep the tag in place…',es:'No quites la etiqueta…'},
   nfcOkTitle:{en:'✓ Tag written',es:'✓ Etiqueta escrita'},
   nfcOkMsg:{en:'Anyone who taps this tag will open the location directly in Maps.',es:'Quien toque esta etiqueta abrirá la ubicación directamente en Maps.'},
   nfcErrTitle:{en:'Write failed',es:'Error al escribir'},
@@ -1779,19 +1781,44 @@ document.getElementById('nfcSheet').addEventListener('click',e=>{if(e.target===e
 async function shareNFC(){
   if(!('NDEFReader' in window)){alert(t('nfcNoSupport'));return;}
   closeShareSheet();
-  // Write the map redirect URL as a URL record — fits any NTAG213 tag and opens Maps on tap.
-  // Fall back to a short text summary if no location is set.
   const url=shareMapLink();
-  const record=url
+  const newRecord=url
     ?{recordType:'url',data:url}
     :{recordType:'text',data:buildShareText().split('\n').slice(0,6).join('\n')};
+
+  const scanCtrl=new AbortController();
+  // Cancel button aborts the scan
+  const origClose=document.getElementById('nfcSheetClose').onclick;
+  document.getElementById('nfcSheetClose').onclick=()=>{scanCtrl.abort();closeNfcSheet();};
+
   openNfcSheet('📡',t('nfcReadyTitle'),t('nfcReadyMsg'),true);
+
   try{
-    const w=new NDEFReader();
-    await w.write({records:[record]});
-    openNfcSheet('✅',t('nfcOkTitle'),t('nfcOkMsg'),true);
+    const ndef=new NDEFReader();
+    // scan() claims the NFC channel BEFORE the tag is presented — prevents Android system
+    // from intercepting tags that already have content and dispatching them elsewhere.
+    await ndef.scan({signal:scanCtrl.signal});
+    let done=false;
+    ndef.addEventListener('reading',async ()=>{
+      if(done)return; done=true;
+      // Tag is in range and Chrome owns the session — update UI then overwrite immediately.
+      document.getElementById('nfcSheetTitle').textContent=t('nfcWritingTitle');
+      document.getElementById('nfcSheetMsg').textContent=t('nfcWritingMsg');
+      document.getElementById('nfcSheetClose').style.display='none';
+      try{
+        await ndef.write({records:[newRecord]});
+        scanCtrl.abort(); // stop scanning after successful write
+        openNfcSheet('✅',t('nfcOkTitle'),t('nfcOkMsg'),true);
+      }catch(e){
+        openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
+      }
+      document.getElementById('nfcSheetClose').onclick=origClose;
+    });
+    ndef.addEventListener('readingerror',()=>{
+      openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
+    });
   }catch(e){
-    openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
+    if(e.name!=='AbortError') openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
   }
 }
 function copyShare(){

@@ -950,6 +950,7 @@ function cleanSelection(){
 }
 
 /* ====================== TOTALS ====================== */
+function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
 // Factor de corrugado por cara: piso=1, standing seam=1, resto=(1 + corrPct/100)
 function corrFactor(f){
   if(!state.corrugated||f.cat==='floor') return 1;
@@ -963,7 +964,7 @@ function spfApplicable(f){
   return true;
 }
 // Compat: factor por categoría (sin distinguir arco). Usar corrFactor(f) cuando haya cara.
-function dispFactor(cat){ return state.corrugated&&cat!=='floor'?CORR_FLAT:1; }
+function dispFactor(cat){ return state.corrugated&&cat!=='floor'?1.12:1; }
 function totals(){
   let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0,roofExclD=0;
   const perMod={};

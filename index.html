@@ -540,7 +540,8 @@ const I18N={
   nfcPrompt:{en:'Tap an NFC tag now…',es:'Acerca una etiqueta NFC ahora…'},
   nfcWritten:{en:'✓ Written to NFC tag',es:'✓ Escrito en la etiqueta NFC'},
   nfcError:{en:'Could not write the NFC tag',es:'No se pudo escribir la etiqueta NFC'},
-  shareSubject:{en:'Power Foam ATL — Area report',es:'Power Foam ATL — Reporte de áreas'}
+  shareSubject:{en:'Power Foam ATL — Area report',es:'Power Foam ATL — Reporte de áreas'},
+  location:{en:'Location',es:'Ubicación'}
 };
 const FACE_ES={
   'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
@@ -1628,17 +1629,24 @@ function isIOS(){
   return /iP(hone|ad|od)/.test(navigator.userAgent)
     || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints>1); // iPadOS reports as Mac
 }
-function openInMaps(){
-  const p=state.project,ios=isIOS();let url;
+// Platform-aware maps deep link: Apple Maps on iOS (opens the Maps app directly), Google elsewhere.
+function mapsLink(){
+  const p=state.project,ios=isIOS();
   if(p.lat!=null&&p.lng!=null){
     const label=encodeURIComponent((p.address||'').split(',')[0].trim()||t('address'));
-    url=ios?'https://maps.apple.com/?ll='+p.lat+','+p.lng+'&q='+label
-           :'https://www.google.com/maps?q='+p.lat+','+p.lng;
-  }else if((p.address||'').trim()){
+    return ios?'https://maps.apple.com/?ll='+p.lat+','+p.lng+'&q='+label
+             :'https://www.google.com/maps?q='+p.lat+','+p.lng;
+  }
+  if((p.address||'').trim()){
     const q=encodeURIComponent(p.address.trim());
-    url=ios?'https://maps.apple.com/?q='+q
-           :'https://www.google.com/maps/search/?api=1&query='+q;
-  }else{alert(t('mapNoAddr'));return;}
+    return ios?'https://maps.apple.com/?q='+q
+             :'https://www.google.com/maps/search/?api=1&query='+q;
+  }
+  return '';
+}
+function openInMaps(){
+  const url=mapsLink();
+  if(!url){alert(t('mapNoAddr'));return;}
   openUrl(url);
 }
 document.getElementById('projClient').addEventListener('input',e=>{
@@ -1672,7 +1680,8 @@ function buildShareText(){
     lines.push('────────────');
     state.zones.forEach(z=>lines.push('• '+z.name+': '+L(zoneDispArea(z))+' '+U));
   }
-  if(p.lat!=null&&p.lng!=null) lines.push('📍 https://www.google.com/maps?q='+p.lat+','+p.lng);
+  const link=mapsLink();
+  if(link) lines.push('📍 '+t('location')+': '+link);
   return lines.join('\n');
 }
 function openShareSheet(){
@@ -1683,7 +1692,10 @@ function openShareSheet(){
 function closeShareSheet(){document.getElementById('shareSheet').classList.remove('open');}
 async function shareNative(){
   const text=buildShareText();
-  try{await navigator.share({title:t('shareSubject'),text});}catch(e){}
+  const link=mapsLink();
+  const payload={title:t('shareSubject'),text};
+  if(link) payload.url=link; // iOS treats this as a tappable location link
+  try{await navigator.share(payload);}catch(e){}
   closeShareSheet();
 }
 function shareWhatsApp(){openUrl('https://wa.me/?text='+encodeURIComponent(buildShareText()));closeShareSheet();}

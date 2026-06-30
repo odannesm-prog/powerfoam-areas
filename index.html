@@ -1786,40 +1786,26 @@ async function shareNFC(){
     ?{recordType:'url',data:url}
     :{recordType:'text',data:buildShareText().split('\n').slice(0,6).join('\n')};
 
-  const scanCtrl=new AbortController();
-  // Cancel button aborts the scan
-  const origClose=document.getElementById('nfcSheetClose').onclick;
-  document.getElementById('nfcSheetClose').onclick=()=>{scanCtrl.abort();closeNfcSheet();};
+  const ctrl=new AbortController();
+  // Wire cancel button to abort the write operation
+  document.getElementById('nfcSheetClose').onclick=()=>{ctrl.abort();closeNfcSheet();};
 
   openNfcSheet('📡',t('nfcReadyTitle'),t('nfcReadyMsg'),true);
 
   try{
     const ndef=new NDEFReader();
-    // scan() claims the NFC channel BEFORE the tag is presented — prevents Android system
-    // from intercepting tags that already have content and dispatching them elsewhere.
-    await ndef.scan({signal:scanCtrl.signal});
-    let done=false;
-    ndef.addEventListener('reading',async ()=>{
-      if(done)return; done=true;
-      // Tag is in range and Chrome owns the session — update UI then overwrite immediately.
-      document.getElementById('nfcSheetTitle').textContent=t('nfcWritingTitle');
-      document.getElementById('nfcSheetMsg').textContent=t('nfcWritingMsg');
-      document.getElementById('nfcSheetClose').style.display='none';
-      try{
-        await ndef.write({records:[newRecord]});
-        scanCtrl.abort(); // stop scanning after successful write
-        openNfcSheet('✅',t('nfcOkTitle'),t('nfcOkMsg'),true);
-      }catch(e){
-        openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
-      }
-      document.getElementById('nfcSheetClose').onclick=origClose;
-    });
-    ndef.addEventListener('readingerror',()=>{
-      openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
-    });
+    // write() puts Chrome in WRITE-mode foreground dispatch — Android NFC system is bypassed
+    // and does NOT dispatch the tag's existing content. overwrite:true erases whatever is on
+    // the tag and replaces it in a single tap.
+    await ndef.write({records:[newRecord]},{overwrite:true,signal:ctrl.signal});
+    openNfcSheet('✅',t('nfcOkTitle'),t('nfcOkMsg'),true);
   }catch(e){
-    if(e.name!=='AbortError') openNfcSheet('❌',t('nfcErrTitle'),t('nfcErrMsg'),true);
+    if(e.name==='AbortError')return;
+    // Surface the actual error to help diagnose tag compatibility issues
+    const detail=e&&e.message?e.message:'';
+    openNfcSheet('❌',t('nfcErrTitle'),(detail||t('nfcErrMsg')),true);
   }
+  document.getElementById('nfcSheetClose').onclick=null;
 }
 function copyShare(){
   const text=buildShareText();

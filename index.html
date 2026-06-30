@@ -195,6 +195,22 @@
   .res-sub-stats{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center}
   .res-sub-stats span{font-size:12px;color:var(--muted)}
   .res-sub-stats span b{color:var(--text);font-weight:700}
+
+  /* Cloud sync UI */
+  .rc-actions{display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .cloud-ind{font-size:11px;font-weight:600;margin-left:auto}
+  .cloud-ind.ok{color:var(--green)}
+  .cloud-ind.err{color:var(--red)}
+  .cl-item{display:flex;flex-direction:column;gap:3px;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:.15s}
+  .cl-item:hover{border-color:var(--accent2);background:#1a2b46}
+  .cl-item .cli-name{font-weight:700;font-size:14px;color:var(--text)}
+  .cl-item .cli-id{font-size:11px;color:var(--accent2);font-family:monospace;font-weight:700}
+  .cl-item .cli-meta{font-size:11.5px;color:var(--muted)}
+  .cl-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;line-height:1.7}
+  .cloud-cfg-instr{font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:12px}
+  .cloud-cfg-instr b{color:var(--text)}
+  .cloud-cfg-instr code{font-family:monospace;color:var(--accent2);font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:4px}
+  #firebaseCfgInput{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:monospace;font-size:11.5px;padding:10px;resize:vertical;min-height:120px;margin-bottom:10px}
   @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
 
   /* ============ MOBILE NAV — siempre visible, oculto solo en desktop ============ */
@@ -390,6 +406,11 @@
       <div class="rc-name" id="rcName">—</div>
       <div class="rc-id" id="rcId"></div>
       <div class="rc-addr" id="rcAddr"></div>
+      <div class="rc-actions">
+        <button class="btn btn-ghost btn-sm" id="clientListBtn">📋 <span data-i18n="clientsBtn">Clients</span></button>
+        <button class="btn btn-ghost btn-sm" id="cloudSetupBtn">☁ <span data-i18n="cloudSetupBtn">Cloud</span></button>
+        <span class="cloud-ind" id="cloudInd"></span>
+      </div>
     </div>
 
     <!-- Total marked area -->
@@ -422,6 +443,27 @@
       </div>
     </div>
   </aside>
+</div>
+
+<!-- Cloud setup modal -->
+<div class="share-sheet" id="cloudSetupSheet">
+  <div class="sheet">
+    <h3>☁ <span data-i18n="cloudSetupTitle">Cloud Setup</span></h3>
+    <div class="cloud-cfg-instr" id="cloudCfgInstr"></div>
+    <textarea id="firebaseCfgInput" placeholder='{"apiKey":"...","projectId":"..."}'></textarea>
+    <button class="btn btn-accent" id="cloudConnectBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="cloudConnect">Connect</button>
+    <button class="share-cancel" id="cloudSetupClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Client list modal -->
+<div class="share-sheet" id="clientListSheet">
+  <div class="sheet" style="max-height:85vh;display:flex;flex-direction:column;gap:0">
+    <h3 style="margin-bottom:10px">📋 <span data-i18n="clientsBtn">Clients</span></h3>
+    <input type="search" id="clientSearch" style="background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;padding:9px 12px;margin-bottom:10px;outline:none" data-i18n-ph="cloudSearchPh">
+    <div id="clientListBody" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <button class="share-cancel" id="clientListClose" data-i18n="cancel" style="margin-top:10px">Cancel</button>
+  </div>
 </div>
 
 <!-- GPS help modal -->
@@ -574,9 +616,24 @@ const I18N={
   clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
   saveBtn:{en:'Save',es:'Guardar'},
   noClient:{en:'No client',es:'Sin cliente'},
-  totalMarked:{en:'Total Marked Area',es:'Área Total Marcada'},
+  totalMarked:{en:'Total Area',es:'Área Total'},
   totalZones:{en:'Zones Total',es:'Total de Zonas'},
+  selectedArea:{en:'Selected Area',es:'Área Seleccionada'},
   shareCsv:{en:'Download CSV',es:'Descargar CSV'},
+  clientsBtn:{en:'Clients',es:'Clientes'},
+  cloudSetupBtn:{en:'Cloud',es:'Nube'},
+  cloudSetupTitle:{en:'Cloud Sync — Firebase',es:'Sincronización Nube — Firebase'},
+  cloudCfgInstr:{en:'<b>1.</b> Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent2)">console.firebase.google.com</a><br><b>2.</b> Create a project → Add web app<br><b>3.</b> Copy the <code>firebaseConfig</code> object and paste it below as JSON.<br><b>4.</b> In Firestore → Rules, set: <code>allow read, write: if true;</code>',es:'<b>1.</b> Ve a <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent2)">console.firebase.google.com</a><br><b>2.</b> Crea un proyecto → Agrega app web<br><b>3.</b> Copia el objeto <code>firebaseConfig</code> y pégalo abajo como JSON.<br><b>4.</b> En Firestore → Reglas, escribe: <code>allow read, write: if true;</code>'},
+  cloudConnect:{en:'Connect',es:'Conectar'},
+  cloudConnected:{en:'☁ Connected',es:'☁ Conectado'},
+  cloudError:{en:'☁ Error',es:'☁ Error'},
+  cloudSaved:{en:'✓ Saved to cloud',es:'✓ Guardado en nube'},
+  cloudSaving:{en:'Saving…',es:'Guardando…'},
+  noCloudClients:{en:'No clients saved to cloud yet.',es:'No hay clientes guardados en la nube aún.'},
+  cloudNotCfg:{en:'Cloud not configured. Tap ☁ Cloud to set up.',es:'Nube no configurada. Toca ☁ Nube para configurar.'},
+  cloudSearchPh:{en:'Search by name, address or ID…',es:'Buscar por nombre, dirección o ID…'},
+  loadClientBtn:{en:'Load',es:'Cargar'},
+  cloudCfgBad:{en:'Invalid config — paste the full firebaseConfig JSON object.',es:'Configuración inválida — pega el objeto JSON completo de firebaseConfig.'},
   shareBtn:{en:'📤 Share',es:'📤 Compartir'},
   shareTitle:{en:'Save / Share',es:'Guardar / Compartir'},
   shareNative:{en:'Share…',es:'Compartir…'},
@@ -1138,17 +1195,17 @@ function updateSimpleResults(S){
   const addrEl=document.getElementById('rcAddr');
   addrEl.textContent=p.address||'';
   addrEl.style.display=p.address?'':'none';
-  // Total: zone sum if zones exist, else SPF-applicable or overall
+  // Priority: selected faces → zones → SPF-applicable → overall building total
   let markedVal,markedLbl;
-  if(state.zones.length>0){
-    markedVal=state.zones.reduce((s,z)=>s+zoneDispArea(z),0);
-    markedLbl=t('totalZones');
+  const selTotal=(()=>{let s=0;for(const f of state._faces)if(state.selection.has(f.id))s+=f.area*corrFactor(f);return s;})();
+  if(selTotal>0.001){
+    markedVal=selTotal; markedLbl=t('selectedArea');
+  }else if(state.zones.length>0){
+    markedVal=state.zones.reduce((s,z)=>s+zoneDispArea(z),0); markedLbl=t('totalZones');
   }else if(S.roofExclD>0.01){
-    markedVal=S.spfTotalD;
-    markedLbl=t('spfApplic');
+    markedVal=S.spfTotalD; markedLbl=t('spfApplic');
   }else{
-    markedVal=S.totalD;
-    markedLbl=t('totalMarked');
+    markedVal=S.totalD; markedLbl=t('totalMarked');
   }
   document.getElementById('resTotalLbl').textContent=markedLbl;
   document.getElementById('resTotalVal').textContent=fmt(A2D(markedVal));
@@ -1880,7 +1937,141 @@ function fallbackCopy(text){
   try{document.execCommand('copy');}catch(e){}
   ta.remove();
 }
-document.getElementById('shareBtn').addEventListener('click',openShareSheet);
+/* ====================== CLOUD SYNC (Firebase Firestore) ====================== */
+let _db=null;
+function _loadFbCfg(){try{const r=localStorage.getItem('pf_firebase_cfg');return r?JSON.parse(r):null;}catch(e){return null;}}
+function _saveFbCfg(c){localStorage.setItem('pf_firebase_cfg',JSON.stringify(c));}
+function _setCloudInd(state2,msg){
+  const el=document.getElementById('cloudInd');if(!el)return;
+  el.textContent=msg;el.className='cloud-ind'+(state2==='ok'?' ok':state2==='err'?' err':'');
+}
+async function _loadScript(src){
+  return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+}
+async function initFirebaseCloud(cfg){
+  try{
+    if(!window.firebase){
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+    }
+    if(firebase.apps.length){firebase.apps.forEach(a=>a.delete());}
+    firebase.initializeApp(cfg);
+    _db=firebase.firestore();
+    await _db.collection('pf_clients').limit(1).get(); // connectivity test
+    _setCloudInd('ok',t('cloudConnected'));
+    return true;
+  }catch(e){_db=null;_setCloudInd('err',t('cloudError'));return false;}
+}
+function projectSnapshot(){
+  const S=totals();
+  return {id:state.project.id,client:state.project.client,address:state.project.address,
+    lat:state.project.lat,lng:state.project.lng,
+    modules:state.modules,corrugated:state.corrugated,unit:state.unit,
+    zones:state.zones.map(z=>({id:z.id,name:z.name,color:z.color,area:z.area,faceIds:[...z.faceIds]})),
+    savedAt:new Date().toISOString(),totalArea:S.totalD};
+}
+async function saveToCloud(){
+  if(!_db||!state.project.id||!state.project.client)return false;
+  try{await _db.collection('pf_clients').doc(state.project.id).set(projectSnapshot());return true;}
+  catch(e){return false;}
+}
+async function loadClientsCloud(search){
+  if(!_db)return null;
+  try{
+    const qs=await _db.collection('pf_clients').orderBy('savedAt','desc').limit(60).get();
+    let items=qs.docs.map(d=>d.data());
+    if(search){const s=search.toLowerCase();items=items.filter(c=>((c.client||'')+(c.address||'')+(c.id||'')).toLowerCase().includes(s));}
+    return items;
+  }catch(e){return null;}
+}
+function restoreProject(snap){
+  state.project={client:snap.client||'',address:snap.address||'',lat:snap.lat||null,lng:snap.lng||null,id:snap.id||''};
+  state.modules=snap.modules||[];state.corrugated=!!snap.corrugated;state.unit=snap.unit||'ft';
+  state.zones=(snap.zones||[]).map(z=>({id:z.id||(String(nextZoneId++)),name:z.name||'Zone',color:z.color||'#4f9cff',area:z.area||0,faceIds:new Set(z.faceIds||[])}));
+  state.selection=new Set();
+  document.getElementById('projClient').value=state.project.client;
+  document.getElementById('projAddr').value=state.project.address;
+  updateClientId();
+  document.getElementById('corrCheck').checked=state.corrugated;
+  document.getElementById('corrToggle').classList.toggle('on',state.corrugated);
+  document.querySelectorAll('#unitToggle button').forEach(b=>b.classList.toggle('active',b.dataset.u===state.unit));
+  saveProject();refresh(true);closeClientList();
+}
+
+/* Cloud setup modal */
+function openCloudSetup(){
+  document.getElementById('cloudCfgInstr').innerHTML=t('cloudCfgInstr');
+  const cur=_loadFbCfg();
+  document.getElementById('firebaseCfgInput').value=cur?JSON.stringify(cur,null,2):'';
+  document.getElementById('cloudSetupSheet').classList.add('open');
+}
+function closeCloudSetup(){document.getElementById('cloudSetupSheet').classList.remove('open');}
+document.getElementById('cloudSetupBtn').addEventListener('click',openCloudSetup);
+document.getElementById('cloudSetupClose').addEventListener('click',closeCloudSetup);
+document.getElementById('cloudSetupSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCloudSetup();});
+document.getElementById('cloudConnectBtn').addEventListener('click',async()=>{
+  let raw=document.getElementById('firebaseCfgInput').value.trim();
+  // accept both {apiKey:...} and the full firebase.initializeApp({...}) pattern
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m){alert(t('cloudCfgBad'));return;}
+  let cfg;try{cfg=JSON.parse(m[0]);}catch(e){alert(t('cloudCfgBad'));return;}
+  if(!cfg.projectId){alert(t('cloudCfgBad'));return;}
+  _saveFbCfg(cfg);
+  document.getElementById('cloudConnectBtn').textContent='…';
+  const ok=await initFirebaseCloud(cfg);
+  document.getElementById('cloudConnectBtn').setAttribute('data-i18n','cloudConnect');
+  document.getElementById('cloudConnectBtn').textContent=t('cloudConnect');
+  if(ok) closeCloudSetup();
+});
+
+/* Client list modal */
+async function openClientList(){
+  document.getElementById('clientListSheet').classList.add('open');
+  document.getElementById('clientSearch').value='';
+  await renderClientList('');
+}
+function closeClientList(){document.getElementById('clientListSheet').classList.remove('open');}
+document.getElementById('clientListBtn').addEventListener('click',openClientList);
+document.getElementById('clientListClose').addEventListener('click',closeClientList);
+document.getElementById('clientListSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeClientList();});
+document.getElementById('clientSearch').addEventListener('input',e=>renderClientList(e.target.value));
+async function renderClientList(search){
+  const body=document.getElementById('clientListBody');
+  body.innerHTML='<div class="cl-empty">…</div>';
+  if(!_db){body.innerHTML='<div class="cl-empty">'+t('cloudNotCfg')+'</div>';return;}
+  const items=await loadClientsCloud(search);
+  if(!items||items.length===0){body.innerHTML='<div class="cl-empty">'+t('noCloudClients')+'</div>';return;}
+  body.innerHTML=items.map(c=>{
+    const d=c.savedAt?c.savedAt.slice(0,10):'';
+    const area=c.totalArea?fmt(A2D(c.totalArea))+' '+UAREA():'';
+    return`<div class="cl-item" data-cid="${esc(c.id||'')}">
+      <div class="cli-name">${esc(c.client||'—')}</div>
+      <div class="cli-id">${esc(c.id||'')}</div>
+      <div class="cli-meta">${esc(c.address||'')}${area?' · '+area:''}${d?' · '+d:''}</div>
+    </div>`;
+  }).join('');
+  body.querySelectorAll('.cl-item').forEach(el=>{
+    el.addEventListener('click',async()=>{
+      const cid=el.dataset.cid;
+      const snap=items.find(c=>c.id===cid);
+      if(snap&&confirm((snap.client||snap.id)+'\n\n'+t('loadClientBtn')+'?')) restoreProject(snap);
+    });
+  });
+}
+
+/* Save to cloud on Guardar, then open share sheet */
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+  if(_db&&state.project.id&&state.project.client){
+    _setCloudInd('','…');
+    const ok=await saveToCloud();
+    _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
+    setTimeout(()=>{if(_db)_setCloudInd('ok',t('cloudConnected'));},3000);
+  }
+  openShareSheet();
+});
+
+/* Auto-init cloud if config exists */
+(async()=>{const cfg=_loadFbCfg();if(cfg&&cfg.projectId)await initFirebaseCloud(cfg);})();
 document.getElementById('shareSheet').addEventListener('click',e=>{if(e.target.id==='shareSheet')closeShareSheet();});
 document.getElementById('shCancel').addEventListener('click',closeShareSheet);
 document.getElementById('shOptNative').addEventListener('click',shareNative);

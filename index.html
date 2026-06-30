@@ -101,7 +101,8 @@
   #scene{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
   #scene:active{cursor:grabbing}
   .overlay{position:absolute;pointer-events:none;font-size:11.5px;color:var(--muted)}
-  .overlay.tl{top:12px;left:14px;line-height:1.7}
+  .overlay.tl{top:58px;left:14px;line-height:1.7}
+  .viewport>.corr-toggle{position:absolute;top:12px;left:14px;z-index:6}
   .overlay.tl b{color:var(--text)}
   .view-tools{position:absolute;top:12px;right:14px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
   .view-tools button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(17,28,48,.85);color:var(--text);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
@@ -318,9 +319,6 @@
     <p data-i18n="subtitle">3D Area Calculator · Spray Foam</p>
   </div>
   <div class="spacer"></div>
-  <label class="corr-toggle" id="corrToggle" data-i18n-title="corrTitle" title="Applies 12% extra for corrugated surface">
-    <input type="checkbox" id="corrCheck"> <span data-i18n="corr">+12% Corrugated</span>
-  </label>
   <div class="unit-toggle" id="unitToggle">
     <button data-u="m" data-i18n="unitM">meters (m)</button>
     <button data-u="ft" class="active" data-i18n="unitFt">feet (ft)</button>
@@ -363,6 +361,9 @@
   <!-- Viewport -->
   <section class="viewport">
     <canvas id="scene"></canvas>
+    <label class="corr-toggle" id="corrToggle" data-i18n-title="corrTitle" title="Applies 12% extra for corrugated surface">
+      <input type="checkbox" id="corrCheck"> <span data-i18n="corr">+12% Corrugated</span>
+    </label>
     <div class="overlay tl">
       <div data-i18n-html="ovDrag"><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
       <div data-i18n-html="ovClick"><b>Click</b> faces to select / deselect</div>

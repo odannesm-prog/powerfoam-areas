@@ -382,14 +382,13 @@
         <button class="sp-clear" id="clearSelBtn" data-i18n="clearBtn" data-i18n-title="tClearSel" title="Clear selection">✕ Clear</button>
       </div>
       <div class="sp-area" id="spArea">0.00 <small>ft²</small></div>
-      <div id="saveZoneForm" class="save-zone-form">
+      <div id="saveZoneForm" class="save-zone-form" style="display:none">
         <input class="zone-name-inp" id="zoneNameInp" data-i18n-ph="zoneNamePh" placeholder="Zone name…" maxlength="40">
         <div class="sf-btns">
           <button class="btn btn-accent btn-sm" id="confirmZoneBtn" data-i18n="saveBtn" style="flex:1">✔ Save</button>
           <button class="btn btn-ghost btn-sm" id="cancelZoneBtn">✕</button>
         </div>
       </div>
-      <button class="btn btn-accent btn-sm" id="saveZoneBtn" data-i18n="saveAsZoneBtn" style="width:100%;justify-content:center">＋ Save as Zone</button>
     </div>
 
     <div class="legend">
@@ -421,12 +420,8 @@
       <div class="res-sub-stats" id="resSubStats"></div>
     </div>
 
-    <!-- Save button -->
-    <div class="export-row">
-      <button class="btn btn-accent" id="shareBtn" style="justify-content:center;font-size:14px;padding:13px">
-        💾 <span data-i18n="saveBtn">Save</span>
-      </button>
-    </div>
+    <!-- Save button (hidden) -->
+    <button id="shareBtn" style="display:none"></button>
 
     <!-- Hidden compat: CSV/print still read state directly; these containers just need to exist -->
     <div style="display:none" aria-hidden="true">
@@ -1041,7 +1036,6 @@ function updateSelPanel(){
 
 /* ====================== ZONES ====================== */
 function showSaveForm(){
-  document.getElementById('saveZoneBtn').style.display='none';
   const form=document.getElementById('saveZoneForm');
   form.style.display='block';
   const inp=document.getElementById('zoneNameInp');
@@ -1050,7 +1044,6 @@ function showSaveForm(){
 }
 function hideSaveForm(){
   document.getElementById('saveZoneForm').style.display='none';
-  document.getElementById('saveZoneBtn').style.display='';
 }
 function confirmSaveZone(){
   if(state.selection.size===0){hideSaveForm();return;}
@@ -1695,7 +1688,6 @@ document.getElementById('lblBtn').addEventListener('click',e=>{
   state.showLabels=!state.showLabels;e.currentTarget.classList.toggle('on',state.showLabels);draw();
 });
 document.getElementById('clearSelBtn').addEventListener('click',clearSelection);
-document.getElementById('saveZoneBtn').addEventListener('click',showSaveForm);
 document.getElementById('confirmZoneBtn').addEventListener('click',confirmSaveZone);
 document.getElementById('cancelZoneBtn').addEventListener('click',hideSaveForm);
 document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
@@ -2116,6 +2108,18 @@ function exportCSV(){
   a.href=URL.createObjectURL(blob);a.download='building_areas.csv';a.click();
 }
 
+/* ====================== FIREBASE AUTO-INIT ====================== */
+(function(){
+  const DEFAULT_CFG={"apiKey":"AIzaSyBCzCYxZzk9rtysvQKpsxuNqW4TyA-y5bw","authDomain":"powerfoamatl-fa47b.firebaseapp.com","projectId":"powerfoamatl-fa47b","storageBucket":"powerfoamatl-fa47b.firebasestorage.app","messagingSenderId":"644916808640","appId":"1:644916808640:web:41885575a8f93926cf5625","measurementId":"G-WXFPMYGWC4"};
+  if(!localStorage.getItem('pf_firebase_cfg')){
+    localStorage.setItem('pf_firebase_cfg',JSON.stringify(DEFAULT_CFG));
+  }
+  setTimeout(()=>{
+    const cfg=_loadFbCfg();
+    if(cfg) initFirebaseCloud(cfg);
+  },800);
+})();
+
 /* ====================== INIT ====================== */
 document.getElementById('langToggle').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -2150,6 +2154,44 @@ resize();
   }
 
   navBtns.forEach(b=>b.addEventListener('click',()=>setMobTab(b.dataset.mob)));
+
+  /* ---- Swipe to change panel ---- */
+  const TABS=['building','canvas','results'];
+  function currentTab(){
+    if(ctrlEl.classList.contains('mob-open')) return 'building';
+    if(resEl.classList.contains('mob-open')) return 'results';
+    return 'canvas';
+  }
+  function swipeTab(dir){
+    const idx=TABS.indexOf(currentTab());
+    const next=TABS[Math.max(0,Math.min(TABS.length-1,idx+dir))];
+    if(next!==currentTab()) setMobTab(next);
+  }
+  // Swipe con 2 dedos — escuchar en el body entero (capture phase para recibir antes del canvas)
+  let sw2X=null,sw2Y=null,sw2Active=false,sw2Fired=false;
+  const SW2_THRESH=45;
+  function sw2Start(e){
+    if(!MOBILE()||e.touches.length!==2) return;
+    sw2Active=true; sw2Fired=false;
+    sw2X=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    sw2Y=(e.touches[0].clientY+e.touches[1].clientY)/2;
+  }
+  function sw2Move(e){
+    if(!sw2Active||sw2Fired||e.touches.length!==2) return;
+    const cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    const dx=cx-sw2X, dy=cy-sw2Y;
+    // Disparar en cuanto se cruza el umbral horizontal (antes de que el navegador cancele)
+    if(Math.abs(dx)>=SW2_THRESH && Math.abs(dx)>Math.abs(dy)){
+      sw2Fired=true;
+      swipeTab(dx<0?1:-1);
+    }
+  }
+  function sw2Reset(){sw2Active=false;sw2X=null;sw2Y=null;}
+  document.addEventListener('touchstart',sw2Start,{passive:true,capture:true});
+  document.addEventListener('touchmove',sw2Move,{passive:true,capture:true});
+  document.addEventListener('touchend',sw2Reset,{passive:true,capture:true});
+  document.addEventListener('touchcancel',sw2Reset,{passive:true,capture:true});
 
   if(MOBILE()) setMobTab('building');
   window.addEventListener('resize',()=>{

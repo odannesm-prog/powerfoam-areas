@@ -977,8 +977,6 @@ function spfApplicable(f){
   if(f.cat==='roof' && f.panel==='standingseam') return false;
   return true;
 }
-// Compat: factor por categoría (sin distinguir arco). Usar corrFactor(f) cuando haya cara.
-function dispFactor(cat){ return state.corrugated&&cat!=='floor'?1.12:1; }
 function totals(){
   let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0,roofExclD=0;
   const perMod={};
@@ -1031,11 +1029,6 @@ function toggleFace(fid){
 function clearSelection(){
   state.selection.clear();state.activeZoneId=null;
   updateSelPanel();renderResults();renderZones();draw();
-}
-function selArea(){
-  return[...state.selection].reduce((s,fid)=>{
-    const f=state._faceMap.get(fid);return s+(f?f.area:0);
-  },0);
 }
 function updateSelPanel(){
   const count=state.selection.size;

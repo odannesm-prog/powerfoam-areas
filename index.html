@@ -182,6 +182,19 @@
 
   .export-row{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
   .export-row .btn{flex:1;justify-content:center}
+
+  /* ---- Simplified results panel ---- */
+  .res-client{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+  .res-client .rc-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .res-client .rc-id{font-size:11.5px;color:var(--accent2);font-family:monospace;font-weight:700;letter-spacing:.3px;margin-bottom:3px}
+  .res-client .rc-addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .res-total-block{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:28px 20px;text-align:center}
+  .res-total-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;font-weight:700}
+  .res-total-val{font-size:54px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:4px}
+  .res-total-unit{font-size:18px;color:var(--muted);font-weight:600;margin-bottom:18px}
+  .res-sub-stats{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center}
+  .res-sub-stats span{font-size:12px;color:var(--muted)}
+  .res-sub-stats span b{color:var(--text);font-weight:700}
   @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
 
   /* ============ MOBILE NAV — siempre visible, oculto solo en desktop ============ */
@@ -372,34 +385,41 @@
 
   <!-- Results -->
   <aside class="results">
-    <div class="head"><h2 data-i18n="areaSummary">Area Summary</h2></div>
-    <div class="stats" id="stats"></div>
-
-    <!-- Tabs -->
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="sections" data-i18n="sections">Sections</button>
-      <button class="tab-btn" data-tab="zones"><span data-i18n="zones">Zones</span> <span class="zone-count-badge" id="zoneTabBadge">0</span></button>
+    <!-- Client card -->
+    <div class="res-client" id="resClient">
+      <div class="rc-name" id="rcName">—</div>
+      <div class="rc-id" id="rcId"></div>
+      <div class="rc-addr" id="rcAddr"></div>
     </div>
 
-    <!-- Tab: Sections -->
-    <div class="tab-content active" id="tab-sections" style="flex-direction:column">
-      <div class="breakdown">
-        <table>
-          <thead><tr><th data-i18n="section">Section</th><th class="r" data-i18n="area">Area</th></tr></thead>
-          <tbody id="breakBody"></tbody>
-        </table>
-      </div>
+    <!-- Total marked area -->
+    <div class="res-total-block">
+      <div class="res-total-lbl" id="resTotalLbl"></div>
+      <div class="res-total-val" id="resTotalVal">—</div>
+      <div class="res-total-unit" id="resTotalUnit">ft²</div>
+      <div class="res-sub-stats" id="resSubStats"></div>
     </div>
 
-    <!-- Tab: Zones -->
-    <div class="tab-content" id="tab-zones" style="flex-direction:column">
-      <div class="zones-wrap" id="zonesWrap"></div>
-    </div>
-
+    <!-- Save button -->
     <div class="export-row">
-      <button class="btn btn-accent" id="shareBtn" data-i18n="shareBtn">📤 Share</button>
-      <button class="btn btn-ghost" id="csvBtn">⬇ CSV</button>
-      <button class="btn btn-ghost" id="printBtn" data-i18n="printBtn">🖨 Print</button>
+      <button class="btn btn-accent" id="shareBtn" style="justify-content:center;font-size:14px;padding:13px">
+        💾 <span data-i18n="saveBtn">Save</span>
+      </button>
+    </div>
+
+    <!-- Hidden compat: CSV/print still read state directly; these containers just need to exist -->
+    <div style="display:none" aria-hidden="true">
+      <div class="stats" id="stats"></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="sections"></button>
+        <button class="tab-btn" data-tab="zones"><span id="zoneTabBadge">0</span></button>
+      </div>
+      <div class="tab-content active" id="tab-sections">
+        <div class="breakdown"><table><thead><tr><th></th><th class="r"></th></tr></thead><tbody id="breakBody"></tbody></table></div>
+      </div>
+      <div class="tab-content" id="tab-zones">
+        <div class="zones-wrap" id="zonesWrap"></div>
+      </div>
     </div>
   </aside>
 </div>
@@ -433,6 +453,7 @@
     <button class="share-opt" id="shOptSms"><span class="si">💬</span><span data-i18n="shareSms">Message / SMS</span></button>
     <button class="share-opt" id="shOptEmail"><span class="si">✉️</span><span data-i18n="shareEmail">Email</span></button>
     <button class="share-opt" id="shOptNfc" style="display:none"><span class="si">📡</span><span><span data-i18n="shareNfc">NFC tag</span><small data-i18n="shareNfcSub">Tap a tag to write</small></span></button>
+    <button class="share-opt" id="shOptCsv"><span class="si">📊</span><span data-i18n="shareCsv">Download CSV</span></button>
     <button class="share-opt" id="shOptCopy"><span class="si">📋</span><span data-i18n="shareCopy">Copy text</span></button>
     <button class="share-cancel" id="shCancel" data-i18n="cancel">Cancel</button>
   </div>
@@ -551,8 +572,13 @@ const I18N={
   clientId:{en:'Client ID',es:'ID de Cliente'},
   clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
   clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
+  saveBtn:{en:'Save',es:'Guardar'},
+  noClient:{en:'No client',es:'Sin cliente'},
+  totalMarked:{en:'Total Marked Area',es:'Área Total Marcada'},
+  totalZones:{en:'Zones Total',es:'Total de Zonas'},
+  shareCsv:{en:'Download CSV',es:'Descargar CSV'},
   shareBtn:{en:'📤 Share',es:'📤 Compartir'},
-  shareTitle:{en:'Share results',es:'Compartir resultados'},
+  shareTitle:{en:'Save / Share',es:'Guardar / Compartir'},
   shareNative:{en:'Share…',es:'Compartir…'},
   shareNativeSub:{en:'WhatsApp, Messages, Mail…',es:'WhatsApp, Mensajes, Correo…'},
   shareSms:{en:'Message / SMS',es:'Mensaje / SMS'},
@@ -1102,8 +1128,43 @@ function updateBadges(){
 
 /* ====================== RENDER: RESULTS ====================== */
 const elStats=document.getElementById('stats'),elBreak=document.getElementById('breakBody');
+function updateSimpleResults(S){
+  const p=state.project;
+  // Client card
+  document.getElementById('rcName').textContent=p.client||t('noClient');
+  const idEl=document.getElementById('rcId');
+  idEl.textContent=p.id?t('clientId')+': '+p.id:'';
+  idEl.style.display=p.id?'':'none';
+  const addrEl=document.getElementById('rcAddr');
+  addrEl.textContent=p.address||'';
+  addrEl.style.display=p.address?'':'none';
+  // Total: zone sum if zones exist, else SPF-applicable or overall
+  let markedVal,markedLbl;
+  if(state.zones.length>0){
+    markedVal=state.zones.reduce((s,z)=>s+zoneDispArea(z),0);
+    markedLbl=t('totalZones');
+  }else if(S.roofExclD>0.01){
+    markedVal=S.spfTotalD;
+    markedLbl=t('spfApplic');
+  }else{
+    markedVal=S.totalD;
+    markedLbl=t('totalMarked');
+  }
+  document.getElementById('resTotalLbl').textContent=markedLbl;
+  document.getElementById('resTotalVal').textContent=fmt(A2D(markedVal));
+  document.getElementById('resTotalUnit').textContent=UAREA();
+  // Sub breakdown
+  const U=UAREA(),L=v=>fmt(A2D(v));
+  const sub=[
+    `<span><b>${L(S.wallNetD)}</b> ${t('wallsNet').toLowerCase()} ${U}</span>`,
+    `<span><b>${L(S.roofD)}</b> ${t('roof').toLowerCase()} ${U}</span>`,
+  ];
+  if(S.floor>0.001) sub.push(`<span><b>${L(S.floor)}</b> ${t('floor').toLowerCase()} ${U}</span>`);
+  document.getElementById('resSubStats').innerHTML=sub.join('');
+}
 function renderResults(){
   const S=totals();
+  updateSimpleResults(S);
   const corrBadge=state.corrugated?' <span style="font-size:11px;color:var(--accent)">corrugado</span>':'';
   elStats.innerHTML=`
     <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
@@ -1584,8 +1645,7 @@ document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
   if(e.key==='Enter')confirmSaveZone();
   if(e.key==='Escape')hideSaveForm();
 });
-document.getElementById('csvBtn').addEventListener('click',exportCSV);
-document.getElementById('printBtn').addEventListener('click',()=>window.print());
+document.getElementById('shOptCsv').addEventListener('click',()=>{exportCSV();closeShareSheet();});
 
 /* ====================== PROJECT INFO (client + address + GPS) ====================== */
 function saveProject(){try{localStorage.setItem('pf_project',JSON.stringify(state.project));}catch(e){}}

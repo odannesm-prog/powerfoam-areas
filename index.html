@@ -997,10 +997,18 @@ function totals(){
   return{wall,wallNet,wallNetD,roof,roofD,floor,open,perMod,roofExclD,
          total:wallNet+roof+floor, totalD, spfTotalD:Math.max(0,totalD-roofExclD)};
 }
-// Area de zona ajustada por corrugado (suma cara por cara con su factor)
-function zoneDispArea(z){
-  return [...z.faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);},0);
+// Suma de área (ajustada por corrugado) de un conjunto de IDs de cara.
+function sumCorrIds(fids){
+  let s=0;
+  for(const fid of fids){const f=state._faceMap.get(fid);if(f)s+=f.area*corrFactor(f);}
+  return s;
 }
+// Suma de área (ajustada por corrugado) de los paneles de arco de un módulo.
+function archAreaD(mid){
+  return state._faces.reduce((s,f)=>s+(f.mid===mid&&isArchPanel(f)?f.area*corrFactor(f):0),0);
+}
+// Area de zona ajustada por corrugado (suma cara por cara con su factor)
+function zoneDispArea(z){ return sumCorrIds(z.faceIds); }
 
 /* ====================== SELECTION ====================== */
 function toggleFace(fid){
@@ -1036,9 +1044,7 @@ function updateSelPanel(){
   if(count===0){panel.style.display='none';return;}
   panel.style.display='block';
   document.getElementById('spCount').textContent=count+' '+t(count===1?'faceSel1':'faceSelN');
-  const adjArea=[...state.selection].reduce((s,fid)=>{
-    const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);
-  },0);
+  const adjArea=sumCorrIds(state.selection);
   document.getElementById('spArea').innerHTML=fmt(A2D(adjArea))+' <small>'+UAREA()+'</small>';
 }
 
@@ -1207,7 +1213,7 @@ function updateSimpleResults(S){
   addrEl.style.display=p.address?'':'none';
   // Priority: selected faces → zones → SPF-applicable → overall building total
   let markedVal,markedLbl;
-  const selTotal=(()=>{let s=0;for(const f of state._faces)if(state.selection.has(f.id))s+=f.area*corrFactor(f);return s;})();
+  const selTotal=sumCorrIds(state.selection);
   if(selTotal>0.001){
     markedVal=selTotal; markedLbl=t('selectedArea');
   }else if(state.zones.length>0){
@@ -1273,7 +1279,7 @@ function renderResults(){
     // Arco: una sola fila con el area total (en vez de 12 paneles)
     const archFaces=pm.faces.filter(isArchPanel);
     if(archFaces.length>0){
-      const archAreaD=archFaces.reduce((s,f)=>s+f.area*corrFactor(f),0);
+      const archA=archAreaD(m.id);
       const allSel=archFaces.every(f=>state.selection.has(f.id));
       const azones=new Set();
       archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
@@ -1283,7 +1289,7 @@ function renderResults(){
       const archSpfBdg=!spfApplicable(archFaces[0])?` <span style="font-size:9px;color:var(--red);font-weight:700;border:1px solid var(--red);border-radius:4px;padding:0 3px;white-space:nowrap">⚠ ${t('noSpf')}</span>`:'';
       rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
         <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}${archSpfBdg}</td>
-        <td class="r">${fmt(A2D(archAreaD))}${archCorrBdg}</td></tr>`;
+        <td class="r">${fmt(A2D(archA))}${archCorrBdg}</td></tr>`;
     }
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
@@ -1462,13 +1468,10 @@ function draw(){
       if(m.roof!=='arch') continue;
       const af=drawables.filter(d=>d.f.mid===m.id && isArchPanel(d.f));
       if(!af.length) continue;
-      const archAreaD=state._faces
-        .filter(f=>f.mid===m.id && isArchPanel(f))
-        .reduce((s,f)=>s+f.area*corrFactor(f),0);
       const pts=af.flatMap(d=>d.proj);
       const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
       const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-      const area=fmt(A2D(archAreaD))+' '+UAREA();
+      const area=fmt(A2D(archAreaD(m.id)))+' '+UAREA();
       const sel=state._faces.some(f=>f.mid===m.id && isArchPanel(f) && state.selection.has(f.id));
       if(sel) faceLbl(cx,cy,area,null,'#ffd98a','rgba(8,13,24,0.9)');
       else faceLbl(cx,cy,area,null,'#dfe8f5','rgba(8,13,24,0.82)');

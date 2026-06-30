@@ -586,6 +586,8 @@ const I18N={
   panelCorr:{en:'Corrugated / R-Panel',es:'Corrugado / R-Panel'},
   panelSeam:{en:'Standing Seam',es:'Standing Seam'},
   corrPctLabel:{en:'Corrugation %',es:'Corrugación %'},
+  corrFactorLbl:{en:'Corrugation factor',es:'Factor de corrugado'},
+  corrExtra:{en:'extra area',es:'área extra'},
   spfWarn:{en:'⚠ Standing-seam roof: SPF not recommended — it restricts thermal panel movement. Apply on walls only.',es:'⚠ Techo standing seam: SPF no recomendado — restringe el movimiento térmico del panel. Aplicar solo en muros.'},
   spfApplic:{en:'SPF-applicable area',es:'Área aplicable a SPF'},
   noSpf:{en:'no SPF',es:'sin SPF'},
@@ -957,6 +959,18 @@ function corrFactor(f){
   if(f.panel==='standingseam') return 1;
   return 1+(f.corrPct??12)/100;
 }
+// Resumen de los % de corrugado realmente aplicados (caras con factor > 1).
+// Devuelve {pcts:[..], label:'+12%' | '+10% / +20%' | ''}
+function corrSummary(){
+  if(!state.corrugated) return {pcts:[],label:''};
+  const set=new Set();
+  for(const f of state._faces){ if(corrFactor(f)>1) set.add(Math.round((corrFactor(f)-1)*100)); }
+  const pcts=[...set].sort((a,b)=>a-b);
+  if(!pcts.length) return {pcts:[],label:''};
+  const label = pcts.length===1 ? `+${pcts[0]}%`
+              : `+${pcts[0]}% – +${pcts[pcts.length-1]}%`;
+  return {pcts,label};
+}
 // SPF aplicable: NO recomendado en techos standing seam (restringe el movimiento
 // térmico del panel flotante). Muros, pisos y techos atornillados/corrugados: sí.
 function spfApplicable(f){
@@ -1220,12 +1234,16 @@ function updateSimpleResults(S){
     `<span><b>${L(S.roofD)}</b> ${t('roof').toLowerCase()} ${U}</span>`,
   ];
   if(S.floor>0.001) sub.push(`<span><b>${L(S.floor)}</b> ${t('floor').toLowerCase()} ${U}</span>`);
+  const cs=corrSummary();
+  if(cs.label) sub.push(`<span style="color:var(--accent)"><b>${cs.label}</b> ${t('corrFactorLbl').toLowerCase()}</span>`);
   document.getElementById('resSubStats').innerHTML=sub.join('');
 }
 function renderResults(){
   const S=totals();
   updateSimpleResults(S);
-  const corrBadge=state.corrugated?' <span style="font-size:11px;color:var(--accent)">corrugado</span>':'';
+  const cs=corrSummary();
+  const corrBadge=cs.label?` <span style="font-size:11px;color:var(--accent);font-weight:700">${cs.label}</span>`:'';
+  const corrExtra=Math.max(0,S.totalD-S.total); // superficie adicional por corrugado
   elStats.innerHTML=`
     <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
       <div class="val">${fmt(A2D(S.wallNetD))} <small>${UAREA()}</small></div></div>
@@ -1235,6 +1253,8 @@ function renderResults(){
       <div class="val">${fmt(A2D(S.floor))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
       <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
+    ${cs.label?`<div class="stat"><div class="lbl"><i style="background:var(--accent)"></i>${t('corrFactorLbl')}</div>
+      <div class="val" style="color:var(--accent)">${cs.label} <small>+${fmt(A2D(corrExtra))} ${UAREA()} ${t('corrExtra')}</small></div></div>`:''}
     <div class="stat total"><div class="lbl">${t('totalSurface')}${corrBadge}</div>
       <div class="val">${fmt(A2D(S.totalD))} <small>${UAREA()}</small></div></div>
     ${S.roofExclD>0.01?`<div class="stat total" style="background:linear-gradient(135deg,#15331f,#16231b);border-color:#2c5a3a"><div class="lbl"><i style="background:var(--green)"></i>${t('spfApplic')}</div>
@@ -2090,17 +2110,33 @@ function exportCSV(){
   if((state.project.id||'').trim()) rows.push([t('clientId'),state.project.id]);
   if((state.project.address||'').trim()) rows.push([t('address'),state.project.address]);
   if(rows.length) rows.push([]);
-  rows.push([t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']);
+  const cs=corrSummary();
+  const hasCorr=!!cs.label;
+  const aHdr=t('area')+' ('+UAREA()+')';
+  const cHdr=t('corrFactorLbl')+' ('+UAREA()+')';
+  rows.push(hasCorr
+    ? [t('module'),t('section'),t('csvType'),aHdr,'+%',cHdr]
+    : [t('module'),t('section'),t('csvType'),aHdr]);
   for(const f of state._faces){
     const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
-    rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
+    if(hasCorr){
+      const cfp=Math.round((corrFactor(f)-1)*100);
+      rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2),cfp>0?'+'+cfp+'%':'—',A2D(f.area*corrFactor(f)).toFixed(2)]);
+    }else{
+      rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
+    }
   }
   rows.push([]);
-  rows.push(['','',t('wallsNet'),A2D(S.wallNet).toFixed(2)]);
-  rows.push(['','',t('roof'),A2D(S.roof).toFixed(2)]);
-  rows.push(['','',t('floor'),A2D(S.floor).toFixed(2)]);
+  rows.push(['','',t('wallsNet'),A2D(S.wallNet).toFixed(2),'',hasCorr?A2D(S.wallNetD).toFixed(2):'']);
+  rows.push(['','',t('roof'),A2D(S.roof).toFixed(2),'',hasCorr?A2D(S.roofD).toFixed(2):'']);
+  rows.push(['','',t('floor'),A2D(S.floor).toFixed(2),'',hasCorr?A2D(S.floor).toFixed(2):'']);
   rows.push(['','',t('openings'),A2D(S.open).toFixed(2)]);
-  rows.push(['','','TOTAL',A2D(S.total).toFixed(2)]);
+  if(hasCorr){
+    rows.push(['','',t('corrFactorLbl'),cs.label]);
+    rows.push(['','','TOTAL',A2D(S.total).toFixed(2),'',A2D(S.totalD).toFixed(2)]);
+  }else{
+    rows.push(['','','TOTAL',A2D(S.total).toFixed(2)]);
+  }
   if(state.zones.length>0){
     rows.push([]);
     rows.push(['=== '+t('savedZones').toUpperCase()+' ===','','','']);

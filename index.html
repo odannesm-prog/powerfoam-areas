@@ -404,6 +404,16 @@
   </aside>
 </div>
 
+<!-- GPS help modal -->
+<div class="share-sheet" id="gpsHelpSheet">
+  <div class="sheet">
+    <h3 id="gpsHelpTitle" style="margin-bottom:10px">📍</h3>
+    <div id="gpsHelpBody" style="font-size:13.5px;line-height:1.75;color:var(--muted);margin-bottom:16px"></div>
+    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-bottom:9px" id="gpsRetryBtn"></button>
+    <button class="share-cancel" id="gpsHelpClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <!-- Share sheet -->
 <div class="share-sheet" id="shareSheet">
   <div class="sheet">
@@ -521,6 +531,12 @@ const I18N={
   gpsError:{en:'Could not get location',es:'No se pudo obtener la ubicación'},
   gpsTimeout:{en:'GPS timed out. Make sure Location Services are ON for Safari and try outdoors.',es:'El GPS tardó demasiado. Verifica que Localización esté activada para Safari e intenta al aire libre.'},
   gpsInsecure:{en:'GPS needs a secure (https) connection',es:'El GPS requiere conexión segura (https)'},
+  gpsHelpDeniedTitle:{en:'Location Blocked',es:'Ubicación Bloqueada'},
+  gpsHelpDeniedIos:{en:'Safari doesn\'t have permission to access your location.<br><br><b>Option 1 — from Safari:</b><br>Tap the <b>aA</b> icon in the address bar → <b>Website Settings</b> → <b>Location → Allow</b><br><br><b>Option 2 — from Settings:</b><br>Settings → Privacy &amp; Security → Location Services → Safari → <b>While Using</b><br><br>Then come back and tap 📍 again.',es:'Safari no tiene permiso para acceder a tu ubicación.<br><br><b>Opción 1 — desde Safari:</b><br>Toca el ícono <b>aA</b> en la barra de dirección → <b>Ajustes del sitio web</b> → <b>Ubicación → Permitir</b><br><br><b>Opción 2 — desde Configuración:</b><br>Configuración → Privacidad y seguridad → Localización → Safari → <b>Al usar</b><br><br>Luego regresa y toca 📍 de nuevo.'},
+  gpsHelpDeniedAndroid:{en:'Your browser blocked location access.<br><br>Tap the <b>lock icon</b> in the address bar → <b>Permissions → Location → Allow</b><br><br>Then tap 📍 again.',es:'El navegador bloqueó el acceso a ubicación.<br><br>Toca el <b>ícono de candado</b> en la barra de dirección → <b>Permisos → Ubicación → Permitir</b><br><br>Luego toca 📍 de nuevo.'},
+  gpsHelpTimeTitle:{en:'GPS Timed Out',es:'GPS Tardó Demasiado'},
+  gpsHelpTimeMsg:{en:'Could not get your location. Make sure:<br>• <b>Location Services</b> is ON for Safari in Settings<br>• You are <b>outdoors or near a window</b> (GPS needs sky visibility)<br><br>Tap <b>Try Again</b> to retry.',es:'No se pudo obtener la ubicación. Verifica:<br>• <b>Localización</b> esté activada para Safari en Configuración<br>• Estar <b>al aire libre o cerca de una ventana</b> (el GPS necesita cielo)<br><br>Toca <b>Intentar de nuevo</b> para reintentar.'},
+  gpsRetry:{en:'Try Again',es:'Intentar de nuevo'},
   mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'},
   clientId:{en:'Client ID',es:'ID de Cliente'},
   clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
@@ -1586,17 +1602,29 @@ function clearClient(){
   document.getElementById('projAddr').value='';
   updateClientId();saveProject();
 }
+function showGpsHelp(errCode){
+  const ios=isIOS();
+  document.getElementById('gpsHelpTitle').textContent=
+    errCode===1?t('gpsHelpDeniedTitle'):t('gpsHelpTimeTitle');
+  document.getElementById('gpsHelpBody').innerHTML=
+    errCode===1?(ios?t('gpsHelpDeniedIos'):t('gpsHelpDeniedAndroid')):t('gpsHelpTimeMsg');
+  document.getElementById('gpsRetryBtn').textContent=t('gpsRetry');
+  document.getElementById('gpsHelpSheet').classList.add('open');
+}
+function closeGpsHelp(){document.getElementById('gpsHelpSheet').classList.remove('open');}
+document.getElementById('gpsRetryBtn').addEventListener('click',()=>{closeGpsHelp();captureGPS();});
+document.getElementById('gpsHelpClose').addEventListener('click',closeGpsHelp);
+document.getElementById('gpsHelpSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGpsHelp();});
+
 function captureGPS(){
   const btn=document.getElementById('gpsBtn'),addrInp=document.getElementById('projAddr');
   if(!navigator.geolocation){alert(t('gpsNoSupport'));return;}
-  // iOS Safari only serves geolocation on a secure (HTTPS) context.
   if(window.isSecureContext===false){alert(t('gpsInsecure'));return;}
   btn.classList.add('locating');
   const onOk=pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
     state.project.lat=lat;state.project.lng=lng;
     const fallback=lat.toFixed(6)+', '+lng.toFixed(6);
-    // Reverse-geocode via OpenStreetMap Nominatim (free, no key). Falls back to coords offline.
     fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lng,
           {headers:{'Accept':'application/json'}})
       .then(r=>r.ok?r.json():Promise.reject())
@@ -1606,14 +1634,15 @@ function captureGPS(){
       .finally(()=>btn.classList.remove('locating'));
   };
   const onErr=(err,canRetry)=>{
-    // iOS often times out on high-accuracy GPS → retry once with coarse/cached location
     if(canRetry && err && err.code===3){
       navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,false),
         {enableHighAccuracy:false,timeout:25000,maximumAge:60000});
       return;
     }
     btn.classList.remove('locating');
-    alert(err&&err.code===1?t('gpsDenied'):err&&err.code===3?t('gpsTimeout'):t('gpsError'));
+    const code=err&&err.code;
+    if(code===1||code===3) showGpsHelp(code);
+    else alert(t('gpsError'));
   };
   navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,true),
     {enableHighAccuracy:true,timeout:15000,maximumAge:0});

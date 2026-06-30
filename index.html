@@ -1623,11 +1623,22 @@ function openUrl(url){
   a.href=url;a.target='_blank';a.rel='noopener';
   document.body.appendChild(a);a.click();a.remove();
 }
+// iPhone/iPad → open the native Apple Maps app; everything else → Google Maps.
+function isIOS(){
+  return /iP(hone|ad|od)/.test(navigator.userAgent)
+    || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints>1); // iPadOS reports as Mac
+}
 function openInMaps(){
-  const p=state.project;let url;
-  if(p.lat!=null&&p.lng!=null) url='https://www.google.com/maps?q='+p.lat+','+p.lng;
-  else if((p.address||'').trim()) url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address.trim());
-  else{alert(t('mapNoAddr'));return;}
+  const p=state.project,ios=isIOS();let url;
+  if(p.lat!=null&&p.lng!=null){
+    const label=encodeURIComponent((p.address||'').split(',')[0].trim()||t('address'));
+    url=ios?'https://maps.apple.com/?ll='+p.lat+','+p.lng+'&q='+label
+           :'https://www.google.com/maps?q='+p.lat+','+p.lng;
+  }else if((p.address||'').trim()){
+    const q=encodeURIComponent(p.address.trim());
+    url=ios?'https://maps.apple.com/?q='+q
+           :'https://www.google.com/maps/search/?api=1&query='+q;
+  }else{alert(t('mapNoAddr'));return;}
   openUrl(url);
 }
 document.getElementById('projClient').addEventListener('input',e=>{

@@ -1629,6 +1629,19 @@ function isIOS(){
   return /iP(hone|ad|od)/.test(navigator.userAgent)
     || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints>1); // iPadOS reports as Mac
 }
+// Universal redirect link for sharing — device-agnostic, single tap opens the right Maps app.
+function shareMapLink(){
+  const p=state.project;
+  const base='https://odannesm-prog.github.io/powerfoam-areas/maps.html';
+  if(p.lat!=null&&p.lng!=null){
+    const q=encodeURIComponent((p.address||'').split(',')[0].trim()||'Power Foam ATL');
+    return base+'?lat='+p.lat+'&lng='+p.lng+'&q='+q;
+  }
+  if((p.address||'').trim()){
+    return base+'?q='+encodeURIComponent(p.address.trim());
+  }
+  return '';
+}
 // Platform-aware maps deep link: Apple Maps on iOS (opens the Maps app directly), Google elsewhere.
 function mapsLink(){
   const p=state.project,ios=isIOS();
@@ -1680,7 +1693,7 @@ function buildShareText(){
     lines.push('────────────');
     state.zones.forEach(z=>lines.push('• '+z.name+': '+L(zoneDispArea(z))+' '+U));
   }
-  const link=mapsLink();
+  const link=shareMapLink();
   if(link) lines.push('📍 '+t('location')+': '+link);
   return lines.join('\n');
 }
@@ -1692,9 +1705,9 @@ function openShareSheet(){
 function closeShareSheet(){document.getElementById('shareSheet').classList.remove('open');}
 async function shareNative(){
   const text=buildShareText();
-  const link=mapsLink();
+  const link=shareMapLink();
   const payload={title:t('shareSubject'),text};
-  if(link) payload.url=link; // iOS treats this as a tappable location link
+  if(link) payload.url=link; // universal redirect → iOS opens Apple Maps, Android opens Google Maps
   try{await navigator.share(payload);}catch(e){}
   closeShareSheet();
 }

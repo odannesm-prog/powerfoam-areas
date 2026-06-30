@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Power Foam ATL — Location</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:system-ui,-apple-system,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;background:linear-gradient(180deg,#2e86de,#1a6abf);color:#fff;text-align:center;padding:24px}
+.logo{font-size:22px;font-weight:800;color:#FFC400;margin-bottom:6px;letter-spacing:.3px}
+.sub{font-size:14px;opacity:.75;margin-bottom:32px}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.msg{font-size:15px;opacity:.85}
+.fallback{margin-top:28px;display:none}
+.fallback a{display:inline-block;margin:8px;padding:10px 20px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);border-radius:10px;color:#fff;text-decoration:none;font-size:14px;font-weight:600}
+.fallback a:active{background:rgba(255,255,255,.25)}
+</style>
+</head>
+<body>
+<div class="logo">Power Foam ATL</div>
+<div class="sub">3D Area Calculator</div>
+<div class="spinner" id="spinner"></div>
+<div class="msg" id="msg">Opening Maps…</div>
+<div class="fallback" id="fallback">
+  <p style="font-size:13px;opacity:.7;margin-bottom:12px">Tap to open:</p>
+  <div id="fallbackLinks"></div>
+</div>
+
+<script>
+(function(){
+  var p=new URLSearchParams(location.search);
+  var lat=p.get('lat'),lng=p.get('lng'),q=p.get('q')||'Power Foam ATL';
+
+  var ios=/iP(hone|ad|od)/.test(navigator.userAgent)||
+    (/Mac/.test(navigator.platform||'')&&navigator.maxTouchPoints>1);
+
+  var appleUrl='',googleUrl='';
+  if(lat&&lng){
+    var label=encodeURIComponent(q);
+    appleUrl='https://maps.apple.com/?ll='+lat+','+lng+'&q='+label;
+    googleUrl='https://www.google.com/maps?q='+lat+','+lng;
+  }else if(q&&q!=='Power Foam ATL'){
+    var eq=encodeURIComponent(q);
+    appleUrl='https://maps.apple.com/?q='+eq;
+    googleUrl='https://www.google.com/maps/search/?api=1&query='+eq;
+  }
+
+  var primary=ios?appleUrl:googleUrl;
+  var secondary=ios?googleUrl:appleUrl;
+  var primaryLabel=ios?'🍎 Apple Maps':'🗺 Google Maps';
+  var secondaryLabel=ios?'🗺 Google Maps':'🍎 Apple Maps';
+
+  if(!primary){
+    document.getElementById('spinner').style.display='none';
+    document.getElementById('msg').textContent='No location data provided.';
+    return;
+  }
+
+  // redirect immediately
+  location.replace(primary);
+
+  // fallback UI after 2s if redirect didn't work
+  setTimeout(function(){
+    document.getElementById('spinner').style.display='none';
+    document.getElementById('msg').textContent="Didn't open automatically? Tap below:";
+    var fb=document.getElementById('fallback');
+    var links=document.getElementById('fallbackLinks');
+    links.innerHTML='<a href="'+primary+'">'+primaryLabel+'</a>'
+      +(secondary?'<a href="'+secondary+'">'+secondaryLabel+'</a>':'');
+    fb.style.display='block';
+  },2000);
+})();
+</script>
+</body>
+</html>

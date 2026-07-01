@@ -663,6 +663,9 @@ const I18N={
   cloudNotCfg:{en:'Cloud not configured. Tap ☁ Cloud to set up.',es:'Nube no configurada. Toca ☁ Nube para configurar.'},
   cloudSearchPh:{en:'Search by name, address or ID…',es:'Buscar por nombre, dirección o ID…'},
   loadClientBtn:{en:'Load',es:'Cargar'},
+  deleteClientBtn:{en:'🗑 Delete',es:'🗑 Eliminar'},
+  deleteClientConfirm:{en:'Delete this client permanently? This cannot be undone.',es:'¿Eliminar este cliente permanentemente? Esta acción no se puede deshacer.'},
+  deleteClientError:{en:'Could not delete — try again.',es:'No se pudo eliminar — intenta de nuevo.'},
   cloudCfgBad:{en:'Invalid config — paste the full firebaseConfig JSON object.',es:'Configuración inválida — pega el objeto JSON completo de firebaseConfig.'},
   accountBtn:{en:'Sign in',es:'Iniciar sesión'},
   notSignedIn:{en:'Not signed in',es:'Sin iniciar sesión'},
@@ -2010,6 +2013,11 @@ async function loadClientsCloud(search){
     return items;
   }catch(e){return null;}
 }
+async function deleteClientCloud(id){
+  if(!_db||!_authUser||!id)return false;
+  try{await _db.collection('pf_clients').doc(id).delete();return true;}
+  catch(e){return false;}
+}
 /* ---- Email/password auth ---- */
 function _authErrorMsg(code){
   const map={
@@ -2194,10 +2202,18 @@ function showClientDetail(snap){
       <div class="cli-detail-row"><span>${t('savedOnLbl')}</span><b>${d}</b></div>
       <div class="auth-err" style="color:var(--muted);margin-top:10px">${t('loadOverwriteWarn')}</div>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;margin:12px 0 8px" id="clientDetailBack">${t('backBtn')}</button>
-      <button class="btn btn-accent" style="width:100%;justify-content:center" id="clientDetailLoad">${t('loadThisProject')}</button>
+      <button class="btn btn-accent" style="width:100%;justify-content:center;margin-bottom:8px" id="clientDetailLoad">${t('loadThisProject')}</button>
+      <button class="btn" style="width:100%;justify-content:center;background:rgba(255,107,107,.12);color:var(--red);border:1px solid rgba(255,107,107,.35)" id="clientDetailDelete">${t('deleteClientBtn')}</button>
     </div>`;
   document.getElementById('clientDetailBack').addEventListener('click',showClientListView);
   document.getElementById('clientDetailLoad').addEventListener('click',()=>{if(_clientDetailSnap)restoreProject(_clientDetailSnap);});
+  document.getElementById('clientDetailDelete').addEventListener('click',async()=>{
+    if(!_clientDetailSnap||!confirm(t('deleteClientConfirm')))return;
+    const btn=document.getElementById('clientDetailDelete');btn.textContent='…';
+    const ok=await deleteClientCloud(_clientDetailSnap.id);
+    if(ok){showClientListView();renderClientList(document.getElementById('clientSearch').value);}
+    else{btn.textContent=t('deleteClientError');setTimeout(()=>{btn.textContent=t('deleteClientBtn');},1800);}
+  });
 }
 
 /* Save: cloud if configured (client set), otherwise fall back to CSV download */

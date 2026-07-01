@@ -205,6 +205,15 @@
   .cl-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;line-height:1.7}
   .cloud-cfg-instr{font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:12px}
   .cloud-cfg-instr b{color:var(--text)}
+
+  /* Account / auth UI */
+  .acct-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+  .acct-status{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .auth-input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13.5px;padding:10px 12px;margin-bottom:9px;outline:none;box-sizing:border-box}
+  .auth-input:focus{border-color:var(--accent2)}
+  .auth-err{color:var(--red);font-size:12.5px;margin:-3px 0 10px;line-height:1.5}
+  .auth-link{text-align:center;font-size:12.5px;color:var(--accent2);cursor:pointer;padding:8px 0 0;text-decoration:underline}
+  .auth-signed-email{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;word-break:break-all}
   .cloud-cfg-instr code{font-family:monospace;color:var(--accent2);font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:4px}
   #firebaseCfgInput{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:monospace;font-size:11.5px;padding:10px;resize:vertical;min-height:120px;margin-bottom:10px}
   @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
@@ -392,6 +401,12 @@
 
   <!-- Results -->
   <aside class="results">
+    <!-- Account (sign in / signed-in email) -->
+    <div class="acct-row" id="acctRow">
+      <span class="acct-status" id="acctStatus" data-i18n="notSignedIn">Not signed in</span>
+      <button class="btn btn-ghost btn-sm" id="accountBtn">👤 <span data-i18n="accountBtn">Sign in</span></button>
+    </div>
+
     <!-- Client card (hidden from Results per user request; JS refs kept so nothing errors — re-attach elsewhere to reuse) -->
     <div class="res-client" id="resClient" style="display:none">
       <div class="rc-name" id="rcName">—</div>
@@ -433,6 +448,26 @@
       </div>
     </div>
   </aside>
+</div>
+
+<!-- Auth (sign in / sign up / signed in) modal -->
+<div class="share-sheet" id="authSheet">
+  <div class="sheet">
+    <h3>👤 <span id="authTitle" data-i18n="signIn">Sign in</span></h3>
+    <div id="authSignedOutBox">
+      <input type="email" class="auth-input" id="authEmail" autocomplete="username" data-i18n-ph="email" placeholder="Email">
+      <input type="password" class="auth-input" id="authPassword" autocomplete="current-password" data-i18n-ph="password" placeholder="Password">
+      <div class="auth-err" id="authErr" style="display:none"></div>
+      <button class="btn btn-accent" id="authSubmitBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="signIn">Sign in</button>
+      <div class="auth-link" id="authToggleMode" data-i18n="needAccount">Don't have an account? Sign up</div>
+      <div class="auth-link" id="authForgotPw" data-i18n="forgotPassword">Forgot your password?</div>
+    </div>
+    <div id="authSignedInBox" style="display:none">
+      <div class="auth-signed-email" id="authUserEmail"></div>
+      <button class="btn btn-accent" id="authSignOutBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="signOut">Sign out</button>
+    </div>
+    <button class="share-cancel" id="authClose" data-i18n="cancel">Cancel</button>
+  </div>
 </div>
 
 <!-- Cloud setup modal -->
@@ -618,6 +653,27 @@ const I18N={
   cloudSearchPh:{en:'Search by name, address or ID…',es:'Buscar por nombre, dirección o ID…'},
   loadClientBtn:{en:'Load',es:'Cargar'},
   cloudCfgBad:{en:'Invalid config — paste the full firebaseConfig JSON object.',es:'Configuración inválida — pega el objeto JSON completo de firebaseConfig.'},
+  accountBtn:{en:'Sign in',es:'Iniciar sesión'},
+  notSignedIn:{en:'Not signed in',es:'Sin iniciar sesión'},
+  signIn:{en:'Sign in',es:'Iniciar sesión'},
+  signUp:{en:'Create account',es:'Crear cuenta'},
+  signOut:{en:'Sign out',es:'Cerrar sesión'},
+  email:{en:'Email',es:'Correo electrónico'},
+  password:{en:'Password',es:'Contraseña'},
+  needAccount:{en:"Don't have an account? Sign up",es:'¿No tienes cuenta? Crear una'},
+  haveAccount:{en:'Already have an account? Sign in',es:'¿Ya tienes cuenta? Iniciar sesión'},
+  forgotPassword:{en:'Forgot your password?',es:'¿Olvidaste tu contraseña?'},
+  resetPwSent:{en:'Password reset email sent — check your inbox.',es:'Correo de recuperación enviado — revisa tu bandeja.'},
+  resetPwNeedEmail:{en:'Enter your email above first.',es:'Ingresa tu correo arriba primero.'},
+  pleaseSignIn:{en:'Sign in to see your saved clients.',es:'Inicia sesión para ver tus clientes guardados.'},
+  authErrGeneric:{en:'Something went wrong. Try again.',es:'Algo salió mal. Intenta de nuevo.'},
+  authErrEmailInUse:{en:'That email is already registered — try signing in instead.',es:'Ese correo ya está registrado — intenta iniciar sesión.'},
+  authErrInvalidEmail:{en:'That email address looks invalid.',es:'Ese correo no parece válido.'},
+  authErrWeakPw:{en:'Password must be at least 6 characters.',es:'La contraseña debe tener al menos 6 caracteres.'},
+  authErrWrongPw:{en:'Wrong email or password.',es:'Correo o contraseña incorrectos.'},
+  authErrUserNotFound:{en:"No account with that email — try creating one.",es:'No hay cuenta con ese correo — prueba crear una.'},
+  authErrTooMany:{en:'Too many attempts — wait a bit and try again.',es:'Demasiados intentos — espera un momento e intenta de nuevo.'},
+  authErrNotEnabled:{en:'Sign-in isn\'t enabled yet for this project — enable Email/Password in the Firebase Console under Authentication → Sign-in method.',es:'El inicio de sesión aún no está habilitado para este proyecto — actívalo en Firebase Console, en Authentication → Sign-in method → Email/Password.'},
   shareBtn:{en:'📤 Share',es:'📤 Compartir'},
   shareTitle:{en:'Save / Share',es:'Guardar / Compartir'},
   shareNative:{en:'Share…',es:'Compartir…'},
@@ -1884,16 +1940,19 @@ function _setCloudInd(state2,msg){
 async function _loadScript(src){
   return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
 }
+let _authUser=null;
 async function initFirebaseCloud(cfg){
   try{
     if(!window.firebase){
       await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
       await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
     }
     if(firebase.apps.length){firebase.apps.forEach(a=>a.delete());}
     firebase.initializeApp(cfg);
     _db=firebase.firestore();
     await _db.collection('pf_clients').limit(1).get(); // connectivity test
+    firebase.auth().onAuthStateChanged(u=>{_authUser=u;updateAuthUI();});
     _setCloudInd('ok',t('cloudConnected'));
     return true;
   }catch(e){_db=null;_setCloudInd('err',t('cloudError'));return false;}
@@ -1904,21 +1963,58 @@ function projectSnapshot(){
     lat:state.project.lat,lng:state.project.lng,
     modules:state.modules,unit:state.unit,
     zones:state.zones.map(z=>({id:z.id,name:z.name,color:z.color,area:z.area,faceIds:[...z.faceIds]})),
-    savedAt:new Date().toISOString(),totalArea:S.total};
+    savedAt:new Date().toISOString(),totalArea:S.total,ownerUid:_authUser?_authUser.uid:null};
 }
 async function saveToCloud(){
-  if(!_db||!state.project.id||!state.project.client)return false;
+  if(!_db||!_authUser||!state.project.id||!state.project.client)return false;
   try{await _db.collection('pf_clients').doc(state.project.id).set(projectSnapshot());return true;}
   catch(e){return false;}
 }
 async function loadClientsCloud(search){
-  if(!_db)return null;
+  if(!_db||!_authUser)return null;
   try{
-    const qs=await _db.collection('pf_clients').orderBy('savedAt','desc').limit(60).get();
+    const qs=await _db.collection('pf_clients').where('ownerUid','==',_authUser.uid).limit(60).get();
     let items=qs.docs.map(d=>d.data());
+    items.sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||'')); // sorted client-side, no composite index needed
     if(search){const s=search.toLowerCase();items=items.filter(c=>((c.client||'')+(c.address||'')+(c.id||'')).toLowerCase().includes(s));}
     return items;
   }catch(e){return null;}
+}
+/* ---- Email/password auth ---- */
+function _authErrorMsg(code){
+  const map={
+    'auth/email-already-in-use':t('authErrEmailInUse'),
+    'auth/invalid-email':t('authErrInvalidEmail'),
+    'auth/weak-password':t('authErrWeakPw'),
+    'auth/wrong-password':t('authErrWrongPw'),
+    'auth/invalid-credential':t('authErrWrongPw'),
+    'auth/user-not-found':t('authErrUserNotFound'),
+    'auth/too-many-requests':t('authErrTooMany'),
+    'auth/configuration-not-found':t('authErrNotEnabled'),
+    'auth/operation-not-allowed':t('authErrNotEnabled'),
+  };
+  return map[code]||t('authErrGeneric');
+}
+function updateAuthUI(){
+  const signedIn=!!_authUser;
+  document.getElementById('acctStatus').textContent=signedIn?_authUser.email:t('notSignedIn');
+  const outBox=document.getElementById('authSignedOutBox'),inBox=document.getElementById('authSignedInBox');
+  if(outBox)outBox.style.display=signedIn?'none':'';
+  if(inBox)inBox.style.display=signedIn?'':'none';
+  if(signedIn)document.getElementById('authUserEmail').textContent=_authUser.email;
+}
+async function authSignIn(email,pw){
+  try{await firebase.auth().signInWithEmailAndPassword(email,pw);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
+}
+async function authSignUp(email,pw){
+  try{await firebase.auth().createUserWithEmailAndPassword(email,pw);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
+}
+async function authSignOut(){try{await firebase.auth().signOut();}catch(e){}}
+async function authResetPassword(email){
+  try{await firebase.auth().sendPasswordResetEmail(email);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
 }
 function restoreProject(snap){
   state.project={client:snap.client||'',address:snap.address||'',lat:snap.lat||null,lng:snap.lng||null,id:snap.id||''};
@@ -1931,6 +2027,52 @@ function restoreProject(snap){
   document.querySelectorAll('#unitToggle button').forEach(b=>b.classList.toggle('active',b.dataset.u===state.unit));
   saveProject();refresh(true);closeClientList();
 }
+
+/* Auth modal */
+let _authMode='signin';
+function _setAuthMode(mode){
+  _authMode=mode;
+  document.getElementById('authTitle').textContent=mode==='signin'?t('signIn'):t('signUp');
+  document.getElementById('authSubmitBtn').textContent=mode==='signin'?t('signIn'):t('signUp');
+  document.getElementById('authToggleMode').textContent=mode==='signin'?t('needAccount'):t('haveAccount');
+  document.getElementById('authForgotPw').style.display=mode==='signin'?'':'none';
+  document.getElementById('authErr').style.display='none';
+}
+function openAuth(){
+  document.getElementById('authEmail').value='';
+  document.getElementById('authPassword').value='';
+  _setAuthMode('signin');
+  updateAuthUI();
+  document.getElementById('authSheet').classList.add('open');
+}
+function closeAuth(){document.getElementById('authSheet').classList.remove('open');}
+document.getElementById('accountBtn').addEventListener('click',openAuth);
+document.getElementById('authClose').addEventListener('click',closeAuth);
+document.getElementById('authSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAuth();});
+document.getElementById('authToggleMode').addEventListener('click',()=>_setAuthMode(_authMode==='signin'?'signup':'signin'));
+document.getElementById('authSubmitBtn').addEventListener('click',async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPassword').value;
+  const errEl=document.getElementById('authErr');
+  errEl.style.display='none';
+  if(!email||!pw){errEl.textContent=t('authErrGeneric');errEl.style.display='';return;}
+  if(!_db){errEl.textContent=t('cloudError');errEl.style.display='';return;}
+  const btn=document.getElementById('authSubmitBtn');btn.textContent='…';
+  const res=_authMode==='signin'?await authSignIn(email,pw):await authSignUp(email,pw);
+  btn.textContent=_authMode==='signin'?t('signIn'):t('signUp');
+  if(res.ok){closeAuth();renderResults();}
+  else{errEl.textContent=res.msg;errEl.style.display='';}
+});
+document.getElementById('authForgotPw').addEventListener('click',async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  const errEl=document.getElementById('authErr');
+  if(!email){errEl.textContent=t('resetPwNeedEmail');errEl.style.display='';return;}
+  const res=await authResetPassword(email);
+  errEl.style.display='';
+  errEl.style.color=res.ok?'var(--green)':'var(--red)';
+  errEl.textContent=res.ok?t('resetPwSent'):res.msg;
+});
+document.getElementById('authSignOutBtn').addEventListener('click',async()=>{await authSignOut();closeAuth();renderResults();});
 
 /* Cloud setup modal */
 function openCloudSetup(){
@@ -1973,6 +2115,7 @@ async function renderClientList(search){
   const body=document.getElementById('clientListBody');
   body.innerHTML='<div class="cl-empty">…</div>';
   if(!_db){body.innerHTML='<div class="cl-empty">'+t('cloudNotCfg')+'</div>';return;}
+  if(!_authUser){body.innerHTML='<div class="cl-empty">'+t('pleaseSignIn')+'</div>';return;}
   const items=await loadClientsCloud(search);
   if(!items||items.length===0){body.innerHTML='<div class="cl-empty">'+t('noCloudClients')+'</div>';return;}
   body.innerHTML=items.map(c=>{
@@ -1995,7 +2138,7 @@ async function renderClientList(search){
 
 /* Save: cloud if configured (client set), otherwise fall back to CSV download */
 document.getElementById('saveResultsBtn').addEventListener('click',async()=>{
-  if(_db&&state.project.id&&state.project.client){
+  if(_db&&_authUser&&state.project.id&&state.project.client){
     _setCloudInd('','…');
     const ok=await saveToCloud();
     _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
@@ -2007,7 +2150,7 @@ document.getElementById('saveResultsBtn').addEventListener('click',async()=>{
 });
 /* Save to cloud on Guardar, then open share sheet */
 document.getElementById('shareBtn').addEventListener('click',async()=>{
-  if(_db&&state.project.id&&state.project.client){
+  if(_db&&_authUser&&state.project.id&&state.project.client){
     _setCloudInd('','…');
     const ok=await saveToCloud();
     _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
@@ -2016,8 +2159,6 @@ document.getElementById('shareBtn').addEventListener('click',async()=>{
   openShareSheet();
 });
 
-/* Auto-init cloud if config exists */
-(async()=>{const cfg=_loadFbCfg();if(cfg&&cfg.projectId)await initFirebaseCloud(cfg);})();
 document.getElementById('shareSheet').addEventListener('click',e=>{if(e.target.id==='shareSheet')closeShareSheet();});
 document.getElementById('shCancel').addEventListener('click',closeShareSheet);
 document.getElementById('shOptNative').addEventListener('click',shareNative);
@@ -2076,10 +2217,8 @@ function exportCSV(){
   if(!localStorage.getItem('pf_firebase_cfg')){
     localStorage.setItem('pf_firebase_cfg',JSON.stringify(DEFAULT_CFG));
   }
-  setTimeout(()=>{
-    const cfg=_loadFbCfg();
-    if(cfg) initFirebaseCloud(cfg);
-  },800);
+  const cfg=_loadFbCfg();
+  if(cfg&&cfg.projectId) initFirebaseCloud(cfg);
 })();
 
 /* ====================== INIT ====================== */

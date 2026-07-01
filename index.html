@@ -42,12 +42,17 @@
   .controls{width:340px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
   .controls .head{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
   .controls .head h2{font-size:14px;font-weight:700;flex:1}
-  .btn{border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px;padding:9px 13px;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+  .btn{border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px;padding:9px 13px;transition:transform .08s ease,filter .08s ease;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
   .btn-accent{background:var(--accent);color:#1a1300}
   .btn-accent:hover{filter:brightness(1.08)}
   .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
   .btn-ghost:hover{background:#1d2c47}
   .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  /* Universal "pressed" feedback so any tap/click visibly registers — toggled via JS (mousedown/touchstart), not bare :active, to work reliably on mobile Safari */
+  button,.icon-btn,.zone-del,.del,.cl-item{-webkit-tap-highlight-color:transparent;transition:transform .08s ease,filter .08s ease}
+  button.pressed,.icon-btn.pressed,.zone-del.pressed,.del.pressed,.cl-item.pressed{transform:scale(0.93);filter:brightness(0.85)}
+  tr.face.pressed td{background:#1c3050!important}
+  .mod-row.pressed{background:#1c3050}
   .modules{flex:1;overflow-y:auto;padding:12px}
   .modules::-webkit-scrollbar{width:9px}
   .modules::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
@@ -2278,6 +2283,23 @@ function exportCSV(){
   }
   const cfg=_loadFbCfg();
   if(cfg&&cfg.projectId) initFirebaseCloud(cfg);
+})();
+
+/* ====================== PRESS FEEDBACK ====================== */
+(function(){
+  const SEL='button,.icon-btn,.zone-del,.del,.cl-item,tr.face,tr.mod-row';
+  function press(e){
+    const el=e.target.closest(SEL);
+    if(el)el.classList.add('pressed');
+  }
+  function unpress(){
+    document.querySelectorAll('.pressed').forEach(el=>el.classList.remove('pressed'));
+  }
+  document.addEventListener('mousedown',press,true);
+  document.addEventListener('touchstart',press,{passive:true,capture:true});
+  document.addEventListener('mouseup',unpress,true);
+  document.addEventListener('touchend',unpress,true);
+  document.addEventListener('touchcancel',unpress,true);
 })();
 
 /* ====================== INIT ====================== */

@@ -207,8 +207,8 @@
   .cloud-cfg-instr b{color:var(--text)}
 
   /* Account / auth UI */
-  .acct-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
-  .acct-status{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acct-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+  .acct-status{flex:1;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .auth-input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13.5px;padding:10px 12px;margin-bottom:9px;outline:none;box-sizing:border-box}
   .auth-input:focus{border-color:var(--accent2)}
   .auth-err{color:var(--red);font-size:12.5px;margin:-3px 0 10px;line-height:1.5}
@@ -401,9 +401,10 @@
 
   <!-- Results -->
   <aside class="results">
-    <!-- Account (sign in / signed-in email) -->
+    <!-- Account (sign in / signed-in email) + saved projects -->
     <div class="acct-row" id="acctRow">
       <span class="acct-status" id="acctStatus" data-i18n="notSignedIn">Not signed in</span>
+      <button class="btn btn-ghost btn-sm" id="clientListBtn">📋 <span data-i18n="clientsBtn">Clients</span></button>
       <button class="btn btn-ghost btn-sm" id="accountBtn">👤 <span data-i18n="accountBtn">Sign in</span></button>
     </div>
 
@@ -413,7 +414,6 @@
       <div class="rc-id" id="rcId"></div>
       <div class="rc-addr" id="rcAddr"></div>
       <div class="rc-actions">
-        <button class="btn btn-ghost btn-sm" id="clientListBtn">📋 <span data-i18n="clientsBtn">Clients</span></button>
         <button class="btn btn-ghost btn-sm" id="cloudSetupBtn">☁ <span data-i18n="cloudSetupBtn">Cloud</span></button>
         <span class="cloud-ind" id="cloudInd"></span>
       </div>

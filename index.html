@@ -214,6 +214,9 @@
   .auth-err{color:var(--red);font-size:12.5px;margin:-3px 0 10px;line-height:1.5}
   .auth-link{text-align:center;font-size:12.5px;color:var(--accent2);cursor:pointer;padding:8px 0 0;text-decoration:underline}
   .auth-signed-email{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;word-break:break-all}
+  .cli-detail-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px}
+  .cli-detail-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .cli-detail-row b{color:var(--text);font-size:13.5px}
   .cloud-cfg-instr code{font-family:monospace;color:var(--accent2);font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:4px}
   #firebaseCfgInput{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:monospace;font-size:11.5px;padding:10px;resize:vertical;min-height:120px;margin-bottom:10px}
   @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
@@ -487,6 +490,7 @@
     <h3 style="margin-bottom:10px">📋 <span data-i18n="clientsBtn">Clients</span></h3>
     <input type="search" id="clientSearch" style="background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;padding:9px 12px;margin-bottom:10px;outline:none" data-i18n-ph="cloudSearchPh">
     <div id="clientListBody" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <div id="clientDetailBody" style="display:none;flex:1;overflow-y:auto;min-height:0"></div>
     <button class="share-cancel" id="clientListClose" data-i18n="cancel" style="margin-top:10px">Cancel</button>
   </div>
 </div>
@@ -660,6 +664,13 @@ const I18N={
   signOut:{en:'Sign out',es:'Cerrar sesión'},
   email:{en:'Email',es:'Correo electrónico'},
   password:{en:'Password',es:'Contraseña'},
+  backBtn:{en:'← Back',es:'← Volver'},
+  loadThisProject:{en:'📂 Load this project',es:'📂 Cargar este proyecto'},
+  loadOverwriteWarn:{en:'Loading will replace the building you\'re currently editing.',es:'Cargar reemplazará el edificio que estás editando ahora.'},
+  savedOnLbl:{en:'Saved',es:'Guardado'},
+  modulesLbl:{en:'Modules',es:'Módulos'},
+  zonesLbl:{en:'Zones',es:'Zonas'},
+  totalAreaLbl:{en:'Total area',es:'Área total'},
   needAccount:{en:"Don't have an account? Sign up",es:'¿No tienes cuenta? Crear una'},
   haveAccount:{en:'Already have an account? Sign in',es:'¿Ya tienes cuenta? Iniciar sesión'},
   forgotPassword:{en:'Forgot your password?',es:'¿Olvidaste tu contraseña?'},
@@ -2104,6 +2115,7 @@ document.getElementById('cloudConnectBtn').addEventListener('click',async()=>{
 async function openClientList(){
   document.getElementById('clientListSheet').classList.add('open');
   document.getElementById('clientSearch').value='';
+  showClientListView();
   await renderClientList('');
 }
 function closeClientList(){document.getElementById('clientListSheet').classList.remove('open');}
@@ -2128,12 +2140,45 @@ async function renderClientList(search){
     </div>`;
   }).join('');
   body.querySelectorAll('.cl-item').forEach(el=>{
-    el.addEventListener('click',async()=>{
+    el.addEventListener('click',()=>{
       const cid=el.dataset.cid;
       const snap=items.find(c=>c.id===cid);
-      if(snap&&confirm((snap.client||snap.id)+'\n\n'+t('loadClientBtn')+'?')) restoreProject(snap);
+      if(snap) showClientDetail(snap);
     });
   });
+}
+/* ---- Explore a saved client: view details before overwriting the current building ---- */
+let _clientDetailSnap=null;
+function showClientListView(){
+  document.getElementById('clientListBody').style.display='';
+  document.getElementById('clientSearch').style.display='';
+  document.getElementById('clientDetailBody').style.display='none';
+}
+function showClientDetail(snap){
+  _clientDetailSnap=snap;
+  document.getElementById('clientListBody').style.display='none';
+  document.getElementById('clientSearch').style.display='none';
+  const detail=document.getElementById('clientDetailBody');
+  detail.style.display='';
+  const d=snap.savedAt?snap.savedAt.slice(0,10):'—';
+  const area=snap.totalArea?fmt(A2D(snap.totalArea))+' '+UAREA():'—';
+  const mods=(snap.modules||[]).length;
+  const zones=(snap.zones||[]).length;
+  detail.innerHTML=`
+    <div class="cli-detail">
+      <div class="cli-detail-name">${esc(snap.client||'—')}</div>
+      ${snap.id?`<div class="cli-id">${esc(snap.id)}</div>`:''}
+      ${snap.address?`<div class="cli-meta" style="margin-bottom:10px">${esc(snap.address)}</div>`:''}
+      <div class="cli-detail-row"><span>${t('totalAreaLbl')}</span><b>${area}</b></div>
+      <div class="cli-detail-row"><span>${t('modulesLbl')}</span><b>${mods}</b></div>
+      <div class="cli-detail-row"><span>${t('zonesLbl')}</span><b>${zones}</b></div>
+      <div class="cli-detail-row"><span>${t('savedOnLbl')}</span><b>${d}</b></div>
+      <div class="auth-err" style="color:var(--muted);margin-top:10px">${t('loadOverwriteWarn')}</div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin:12px 0 8px" id="clientDetailBack">${t('backBtn')}</button>
+      <button class="btn btn-accent" style="width:100%;justify-content:center" id="clientDetailLoad">${t('loadThisProject')}</button>
+    </div>`;
+  document.getElementById('clientDetailBack').addEventListener('click',showClientListView);
+  document.getElementById('clientDetailLoad').addEventListener('click',()=>{if(_clientDetailSnap)restoreProject(_clientDetailSnap);});
 }
 
 /* Save: cloud if configured (client set), otherwise fall back to CSV download */

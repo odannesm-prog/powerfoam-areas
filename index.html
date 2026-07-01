@@ -101,7 +101,7 @@
   #scene{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
   #scene:active{cursor:grabbing}
   .overlay{position:absolute;pointer-events:none;font-size:11.5px;color:var(--muted)}
-  .overlay.tl{top:12px;left:14px;line-height:1.7}
+  .overlay.tl{top:58px;left:14px;line-height:1.7}
   .overlay.tl b{color:var(--text)}
   .view-tools{position:absolute;top:12px;right:14px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
   .view-tools button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(17,28,48,.85);color:var(--text);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
@@ -173,10 +173,6 @@
   .zone-area{font-size:12.5px;font-weight:700;color:var(--accent);white-space:nowrap}
   .zone-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:5px}
   .zone-del:hover{color:var(--red);background:rgba(255,107,107,.1)}
-  .corr-toggle{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);transition:.15s;white-space:nowrap;user-select:none}
-  .corr-toggle:hover{border-color:var(--accent2);color:var(--text)}
-  .corr-toggle.on{background:rgba(255,181,71,.12);border-color:var(--accent);color:var(--accent)}
-  .corr-toggle input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;flex-shrink:0}
   .zone-count-badge{background:#1d3055;border:1px solid var(--line);border-radius:20px;padding:2px 8px;font-size:11px;color:var(--accent2);font-weight:700;margin-left:4px}
   .zones-header{display:flex;align-items:center;gap:6px;padding:2px 0 10px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
 
@@ -242,7 +238,6 @@
     header .logo-wrap{height:48px;padding:6px 8px;flex-shrink:0;background:transparent !important;border-radius:10px;box-shadow:none}
     header .logo-wrap img{height:36px;display:block;background:transparent}
     header .brand{display:none}
-    .corr-toggle{padding:8px 12px;font-size:12px;gap:5px;border-radius:9px;white-space:nowrap}
     .unit-toggle{border-radius:9px}
     .unit-toggle button{width:40px;height:36px;padding:0;font-size:0;display:flex;align-items:center;justify-content:center}
     .unit-toggle button::after{font-size:13px;font-weight:800}
@@ -318,9 +313,6 @@
     <p data-i18n="subtitle">3D Area Calculator · Spray Foam</p>
   </div>
   <div class="spacer"></div>
-  <label class="corr-toggle" id="corrToggle" data-i18n-title="corrTitle" title="Applies 12% extra for corrugated surface">
-    <input type="checkbox" id="corrCheck"> <span data-i18n="corr">+12% Corrugated</span>
-  </label>
   <div class="unit-toggle" id="unitToggle">
     <button data-u="m" data-i18n="unitM">meters (m)</button>
     <button data-u="ft" class="active" data-i18n="unitFt">feet (ft)</button>
@@ -382,14 +374,13 @@
         <button class="sp-clear" id="clearSelBtn" data-i18n="clearBtn" data-i18n-title="tClearSel" title="Clear selection">✕ Clear</button>
       </div>
       <div class="sp-area" id="spArea">0.00 <small>ft²</small></div>
-      <div id="saveZoneForm" class="save-zone-form">
+      <div id="saveZoneForm" class="save-zone-form" style="display:none">
         <input class="zone-name-inp" id="zoneNameInp" data-i18n-ph="zoneNamePh" placeholder="Zone name…" maxlength="40">
         <div class="sf-btns">
           <button class="btn btn-accent btn-sm" id="confirmZoneBtn" data-i18n="saveBtn" style="flex:1">✔ Save</button>
           <button class="btn btn-ghost btn-sm" id="cancelZoneBtn">✕</button>
         </div>
       </div>
-      <button class="btn btn-accent btn-sm" id="saveZoneBtn" data-i18n="saveAsZoneBtn" style="width:100%;justify-content:center">＋ Save as Zone</button>
     </div>
 
     <div class="legend">
@@ -421,12 +412,8 @@
       <div class="res-sub-stats" id="resSubStats"></div>
     </div>
 
-    <!-- Save button -->
-    <div class="export-row">
-      <button class="btn btn-accent" id="shareBtn" style="justify-content:center;font-size:14px;padding:13px">
-        💾 <span data-i18n="saveBtn">Save</span>
-      </button>
-    </div>
+    <!-- Save button (hidden) -->
+    <button id="shareBtn" style="display:none"></button>
 
     <!-- Hidden compat: CSV/print still read state directly; these containers just need to exist -->
     <div style="display:none" aria-hidden="true">
@@ -518,8 +505,6 @@
 /* ====================== I18N (EN / ES) ====================== */
 const I18N={
   subtitle:{en:'3D Area Calculator · Spray Foam',es:'Calculadora de Áreas 3D · Spray Foam'},
-  corr:{en:'Corrugated (+12%/+22%)',es:'Corrugado (+12%/+22%)'},
-  corrTitle:{en:'Flat panels +12% · Quonset arch +22%',es:'Lámina plana +12% · Arco Quonset +22%'},
   unitM:{en:'meters (m)',es:'metros (m)'},
   unitFt:{en:'feet (ft)',es:'pies (ft)'},
   buildingModules:{en:'Building Modules',es:'Módulos del Edificio'},
@@ -587,12 +572,6 @@ const I18N={
   highWallHt:{en:'High wall height',es:'Altura muro alto'},
   rise:{en:'Rise',es:'Alzada'},
   sawtooth:{en:'Sawtooth',es:'Diente de Sierra'},
-  panelType:{en:'Panel type',es:'Tipo de panel'},
-  panelCorr:{en:'Corrugated / R-Panel',es:'Corrugado / R-Panel'},
-  panelSeam:{en:'Standing Seam',es:'Standing Seam'},
-  spfWarn:{en:'⚠ Standing-seam roof: SPF not recommended — it restricts thermal panel movement. Apply on walls only.',es:'⚠ Techo standing seam: SPF no recomendado — restringe el movimiento térmico del panel. Aplicar solo en muros.'},
-  spfApplic:{en:'SPF-applicable area',es:'Área aplicable a SPF'},
-  noSpf:{en:'no SPF',es:'sin SPF'},
   client:{en:'Client',es:'Cliente'},
   clientPh:{en:'Client name',es:'Nombre del cliente'},
   address:{en:'Address',es:'Dirección'},
@@ -719,7 +698,6 @@ const state={
   zones:[],
   activeZoneId:null,
   showLabels:true,
-  corrugated:false,
   project:{client:'',address:'',lat:null,lng:null,id:''},
   cam:{az:0.78,el:0.55,r:30,tx:0,ty:0,tz:0},
   _faces:[],
@@ -733,7 +711,6 @@ function newModule(opts={}){
     name:t('module')+' '+(state.modules.length+1),
     w:8,l:12,h:3,
     roof:'flat',
-    panel:'corrugated',
     rise:1.5,
     px:0,pz:0,
     openings:0,
@@ -747,7 +724,7 @@ function A2D(m2){return state.unit==='m'?m2:m2/M2_FT2;}
 function D2La(v){return state.unit==='m'?v:v*M2_FT2;}
 const ULIN=()=>state.unit==='m'?'m':'ft';
 const UAREA=()=>state.unit==='m'?'m²':'ft²';
-function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){return Math.round(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function hexRgb(h){const n=parseInt(h.slice(1),16);return`${(n>>16)&255},${(n>>8)&255},${n&255}`;}
 
 /* ====================== GEOMETRY ====================== */
@@ -774,7 +751,7 @@ function buildGeometry(){
     const color=MOD_COLORS[mi%MOD_COLORS.length];
     const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
     const add=(key,name,cat,verts,areaOvr)=>{
-      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,panel:m.panel||'corrugated',
+      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,
                   verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
     };
     add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
@@ -952,47 +929,34 @@ function cleanSelection(){
 }
 
 /* ====================== TOTALS ====================== */
-const CORR_FLAT=1.12, CORR_ARCH=1.22; // +12% lámina plana corrugada, +22% arco Quonset profundo
 function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
-// Factor de corrugado por cara: piso=1, arco=1.22, resto=1.12 (solo si corrugado activo)
-// Standing seam = lámina lisa de costura alzada → sin superficie extra (factor 1).
-function corrFactor(f){
-  if(!state.corrugated||f.cat==='floor') return 1;
-  if(f.panel==='standingseam') return 1;
-  return isArchPanel(f)?CORR_ARCH:CORR_FLAT;
-}
-// SPF aplicable: NO recomendado en techos standing seam (restringe el movimiento
-// térmico del panel flotante). Muros, pisos y techos atornillados/corrugados: sí.
-function spfApplicable(f){
-  if(f.cat==='roof' && f.panel==='standingseam') return false;
-  return true;
-}
-// Compat: factor por categoría (sin distinguir arco). Usar corrFactor(f) cuando haya cara.
-function dispFactor(cat){ return state.corrugated&&cat!=='floor'?CORR_FLAT:1; }
 function totals(){
-  let wall=0,roof=0,floor=0,open=0,wallD=0,roofD=0,roofExclD=0;
+  let wall=0,roof=0,floor=0,open=0;
   const perMod={};
-  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,wallD:0,roofD:0,open:m.openings||0,faces:[]};
+  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,open:m.openings||0,faces:[]};
   for(const f of state._faces){
     if(!perMod[f.mid]) continue;
     perMod[f.mid].faces.push(f);
-    const cf=corrFactor(f);
-    if(f.cat==='wall'){wall+=f.area;wallD+=f.area*cf;perMod[f.mid].wall+=f.area;perMod[f.mid].wallD+=f.area*cf;}
-    else if(f.cat==='roof'){roof+=f.area;roofD+=f.area*cf;perMod[f.mid].roof+=f.area;perMod[f.mid].roofD+=f.area*cf;
-      if(!spfApplicable(f)) roofExclD+=f.area*cf;}
+    if(f.cat==='wall'){wall+=f.area;perMod[f.mid].wall+=f.area;}
+    else if(f.cat==='roof'){roof+=f.area;perMod[f.mid].roof+=f.area;}
     else{floor+=f.area;perMod[f.mid].floor+=f.area;}
   }
   for(const m of state.modules) open+=(m.openings||0);
   const wallNet=Math.max(0,wall-open);
-  const wallNetD=Math.max(0,wallD-open); // aberturas son planas, se restan en crudo
-  const totalD=wallNetD+roofD+floor;
-  return{wall,wallNet,wallNetD,roof,roofD,floor,open,perMod,roofExclD,
-         total:wallNet+roof+floor, totalD, spfTotalD:Math.max(0,totalD-roofExclD)};
+  const total=wallNet+roof+floor;
+  return{wall,wallNet,roof,floor,open,perMod,total};
 }
-// Area de zona ajustada por corrugado (suma cara por cara con su factor)
-function zoneDispArea(z){
-  return [...z.faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);},0);
+// Suma de área de un conjunto de IDs de cara.
+function sumFaceIds(fids){
+  let s=0;
+  for(const fid of fids){const f=state._faceMap.get(fid);if(f)s+=f.area;}
+  return s;
 }
+// Suma de área de los paneles de arco de un módulo.
+function archArea(mid){
+  return state._faces.reduce((s,f)=>s+(f.mid===mid&&isArchPanel(f)?f.area:0),0);
+}
+function zoneDispArea(z){ return sumFaceIds(z.faceIds); }
 
 /* ====================== SELECTION ====================== */
 function toggleFace(fid){
@@ -1022,26 +986,18 @@ function clearSelection(){
   state.selection.clear();state.activeZoneId=null;
   updateSelPanel();renderResults();renderZones();draw();
 }
-function selArea(){
-  return[...state.selection].reduce((s,fid)=>{
-    const f=state._faceMap.get(fid);return s+(f?f.area:0);
-  },0);
-}
 function updateSelPanel(){
   const count=state.selection.size;
   const panel=document.getElementById('selPanel');
   if(count===0){panel.style.display='none';return;}
   panel.style.display='block';
   document.getElementById('spCount').textContent=count+' '+t(count===1?'faceSel1':'faceSelN');
-  const adjArea=[...state.selection].reduce((s,fid)=>{
-    const f=state._faceMap.get(fid);return s+(f?f.area*corrFactor(f):0);
-  },0);
+  const adjArea=sumFaceIds(state.selection);
   document.getElementById('spArea').innerHTML=fmt(A2D(adjArea))+' <small>'+UAREA()+'</small>';
 }
 
 /* ====================== ZONES ====================== */
 function showSaveForm(){
-  document.getElementById('saveZoneBtn').style.display='none';
   const form=document.getElementById('saveZoneForm');
   form.style.display='block';
   const inp=document.getElementById('zoneNameInp');
@@ -1050,7 +1006,6 @@ function showSaveForm(){
 }
 function hideSaveForm(){
   document.getElementById('saveZoneForm').style.display='none';
-  document.getElementById('saveZoneBtn').style.display='';
 }
 function confirmSaveZone(){
   if(state.selection.size===0){hideSaveForm();return;}
@@ -1077,7 +1032,7 @@ function renderZones(){
     div.innerHTML=`
       <span class="zone-dot" style="background:${z.color}"></span>
       <input class="zone-name-edit" value="${esc(z.name)}" data-zi="${zi}" title="Edit name">
-      <span class="zone-area">${fmt(A2D(zoneDispArea(z)))} ${UAREA()}${state.corrugated?` <span style="font-size:9px;opacity:.7">corr.</span>`:''}</span>
+      <span class="zone-area">${fmt(A2D(zoneDispArea(z)))} ${UAREA()}</span>
       <button class="zone-del" data-zdel="${zi}" title="Delete zone">✕</button>`;
     wrap.appendChild(div);
     div.addEventListener('click',e=>{
@@ -1130,11 +1085,6 @@ function renderControls(){
               <option value="sawtooth" ${m.roof==='sawtooth'?'selected':''}>${t('sawtooth')}</option>
               <option value="arch" ${m.roof==='arch'?'selected':''}>${t('arch')}</option>
             </select></div>
-          <div class="field"><label>${t('panelType')}</label>
-            <select data-i="${i}" data-k="panel">
-              <option value="corrugated" ${m.panel!=='standingseam'?'selected':''}>${t('panelCorr')}</option>
-              <option value="standingseam" ${m.panel==='standingseam'?'selected':''}>${t('panelSeam')}</option>
-            </select></div>
           <div class="field" style="${['gable','singleslope','hip','gambrel','monitor','sawtooth'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
             <label>${['singleslope','hip','sawtooth'].includes(m.roof)?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
           <div class="field" style="${m.roof==='arch'?'':'display:none'}" data-archpeak="${i}">
@@ -1144,7 +1094,6 @@ function renderControls(){
           <div class="field"><label>${t('openings')} (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
           <div class="field"><label>${t('posX')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
           <div class="field"><label>${t('posZ')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
-          ${m.panel==='standingseam'?`<div class="field full" style="font-size:11px;color:var(--accent);background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.3);border-radius:8px;padding:8px 10px;line-height:1.45">${t('spfWarn')}</div>`:''}
         </div>
       </div>`;
     elModules.appendChild(card);
@@ -1158,7 +1107,6 @@ function renderControls(){
         m.roof=inp.value;
         renderControls();refresh(false);
       }
-      else if(k==='panel'){m.panel=inp.value;renderControls();refresh(false);}
       else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
       else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);}
       else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}
@@ -1178,7 +1126,7 @@ function updateBadges(){
   const T=totals();
   elModules.querySelectorAll('.card').forEach((card,i)=>{
     const m=state.modules[i];const pm=T.perMod[m.id];
-    const tot=pm?pm.wallD+pm.roofD+pm.floor:0;
+    const tot=pm?pm.wall+pm.roof+pm.floor:0;
     const b=card.querySelector('.area-badge');if(b)b.textContent=fmt(A2D(tot))+' '+UAREA();
   });
 }
@@ -1197,15 +1145,13 @@ function updateSimpleResults(S){
   addrEl.style.display=p.address?'':'none';
   // Priority: selected faces → zones → SPF-applicable → overall building total
   let markedVal,markedLbl;
-  const selTotal=(()=>{let s=0;for(const f of state._faces)if(state.selection.has(f.id))s+=f.area*corrFactor(f);return s;})();
+  const selTotal=sumFaceIds(state.selection);
   if(selTotal>0.001){
     markedVal=selTotal; markedLbl=t('selectedArea');
   }else if(state.zones.length>0){
     markedVal=state.zones.reduce((s,z)=>s+zoneDispArea(z),0); markedLbl=t('totalZones');
-  }else if(S.roofExclD>0.01){
-    markedVal=S.spfTotalD; markedLbl=t('spfApplic');
   }else{
-    markedVal=S.totalD; markedLbl=t('totalMarked');
+    markedVal=S.total; markedLbl=t('totalMarked');
   }
   document.getElementById('resTotalLbl').textContent=markedLbl;
   document.getElementById('resTotalVal').textContent=fmt(A2D(markedVal));
@@ -1213,8 +1159,8 @@ function updateSimpleResults(S){
   // Sub breakdown
   const U=UAREA(),L=v=>fmt(A2D(v));
   const sub=[
-    `<span><b>${L(S.wallNetD)}</b> ${t('wallsNet').toLowerCase()} ${U}</span>`,
-    `<span><b>${L(S.roofD)}</b> ${t('roof').toLowerCase()} ${U}</span>`,
+    `<span><b>${L(S.wallNet)}</b> ${t('wallsNet').toLowerCase()} ${U}</span>`,
+    `<span><b>${L(S.roof)}</b> ${t('roof').toLowerCase()} ${U}</span>`,
   ];
   if(S.floor>0.001) sub.push(`<span><b>${L(S.floor)}</b> ${t('floor').toLowerCase()} ${U}</span>`);
   document.getElementById('resSubStats').innerHTML=sub.join('');
@@ -1222,52 +1168,43 @@ function updateSimpleResults(S){
 function renderResults(){
   const S=totals();
   updateSimpleResults(S);
-  const corrBadge=state.corrugated?' <span style="font-size:11px;color:var(--accent)">corrugado</span>':'';
   elStats.innerHTML=`
     <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
-      <div class="val">${fmt(A2D(S.wallNetD))} <small>${UAREA()}</small></div></div>
+      <div class="val">${fmt(A2D(S.wallNet))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>${t('roof')}</div>
-      <div class="val">${fmt(A2D(S.roofD))} <small>${UAREA()}</small></div></div>
+      <div class="val">${fmt(A2D(S.roof))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>${t('floor')}</div>
       <div class="val">${fmt(A2D(S.floor))} <small>${UAREA()}</small></div></div>
     <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
       <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
-    <div class="stat total"><div class="lbl">${t('totalSurface')}${corrBadge}</div>
-      <div class="val">${fmt(A2D(S.totalD))} <small>${UAREA()}</small></div></div>
-    ${S.roofExclD>0.01?`<div class="stat total" style="background:linear-gradient(135deg,#15331f,#16231b);border-color:#2c5a3a"><div class="lbl"><i style="background:var(--green)"></i>${t('spfApplic')}</div>
-      <div class="val" style="color:var(--green)">${fmt(A2D(S.spfTotalD))} <small>${UAREA()}</small></div></div>`:''}`;
+    <div class="stat total"><div class="lbl">${t('totalSurface')}</div>
+      <div class="val">${fmt(A2D(S.total))} <small>${UAREA()}</small></div></div>`;
 
   let rows='';
   state.modules.forEach(m=>{
     const pm=S.perMod[m.id];
-    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wallD+pm.roofD+pm.floor))} ${UAREA()}</td></tr>`;
+    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall+pm.roof+pm.floor))} ${UAREA()}</td></tr>`;
     pm.faces.forEach(f=>{
       if(isArchPanel(f)) return; // paneles del arco se agrupan abajo
       const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
       const isSel=state.selection.has(f.id);
       const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
         .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
-      const cfp=Math.round((corrFactor(f)-1)*100);
-      const corrBdg=cfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${cfp}%</span>`:'';
-      const spfBdg=!spfApplicable(f)?` <span style="font-size:9px;color:var(--red);font-weight:700;border:1px solid var(--red);border-radius:4px;padding:0 3px;white-space:nowrap">⚠ ${t('noSpf')}</span>`:'';
       rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
-        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}${spfBdg}</td>
-        <td class="r">${fmt(A2D(f.area*corrFactor(f)))}${corrBdg}</td></tr>`;
+        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
+        <td class="r">${fmt(A2D(f.area))}</td></tr>`;
     });
     // Arco: una sola fila con el area total (en vez de 12 paneles)
     const archFaces=pm.faces.filter(isArchPanel);
     if(archFaces.length>0){
-      const archAreaD=archFaces.reduce((s,f)=>s+f.area*corrFactor(f),0);
+      const archA=archArea(m.id);
       const allSel=archFaces.every(f=>state.selection.has(f.id));
       const azones=new Set();
       archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
       const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
-      const acfp=Math.round((corrFactor(archFaces[0])-1)*100);
-      const archCorrBdg=acfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${acfp}%</span>`:'';
-      const archSpfBdg=!spfApplicable(archFaces[0])?` <span style="font-size:9px;color:var(--red);font-weight:700;border:1px solid var(--red);border-radius:4px;padding:0 3px;white-space:nowrap">⚠ ${t('noSpf')}</span>`:'';
       rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
-        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}${archSpfBdg}</td>
-        <td class="r">${fmt(A2D(archAreaD))}${archCorrBdg}</td></tr>`;
+        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
+        <td class="r">${fmt(A2D(archA))}</td></tr>`;
     }
     if(pm.open>0)
       rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
@@ -1370,65 +1307,10 @@ function draw(){
     }
     _visible.push({f,poly:d.proj,depth:d.depth});
 
-    // Corrugation texture — parallel ridges clipped to face polygon
-    if(state.corrugated && f.cat!=='floor'){
-      ctx.save();
-      ctx.beginPath();
-      d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-      ctx.closePath();
-      ctx.clip();
-      // Direction: walls=vertical(Y), arch=tangential around arch, roofs=up-the-slope
-      // Arch tangential: perpendicular to radial normal in XY plane → [-n[1], n[0], 0]
-      // This makes corrugation follow the arch curve (classic Quonset look)
-      // Up-the-slope for flat roofs: project world-up [0,1,0] onto face plane: u - dot(u,n)*n
-      let wDir;
-      if(f.cat==='wall'){wDir=[0,1,0];}
-      else if(isArchPanel(f)){
-        // Tangent direction around arch circumference = perpendicular to outward radial normal
-        const tl=Math.hypot(d.n[0],d.n[1]);
-        wDir=tl>0.05?[-d.n[1]/tl,d.n[0]/tl,0]:[0,0,1];
-      }else{
-        const nu=d.n[1]; // dot([0,1,0], n) = n[1]
-        const ux=-nu*d.n[0],uy=1-nu*d.n[1],uz=-nu*d.n[2],ul=Math.hypot(ux,uy,uz);
-        wDir=ul>0.05?[ux/ul,uy/ul,uz/ul]:[0,0,1];
-      }
-      const pA=project(d.cen,B);
-      const pB=project([d.cen[0]+wDir[0],d.cen[1]+wDir[1],d.cen[2]+wDir[2]],B);
-      if(pA&&pB){
-        const dx=pB.x-pA.x, dy=pB.y-pA.y, len=Math.hypot(dx,dy);
-        if(len>0.5){
-          const ux=dx/len, uy=dy/len; // along ridge
-          const px=-uy, py=ux;         // across ridges
-          const xs=d.proj.map(p=>p.x), ys=d.proj.map(p=>p.y);
-          const cx=(Math.min(...xs)+Math.max(...xs))/2;
-          const cy=(Math.min(...ys)+Math.max(...ys))/2;
-          const span=(Math.max(...xs)-Math.min(...xs))*Math.abs(px)+(Math.max(...ys)-Math.min(...ys))*Math.abs(py);
-          const step=Math.max(5,Math.min(20,span/14));
-          const drawLn=(ox,oy)=>{
-            const ts=[];
-            if(Math.abs(ux)>0.01){ts.push((Math.min(...xs)-ox)/ux,(Math.max(...xs)-ox)/ux);}
-            if(Math.abs(uy)>0.01){ts.push((Math.min(...ys)-oy)/uy,(Math.max(...ys)-oy)/uy);}
-            if(ts.length<2)return;
-            const t0=Math.min(...ts),t1=Math.max(...ts);
-            ctx.beginPath();ctx.moveTo(ox+ux*t0,oy+uy*t0);ctx.lineTo(ox+ux*t1,oy+uy*t1);ctx.stroke();
-          };
-          // Shadow lines
-          ctx.strokeStyle=isSel?'rgba(100,50,0,0.28)':'rgba(0,0,0,0.22)';
-          ctx.lineWidth=1.0;
-          for(let s=0;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);if(s)drawLn(cx-px*s,cy-py*s);}
-          // Highlight lines (offset half step)
-          ctx.strokeStyle=isSel?'rgba(255,220,80,0.20)':'rgba(255,255,255,0.16)';
-          ctx.lineWidth=0.6;
-          for(let s=step/2;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);drawLn(cx-px*s,cy-py*s);}
-        }
-      }
-      ctx.restore();
-    }
-
     if(state.showLabels && !isArchPanel(f)){
       const c=project(d.cen,B);
       if(c&&f.area>0.3){
-        const area=fmt(A2D(f.area*corrFactor(f)))+' '+UAREA();
+        const area=fmt(A2D(f.area))+' '+UAREA();
         if(isSel){
           faceLbl(c.x,c.y,area,null,'#ffd98a','rgba(8,13,24,0.85)');
         }else if(zone){
@@ -1446,13 +1328,10 @@ function draw(){
       if(m.roof!=='arch') continue;
       const af=drawables.filter(d=>d.f.mid===m.id && isArchPanel(d.f));
       if(!af.length) continue;
-      const archAreaD=state._faces
-        .filter(f=>f.mid===m.id && isArchPanel(f))
-        .reduce((s,f)=>s+f.area*corrFactor(f),0);
       const pts=af.flatMap(d=>d.proj);
       const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
       const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-      const area=fmt(A2D(archAreaD))+' '+UAREA();
+      const area=fmt(A2D(archArea(m.id)))+' '+UAREA();
       const sel=state._faces.some(f=>f.mid===m.id && isArchPanel(f) && state.selection.has(f.id));
       if(sel) faceLbl(cx,cy,area,null,'#ffd98a','rgba(8,13,24,0.9)');
       else faceLbl(cx,cy,area,null,'#dfe8f5','rgba(8,13,24,0.82)');
@@ -1547,7 +1426,7 @@ function drawDims(B){
     // offset: scale with building so labels don't sit on the surface
     const od=Math.max(1.8,(m.w+m.l)*0.07);
     const u=ULIN();
-    const lbl=v=>fmt(L2D(v))+' '+u;
+    const lbl=v=>L2D(v).toLocaleString('en-US',{maximumFractionDigits:1})+' '+u;
     // Width  → front bottom edge, offset toward viewer (+z)
     dim3d([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w),B);
     // Length → right bottom edge, offset to the right (+x)
@@ -1677,11 +1556,6 @@ document.getElementById('addBtn').addEventListener('click',()=>{
   state.modules.push(newModule({px:last?last.px+last.w+1:0}));
   renderControls();refresh(true);
 });
-document.getElementById('corrCheck').addEventListener('change',e=>{
-  state.corrugated=e.target.checked;
-  document.getElementById('corrToggle').classList.toggle('on',state.corrugated);
-  renderResults();renderZones();updateBadges();updateSelPanel();draw();
-});
 document.getElementById('unitToggle').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   state.unit=b.dataset.u;
@@ -1695,7 +1569,6 @@ document.getElementById('lblBtn').addEventListener('click',e=>{
   state.showLabels=!state.showLabels;e.currentTarget.classList.toggle('on',state.showLabels);draw();
 });
 document.getElementById('clearSelBtn').addEventListener('click',clearSelection);
-document.getElementById('saveZoneBtn').addEventListener('click',showSaveForm);
 document.getElementById('confirmZoneBtn').addEventListener('click',confirmSaveZone);
 document.getElementById('cancelZoneBtn').addEventListener('click',hideSaveForm);
 document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
@@ -1848,11 +1721,10 @@ function buildShareText(){
   if(p.client||p.id) lines.push(t('client')+': '+(p.client||'-')+(p.id?'  ['+p.id+']':''));
   if(p.address) lines.push(t('address')+': '+p.address);
   lines.push('────────────');
-  lines.push(t('wallsNet')+': '+L(S.wallNetD)+' '+U);
-  lines.push(t('roof')+': '+L(S.roofD)+' '+U);
+  lines.push(t('wallsNet')+': '+L(S.wallNet)+' '+U);
+  lines.push(t('roof')+': '+L(S.roof)+' '+U);
   lines.push(t('floor')+': '+L(S.floor)+' '+U);
-  lines.push(t('totalSurface').replace(/\s*\(.*$/,'')+': '+L(S.totalD)+' '+U);
-  if(S.roofExclD>0.01) lines.push(t('spfApplic')+': '+L(S.spfTotalD)+' '+U);
+  lines.push(t('totalSurface').replace(/\s*\(.*$/,'')+': '+L(S.total)+' '+U);
   if(state.zones.length){
     lines.push('────────────');
     state.zones.forEach(z=>lines.push('• '+z.name+': '+L(zoneDispArea(z))+' '+U));
@@ -1966,9 +1838,9 @@ function projectSnapshot(){
   const S=totals();
   return {id:state.project.id,client:state.project.client,address:state.project.address,
     lat:state.project.lat,lng:state.project.lng,
-    modules:state.modules,corrugated:state.corrugated,unit:state.unit,
+    modules:state.modules,unit:state.unit,
     zones:state.zones.map(z=>({id:z.id,name:z.name,color:z.color,area:z.area,faceIds:[...z.faceIds]})),
-    savedAt:new Date().toISOString(),totalArea:S.totalD};
+    savedAt:new Date().toISOString(),totalArea:S.total};
 }
 async function saveToCloud(){
   if(!_db||!state.project.id||!state.project.client)return false;
@@ -1986,14 +1858,12 @@ async function loadClientsCloud(search){
 }
 function restoreProject(snap){
   state.project={client:snap.client||'',address:snap.address||'',lat:snap.lat||null,lng:snap.lng||null,id:snap.id||''};
-  state.modules=snap.modules||[];state.corrugated=!!snap.corrugated;state.unit=snap.unit||'ft';
+  state.modules=snap.modules||[];state.unit=snap.unit||'ft';
   state.zones=(snap.zones||[]).map(z=>({id:z.id||(String(nextZoneId++)),name:z.name||'Zone',color:z.color||'#4f9cff',area:z.area||0,faceIds:new Set(z.faceIds||[])}));
   state.selection=new Set();
   document.getElementById('projClient').value=state.project.client;
   document.getElementById('projAddr').value=state.project.address;
   updateClientId();
-  document.getElementById('corrCheck').checked=state.corrugated;
-  document.getElementById('corrToggle').classList.toggle('on',state.corrugated);
   document.querySelectorAll('#unitToggle button').forEach(b=>b.classList.toggle('active',b.dataset.u===state.unit));
   saveProject();refresh(true);closeClientList();
 }
@@ -2088,25 +1958,27 @@ function exportCSV(){
   if((state.project.id||'').trim()) rows.push([t('clientId'),state.project.id]);
   if((state.project.address||'').trim()) rows.push([t('address'),state.project.address]);
   if(rows.length) rows.push([]);
-  rows.push([t('module'),t('section'),t('csvType'),t('area')+' ('+UAREA()+')']);
+  const aHdr=t('area')+' ('+UAREA()+')';
+  rows.push([t('module'),t('section'),t('csvType'),aHdr]);
+  const R=v=>String(Math.round(A2D(v))); // área redondeada para CSV
   for(const f of state._faces){
     const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
-    rows.push([f.mname,tf(f.name),type,A2D(f.area).toFixed(2)]);
+    rows.push([f.mname,tf(f.name),type,R(f.area)]);
   }
   rows.push([]);
-  rows.push(['','',t('wallsNet'),A2D(S.wallNet).toFixed(2)]);
-  rows.push(['','',t('roof'),A2D(S.roof).toFixed(2)]);
-  rows.push(['','',t('floor'),A2D(S.floor).toFixed(2)]);
-  rows.push(['','',t('openings'),A2D(S.open).toFixed(2)]);
-  rows.push(['','','TOTAL',A2D(S.total).toFixed(2)]);
+  rows.push(['','',t('wallsNet'),R(S.wallNet)]);
+  rows.push(['','',t('roof'),R(S.roof)]);
+  rows.push(['','',t('floor'),R(S.floor)]);
+  rows.push(['','',t('openings'),R(S.open)]);
+  rows.push(['','','TOTAL',R(S.total)]);
   if(state.zones.length>0){
     rows.push([]);
     rows.push(['=== '+t('savedZones').toUpperCase()+' ===','','','']);
     for(const z of state.zones){
-      rows.push([z.name,'',t('zoneTotal'),A2D(z.area).toFixed(2)]);
+      rows.push([z.name,'',t('zoneTotal'),R(z.area)]);
       for(const fid of z.faceIds){
         const f=state._faceMap.get(fid);if(!f)continue;
-        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',A2D(f.area).toFixed(2)]);
+        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',R(f.area)]);
       }
     }
   }
@@ -2115,6 +1987,18 @@ function exportCSV(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='building_areas.csv';a.click();
 }
+
+/* ====================== FIREBASE AUTO-INIT ====================== */
+(function(){
+  const DEFAULT_CFG={"apiKey":"AIzaSyBCzCYxZzk9rtysvQKpsxuNqW4TyA-y5bw","authDomain":"powerfoamatl-fa47b.firebaseapp.com","projectId":"powerfoamatl-fa47b","storageBucket":"powerfoamatl-fa47b.firebasestorage.app","messagingSenderId":"644916808640","appId":"1:644916808640:web:41885575a8f93926cf5625","measurementId":"G-WXFPMYGWC4"};
+  if(!localStorage.getItem('pf_firebase_cfg')){
+    localStorage.setItem('pf_firebase_cfg',JSON.stringify(DEFAULT_CFG));
+  }
+  setTimeout(()=>{
+    const cfg=_loadFbCfg();
+    if(cfg) initFirebaseCloud(cfg);
+  },800);
+})();
 
 /* ====================== INIT ====================== */
 document.getElementById('langToggle').addEventListener('click',e=>{
@@ -2150,6 +2034,44 @@ resize();
   }
 
   navBtns.forEach(b=>b.addEventListener('click',()=>setMobTab(b.dataset.mob)));
+
+  /* ---- Swipe to change panel ---- */
+  const TABS=['building','canvas','results'];
+  function currentTab(){
+    if(ctrlEl.classList.contains('mob-open')) return 'building';
+    if(resEl.classList.contains('mob-open')) return 'results';
+    return 'canvas';
+  }
+  function swipeTab(dir){
+    const idx=TABS.indexOf(currentTab());
+    const next=TABS[Math.max(0,Math.min(TABS.length-1,idx+dir))];
+    if(next!==currentTab()) setMobTab(next);
+  }
+  // Swipe con 2 dedos — escuchar en el body entero (capture phase para recibir antes del canvas)
+  let sw2X=null,sw2Y=null,sw2Active=false,sw2Fired=false;
+  const SW2_THRESH=45;
+  function sw2Start(e){
+    if(!MOBILE()||e.touches.length!==2) return;
+    sw2Active=true; sw2Fired=false;
+    sw2X=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    sw2Y=(e.touches[0].clientY+e.touches[1].clientY)/2;
+  }
+  function sw2Move(e){
+    if(!sw2Active||sw2Fired||e.touches.length!==2) return;
+    const cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    const dx=cx-sw2X, dy=cy-sw2Y;
+    // Disparar en cuanto se cruza el umbral horizontal (antes de que el navegador cancele)
+    if(Math.abs(dx)>=SW2_THRESH && Math.abs(dx)>Math.abs(dy)){
+      sw2Fired=true;
+      swipeTab(dx<0?1:-1);
+    }
+  }
+  function sw2Reset(){sw2Active=false;sw2X=null;sw2Y=null;}
+  document.addEventListener('touchstart',sw2Start,{passive:true,capture:true});
+  document.addEventListener('touchmove',sw2Move,{passive:true,capture:true});
+  document.addEventListener('touchend',sw2Reset,{passive:true,capture:true});
+  document.addEventListener('touchcancel',sw2Reset,{passive:true,capture:true});
 
   if(MOBILE()) setMobTab('building');
   window.addEventListener('resize',()=>{

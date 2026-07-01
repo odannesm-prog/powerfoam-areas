@@ -407,6 +407,7 @@
     <!-- Account (sign in / signed-in email) + saved projects -->
     <div class="acct-row" id="acctRow">
       <span class="acct-status" id="acctStatus" data-i18n="notSignedIn">Not signed in</span>
+      <button class="btn btn-ghost btn-sm" id="newClientBtn" data-i18n-title="newClientTitle" title="Start a new client">➕</button>
       <button class="btn btn-ghost btn-sm" id="clientListBtn">📋 <span data-i18n="clientsBtn">Clients</span></button>
       <button class="btn btn-ghost btn-sm" id="accountBtn">👤 <span data-i18n="accountBtn">Sign in</span></button>
     </div>
@@ -636,6 +637,7 @@ const I18N={
   mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'},
   clientId:{en:'Client ID',es:'ID de Cliente'},
   clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
+  newClientTitle:{en:'Start a new client',es:'Empezar un cliente nuevo'},
   clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
   saveResultsBtn:{en:'💾 Save',es:'💾 Guardar'},
   noClient:{en:'No client',es:'Sin cliente'},
@@ -1844,6 +1846,7 @@ document.getElementById('projAddr').addEventListener('input',e=>{
 document.getElementById('gpsBtn').addEventListener('click',captureGPS);
 document.getElementById('mapBtn').addEventListener('click',openInMaps);
 document.getElementById('clearClientBtn').addEventListener('click',clearClient);
+document.getElementById('newClientBtn').addEventListener('click',clearClient);
 
 /* ====================== SHARE RESULTS (native / WhatsApp / SMS / email / NFC / copy) ====================== */
 function buildShareText(){
@@ -1978,8 +1981,19 @@ function projectSnapshot(){
 }
 async function saveToCloud(){
   if(!_db||!_authUser||!state.project.id||!state.project.client)return false;
-  try{await _db.collection('pf_clients').doc(state.project.id).set(projectSnapshot());return true;}
-  catch(e){return false;}
+  try{
+    // Guard against overwriting a different client that happens to share this ID
+    // (e.g. the user typed a new client's name without clearing the previous one first).
+    const ref=_db.collection('pf_clients').doc(state.project.id);
+    const existing=await ref.get();
+    if(existing.exists&&existing.data().client&&existing.data().client!==state.project.client){
+      state.project.id=genClientId();
+      updateClientId();
+      saveProject();
+    }
+    await _db.collection('pf_clients').doc(state.project.id).set(projectSnapshot());
+    return true;
+  }catch(e){return false;}
 }
 async function loadClientsCloud(search){
   if(!_db||!_authUser)return null;

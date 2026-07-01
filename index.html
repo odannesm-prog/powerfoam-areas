@@ -414,6 +414,7 @@
 
     <!-- Save + Share -->
     <div class="export-row">
+      <button class="btn btn-ghost" id="saveResultsBtn" data-i18n="saveResultsBtn">💾 Save</button>
       <button class="btn btn-accent" id="shareBtn" data-i18n="shareBtn">📤 Share</button>
     </div>
 
@@ -597,7 +598,7 @@ const I18N={
   clientId:{en:'Client ID',es:'ID de Cliente'},
   clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
   clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
-  saveBtn:{en:'Save',es:'Guardar'},
+  saveResultsBtn:{en:'💾 Save',es:'💾 Guardar'},
   noClient:{en:'No client',es:'Sin cliente'},
   totalMarked:{en:'Total Area',es:'Área Total'},
   totalZones:{en:'Zones Total',es:'Total de Zonas'},
@@ -1992,6 +1993,18 @@ async function renderClientList(search){
   });
 }
 
+/* Save: cloud if configured (client set), otherwise fall back to CSV download */
+document.getElementById('saveResultsBtn').addEventListener('click',async()=>{
+  if(_db&&state.project.id&&state.project.client){
+    _setCloudInd('','…');
+    const ok=await saveToCloud();
+    _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
+    setTimeout(()=>{if(_db)_setCloudInd('ok',t('cloudConnected'));},3000);
+    if(!ok) exportCSV();
+  }else{
+    exportCSV();
+  }
+});
 /* Save to cloud on Guardar, then open share sheet */
 document.getElementById('shareBtn').addEventListener('click',async()=>{
   if(_db&&state.project.id&&state.project.client){

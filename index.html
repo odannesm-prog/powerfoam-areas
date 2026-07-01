@@ -1636,6 +1636,16 @@ function pickAt(px,py){
 }
 
 /* ====================== 3D INTERACTION ====================== */
+// AABB overlap test on the floor plan (XZ) — blocks dragging one module on top of
+// another, which used to render as broken/interpenetrating geometry (painter's-algorithm
+// depth sort can't resolve overlapping solids). A small eps lets modules sit flush.
+function modulesOverlap(m,px,pz,eps=0.05){
+  for(const other of state.modules){
+    if(other.id===m.id)continue;
+    if(px<other.px+other.w-eps&&px+m.w>other.px+eps&&pz<other.pz+other.l-eps&&pz+m.l>other.pz+eps)return true;
+  }
+  return false;
+}
 let drag=null,rafPending=false;
 // Long-press (2s) on a module, then drag to reposition it on the floor plan (px/pz).
 let dragTimer=null,dragCandidate=null,modDrag=null,_dragModuleId=null;
@@ -1644,7 +1654,7 @@ function scheduleDraw(){if(!rafPending){rafPending=true;requestAnimationFrame(()
 canvas.addEventListener('pointerdown',e=>{
   e.preventDefault();
   drag={x:e.clientX,y:e.clientY,az:state.cam.az,el:state.cam.el,moved:false};
-  canvas.setPointerCapture(e.pointerId);
+  try{canvas.setPointerCapture(e.pointerId);}catch(err){}
   clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;
   const rect=canvas.getBoundingClientRect();
   const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
@@ -1678,8 +1688,13 @@ canvas.addEventListener('pointermove',e=>{
     if(g){
       const m=state.modules.find(mm=>mm.id===modDrag.mid);
       if(m){
-        m.px=modDrag.px0+(g[0]-modDrag.gx0);
-        m.pz=modDrag.pz0+(g[2]-modDrag.gz0);
+        // Try both axes together, then each alone, so sliding along one wall while
+        // blocked on the other still feels natural (like dragging furniture).
+        const wantPx=modDrag.px0+(g[0]-modDrag.gx0);
+        const wantPz=modDrag.pz0+(g[2]-modDrag.gz0);
+        if(!modulesOverlap(m,wantPx,wantPz)){m.px=wantPx;m.pz=wantPz;}
+        else if(!modulesOverlap(m,wantPx,m.pz)){m.px=wantPx;}
+        else if(!modulesOverlap(m,m.px,wantPz)){m.pz=wantPz;}
         buildGeometry();
       }
     }

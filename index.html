@@ -1381,7 +1381,21 @@ function draw(){
     const depth=proj.reduce((s,p)=>s+p.z,0)/proj.length;
     drawables.push({f,proj,n,cen,depth});
   }
-  drawables.sort((a,b)=>b.depth-a.depth);
+  // Painter's algorithm can't resolve occlusion BETWEEN two separate solids with a single
+  // global face sort (their faces interleave and paint over each other at some camera angles),
+  // so draw module-by-module: order whole modules far→near by centroid distance to the eye,
+  // and only sort faces by depth WITHIN each module. Overlap is prevented on drag, so
+  // non-interpenetrating modules always sort correctly this way.
+  const modDist=new Map();
+  for(const m of state.modules){
+    const cx=m.px+m.w/2, cy=m.h/2, cz=m.pz+m.l/2;
+    modDist.set(m.id, Math.hypot(cx-B.eye[0], cy-B.eye[1], cz-B.eye[2]));
+  }
+  drawables.sort((a,b)=>{
+    const dm=(modDist.get(b.f.mid)||0)-(modDist.get(a.f.mid)||0);
+    if(Math.abs(dm)>0.001) return dm;   // farther module drawn first
+    return b.depth-a.depth;             // then farther face within the same module
+  });
 
   _visible=[];
   const faceZone=new Map();

@@ -1728,7 +1728,8 @@ canvas.addEventListener('pointerup',e=>{
   clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;
   if(modDrag){
     modDrag=null;_dragModuleId=null;drag=null;
-    renderControls();refresh(false);
+    // Re-encuadrar al soltar: si el módulo se arrastró lejos quedaría fuera de cámara
+    renderControls();refresh(true);
     return;
   }
   if(drag&&!drag.moved){

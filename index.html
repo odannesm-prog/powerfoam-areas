@@ -1375,13 +1375,25 @@ function draw(){
   const light=vnorm([0.5,0.92,0.4]);
   drawGrid(B);
 
+  // Normales orientadas respecto al centro DE SU MÓDULO, no al target global de cámara:
+  // con módulos separados el target cae fuera de cada volumen y el culling borraba
+  // caras válidas (el módulo lejano se veía roto, solo techo sin muros).
+  const modCen=new Map();
+  for(const m of state.modules){
+    let top=m.h;
+    if(m.roof==='arch') top=m.h+m.w/2;
+    else if(m.roof==='monitor') top=m.h+m.rise*1.6;
+    else if(['gable','singleslope','hip','gambrel','sawtooth'].includes(m.roof)) top=m.h+m.rise;
+    modCen.set(m.id,[m.px+m.w/2,top/2,m.pz+m.l/2]);
+  }
   const drawables=[];
   for(const f of state._faces){
     const proj=f.verts.map(v=>project(v,B));
     if(proj.some(p=>p===null))continue;
     let n=normal(f.verts);
     const cen=centroid(f.verts);
-    if(dot(n,vsub(cen,target))<0) n=[-n[0],-n[1],-n[2]];
+    const mc=modCen.get(f.mid)||target;
+    if(dot(n,vsub(cen,mc))<0) n=[-n[0],-n[1],-n[2]];
     if(dot(n,vsub(B.eye,cen))<=0) continue;
     const depth=proj.reduce((s,p)=>s+p.z,0)/proj.length;
     drawables.push({f,proj,n,cen,depth});

@@ -1509,8 +1509,11 @@ function draw(){
       let wDir;
       if(f.cat==='wall'){wDir=[0,1,0];}
       else if(isArchPanel(f)){
-        const tl=Math.hypot(d.n[0],d.n[1]);
-        wDir=tl>0.05?[-d.n[1]/tl,d.n[0]/tl,0]:[0,0,1];
+        // tangente a lo largo de la curva = primer borde del quad (v0→v1),
+        // ya rotado por buildGeometry — válido con cualquier rot del módulo
+        const v0=f.verts[0],v1=f.verts[1];
+        const ex=v1[0]-v0[0],ey=v1[1]-v0[1],ez=v1[2]-v0[2],el=Math.hypot(ex,ey,ez)||1;
+        wDir=[ex/el,ey/el,ez/el];
       }else{
         const nu=d.n[1];
         const ux=-nu*d.n[0],uy=1-nu*d.n[1],uz=-nu*d.n[2],ul=Math.hypot(ux,uy,uz);

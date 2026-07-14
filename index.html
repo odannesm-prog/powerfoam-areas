@@ -115,6 +115,13 @@
   .view-tools button:hover{background:rgba(36,52,80,.9)}
   .view-tools button.on{background:var(--accent);color:#1a1300;border-color:var(--accent)}
 
+  /* ---- Module move/rotate toolbar (visible mientras un módulo está en modo mover) ---- */
+  .mod-tools{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(17,28,48,.92);border:1px solid #4f9cff;border-radius:12px;padding:7px 10px;z-index:7;backdrop-filter:blur(6px);pointer-events:auto}
+  .mod-tools .mt-name{font-size:12px;font-weight:700;color:#8ec4ff;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mod-tools button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .mod-tools button:hover{background:#1d2c47}
+  .mod-tools #mtDone{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+
   /* ---- Selection panel (floating) ---- */
   .sel-panel{position:absolute;bottom:54px;left:14px;background:rgba(11,18,32,.95);border:1px solid var(--line);border-radius:12px;padding:13px 15px;backdrop-filter:blur(8px);min-width:220px;display:none;pointer-events:auto;}
   .sel-panel .sp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -308,6 +315,7 @@
     /* ---- 3D view ---- */
     .view-tools{top:10px;right:10px;gap:6px}
     .view-tools button{width:48px;height:48px;font-size:20px;border-radius:12px}
+    .mod-tools button{width:46px;height:46px;font-size:20px}
     .overlay.tl{display:none}
     .mob-hint{
       display:block;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
@@ -386,6 +394,14 @@
       <button id="zoomIn" data-i18n-title="tZoomIn" title="Zoom in">＋</button>
       <button id="zoomOut" data-i18n-title="tZoomOut" title="Zoom out">－</button>
       <button id="lblBtn" class="on" data-i18n-title="tLabels" title="Toggle area labels">#</button>
+    </div>
+
+    <!-- Barra del módulo activo (aparece al mantener presionado un módulo 2s) -->
+    <div class="mod-tools" id="modTools" style="display:none">
+      <span class="mt-name" id="mtName"></span>
+      <button id="mtRotL" data-i18n-title="rotCCW" title="Rotate 90° left">⟲</button>
+      <button id="mtRotR" data-i18n-title="rotCW" title="Rotate 90° right">⟳</button>
+      <button id="mtDone" data-i18n-title="doneBtn" title="Done">✓</button>
     </div>
 
     <!-- Floating selection panel -->
@@ -724,7 +740,10 @@ const I18N={
   nfcErrMsg:{en:'Make sure the tag is writable (not locked) and try again.',es:'Verifica que la etiqueta no esté bloqueada e intenta de nuevo.'},
   shareSubject:{en:'Power Foam ATL — Area report',es:'Power Foam ATL — Reporte de áreas'},
   location:{en:'Location',es:'Ubicación'},
-  helpTitle:{en:'Quick Start Guide (PDF)',es:'Guía de inicio rápido (PDF)'}
+  helpTitle:{en:'Quick Start Guide (PDF)',es:'Guía de inicio rápido (PDF)'},
+  rotCCW:{en:'Rotate 90° left',es:'Rotar 90° a la izquierda'},
+  rotCW:{en:'Rotate 90° right',es:'Rotar 90° a la derecha'},
+  doneBtn:{en:'Done',es:'Listo'}
 };
 const FACE_ES={
   'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
@@ -801,6 +820,7 @@ function newModule(opts={}){
     rise:1.5,
     corrPct:0,
     px:0,pz:0,
+    rot:0,
     openings:0,
   },opts);
 }
@@ -831,6 +851,34 @@ function normal(v){
   const m=Math.hypot(nx,ny,nz)||1;return[nx/m,ny/m,nz/m];
 }
 
+/* ---- Rotación de módulo (pasos de 90° alrededor de su centro; el footprint
+   queda siempre alineado a los ejes, así el test AABB y el painter siguen válidos) ---- */
+function modRot(m){return (((m.rot||0)%360)+360)%360;}
+function modRotPt(m,p){
+  const r=modRot(m);if(!r)return p;
+  const cx=m.px+m.w/2,cz=m.pz+m.l/2,dx=p[0]-cx,dz=p[2]-cz;
+  if(r===90)  return [cx+dz,p[1],cz-dx];
+  if(r===180) return [cx-dx,p[1],cz-dz];
+  return [cx-dz,p[1],cz+dx];
+}
+function modRotVec(m,v){
+  const r=modRot(m);if(!r)return v;
+  if(r===90)  return [v[2],v[1],-v[0]];
+  if(r===180) return [-v[0],v[1],-v[2]];
+  return [-v[2],v[1],v[0]];
+}
+// Footprint en el plano XZ considerando la rotación (para solape, grid y encuadre)
+function modAABB(m,px,pz){
+  if(px===undefined)px=m.px;
+  if(pz===undefined)pz=m.pz;
+  const r=modRot(m);
+  if(r===90||r===270){
+    const cx=px+m.w/2,cz=pz+m.l/2;
+    return {x0:cx-m.l/2,x1:cx+m.l/2,z0:cz-m.w/2,z1:cz+m.w/2};
+  }
+  return {x0:px,x1:px+m.w,z0:pz,z1:pz+m.l};
+}
+
 const N_ARCH=12;
 function buildGeometry(){
   const faces=[];
@@ -839,6 +887,7 @@ function buildGeometry(){
     const color=MOD_COLORS[mi%MOD_COLORS.length];
     const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
     const add=(key,name,cat,verts,areaOvr)=>{
+      verts=verts.map(v=>modRotPt(m,v)); // rotación del módulo (isometría: no altera áreas)
       faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,corrPct:m.corrPct||0,
                   verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
     };
@@ -1218,7 +1267,8 @@ function renderControls(){
 function updateBadges(){
   const T=totals();
   elModules.querySelectorAll('.card').forEach((card,i)=>{
-    const m=state.modules[i];const pm=T.perMod[m.id];
+    const m=state.modules[i];if(!m)return; // tarjetas obsoletas si aún no corre renderControls
+    const pm=T.perMod[m.id];
     const tot=pm?pm.wall+pm.roof+pm.floor:0;
     const b=card.querySelector('.area-badge');if(b)b.textContent=fmt(A2D(tot))+' '+UAREA();
   });
@@ -1425,7 +1475,7 @@ function draw(){
     const k=0.5+0.55*Math.max(0,dot(d.n,light));
     const isSel=state.selection.has(f.id);
     const zone=faceZone.get(f.id);
-    const isDragged=_dragModuleId!=null&&f.mid===_dragModuleId;
+    const isDragged=(_dragModuleId!=null&&f.mid===_dragModuleId)||(_activeModuleId!=null&&f.mid===_activeModuleId);
 
     ctx.beginPath();
     d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
@@ -1617,20 +1667,23 @@ function drawDims(B){
     const od=Math.max(1.8,(m.w+m.l)*0.07);
     const u=ULIN();
     const lbl=v=>L2D(v).toLocaleString('en-US',{maximumFractionDigits:1})+' '+u;
+    // Las cotas se calculan en el espacio sin rotar y se transforman con la
+    // rotación del módulo (puntos Y offsets), así siguen pegadas a sus aristas físicas.
+    const D=(a,b,off,txt)=>dim3d(modRotPt(m,a),modRotPt(m,b),modRotVec(m,off),txt,B);
     // Width  → front bottom edge, offset toward viewer (+z)
-    dim3d([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w),B);
+    D([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w));
     // Length → right bottom edge, offset to the right (+x)
-    dim3d([x1,0,z0],[x1,0,z1], [od,0,0],      lbl(m.l),B);
+    D([x1,0,z0],[x1,0,z1], [od,0,0],      lbl(m.l));
     // Height → right-front vertical edge, offset corner (+x+z)
-    dim3d([x1,0,z1],[x1,y1,z1],[od*.7,0,od*.7],lbl(m.h),B);
+    D([x1,0,z1],[x1,y1,z1],[od*.7,0,od*.7],lbl(m.h));
     // Gable ridge height → center-front vertical from eave to peak
     if(m.roof==='gable'){
       const xc=(x0+x1)/2, yr=y1+m.rise;
-      dim3d([xc,y1,z1],[xc,yr,z1],[od*.7,0,od*.7],lbl(m.rise)+' ridge',B);
+      D([xc,y1,z1],[xc,yr,z1],[od*.7,0,od*.7],lbl(m.rise)+' ridge');
     }
     if(m.roof==='arch'){
       const xc=(x0+x1)/2, r=m.w/2, yr=m.h+r;
-      dim3d([xc,m.h,z1],[xc,yr,z1],[od*.7,0,od*.7],'r='+lbl(r),B);
+      D([xc,m.h,z1],[xc,yr,z1],[od*.7,0,od*.7],'r='+lbl(r));
     }
   }
 }
@@ -1638,7 +1691,7 @@ function rRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,
 
 function drawGrid(B){
   let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
-  for(const m of state.modules){minX=Math.min(minX,m.px);maxX=Math.max(maxX,m.px+m.w);minZ=Math.min(minZ,m.pz);maxZ=Math.max(maxZ,m.pz+m.l);}
+  for(const m of state.modules){const bb=modAABB(m);minX=Math.min(minX,bb.x0);maxX=Math.max(maxX,bb.x1);minZ=Math.min(minZ,bb.z0);maxZ=Math.max(maxZ,bb.z1);}
   if(!isFinite(minX))return;
   const pad=Math.max(4,(maxX-minX+maxZ-minZ)/4);
   const x0=Math.floor(minX-pad),x1=Math.ceil(maxX+pad),z0=Math.floor(minZ-pad),z1=Math.ceil(maxZ+pad);
@@ -1671,16 +1724,44 @@ function pickAt(px,py){
 // another, which used to render as broken/interpenetrating geometry (painter's-algorithm
 // depth sort can't resolve overlapping solids). A small eps lets modules sit flush.
 function modulesOverlap(m,px,pz,eps=0.05){
+  const a=modAABB(m,px,pz);
   for(const other of state.modules){
     if(other.id===m.id)continue;
-    if(px<other.px+other.w-eps&&px+m.w>other.px+eps&&pz<other.pz+other.l-eps&&pz+m.l>other.pz+eps)return true;
+    const b=modAABB(other);
+    if(a.x0<b.x1-eps&&a.x1>b.x0+eps&&a.z0<b.z1-eps&&a.z1>b.z0+eps)return true;
   }
   return false;
 }
 let drag=null,rafPending=false;
 // Long-press (2s) on a module, then drag to reposition it on the floor plan (px/pz).
 let dragTimer=null,dragCandidate=null,modDrag=null,_dragModuleId=null;
+// Módulo "activo" (modo mover): persiste tras soltar — permite re-arrastrar sin
+// esperar 2s y muestra la barra de rotación #modTools.
+let _activeModuleId=null;
 const LONGPRESS_MS=2000,LONGPRESS_CANCEL_PX=8;
+function setActiveModule(mid){
+  _activeModuleId=mid;
+  const bar=document.getElementById('modTools');
+  if(mid==null){bar.style.display='none';}
+  else{
+    const m=state.modules.find(mm=>mm.id===mid);
+    document.getElementById('mtName').textContent=m?m.name:'';
+    bar.style.display='flex';
+  }
+  scheduleDraw();
+}
+function rotateActive(dir){
+  const m=state.modules.find(mm=>mm.id===_activeModuleId);
+  if(!m)return;
+  const old=m.rot||0;
+  m.rot=(((old+dir*90)%360)+360)%360;
+  if(modulesOverlap(m,m.px,m.pz)){ // la rotación chocaría con otro módulo → cancelar
+    m.rot=old;
+    if(navigator.vibrate)navigator.vibrate(60);
+    return;
+  }
+  renderControls();refresh(true);
+}
 function scheduleDraw(){if(!rafPending){rafPending=true;requestAnimationFrame(()=>{rafPending=false;draw();});}}
 canvas.addEventListener('pointerdown',e=>{
   e.preventDefault();
@@ -1691,6 +1772,21 @@ canvas.addEventListener('pointerdown',e=>{
   const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
   const fid=pickAt(sx,sy);
   const f=fid?state._faceMap.get(fid):null;
+  if(_activeModuleId!=null){
+    if(f&&f.mid===_activeModuleId){
+      // Módulo ya activo: re-arrastre inmediato, sin esperar los 2s
+      const m=state.modules.find(mm=>mm.id===_activeModuleId);
+      const g=screenToGround(sx,sy,camBasis());
+      if(m&&g){
+        modDrag={mid:m.id,px0:m.px,pz0:m.pz,gx0:g[0],gz0:g[2]};
+        _dragModuleId=m.id;
+        scheduleDraw();
+        return;
+      }
+    }else{
+      setActiveModule(null); // tocó fuera del módulo activo → salir del modo mover
+    }
+  }
   if(f){
     dragCandidate={mid:f.mid};
     dragTimer=setTimeout(()=>{
@@ -1702,6 +1798,7 @@ canvas.addEventListener('pointerdown',e=>{
       if(!g)return;
       modDrag={mid:m.id,px0:m.px,pz0:m.pz,gx0:g[0],gz0:g[2]};
       _dragModuleId=m.id;
+      setActiveModule(m.id);
       if(navigator.vibrate)navigator.vibrate(25);
       scheduleDraw();
     },LONGPRESS_MS);
@@ -1739,9 +1836,12 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>{
   clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;
   if(modDrag){
+    const mv=state.modules.find(mm=>mm.id===modDrag.mid);
+    const didMove=mv&&(Math.abs(mv.px-modDrag.px0)>0.001||Math.abs(mv.pz-modDrag.pz0)>0.001);
     modDrag=null;_dragModuleId=null;drag=null;
-    // Re-encuadrar al soltar: si el módulo se arrastró lejos quedaría fuera de cámara
-    renderControls();refresh(true);
+    // Re-encuadrar al soltar SOLO si se movió: si se arrastró lejos quedaría fuera
+    // de cámara; un simple tap sobre el módulo activo no debe saltar la vista.
+    renderControls();refresh(!!didMove);
     return;
   }
   if(drag&&!drag.moved){
@@ -1768,8 +1868,9 @@ canvas.addEventListener('touchend',()=>{pinch=null;});
 function frameView(){
   let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,maxY=0;
   for(const m of state.modules){
-    minX=Math.min(minX,m.px);maxX=Math.max(maxX,m.px+m.w);
-    minZ=Math.min(minZ,m.pz);maxZ=Math.max(maxZ,m.pz+m.l);
+    const bb=modAABB(m);
+    minX=Math.min(minX,bb.x0);maxX=Math.max(maxX,bb.x1);
+    minZ=Math.min(minZ,bb.z0);maxZ=Math.max(maxZ,bb.z1);
     let extra=0;
     if(m.roof==='arch') extra=m.w/2;
     else if(m.roof==='monitor') extra=m.rise*1.6;
@@ -1796,6 +1897,8 @@ document.querySelector('.tab-bar').addEventListener('click',e=>{
 /* ====================== GLOBAL REFRESH ====================== */
 function refresh(reframe){
   buildGeometry();rebuildZoneAreas();cleanSelection();
+  // Si el módulo activo (modo mover) fue eliminado, cerrar la barra de rotación
+  if(_activeModuleId!=null&&!state.modules.some(m=>m.id===_activeModuleId)) setActiveModule(null);
   if(reframe)frameView();
   renderResults();renderZones();updateBadges();updateSelPanel();draw();
 }
@@ -1819,6 +1922,9 @@ document.getElementById('lblBtn').addEventListener('click',e=>{
   state.showLabels=!state.showLabels;e.currentTarget.classList.toggle('on',state.showLabels);draw();
 });
 document.getElementById('clearSelBtn').addEventListener('click',clearSelection);
+document.getElementById('mtRotL').addEventListener('click',()=>rotateActive(-1));
+document.getElementById('mtRotR').addEventListener('click',()=>rotateActive(1));
+document.getElementById('mtDone').addEventListener('click',()=>setActiveModule(null));
 document.getElementById('confirmZoneBtn').addEventListener('click',confirmSaveZone);
 document.getElementById('cancelZoneBtn').addEventListener('click',hideSaveForm);
 document.getElementById('zoneNameInp').addEventListener('keydown',e=>{

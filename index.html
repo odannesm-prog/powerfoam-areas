@@ -631,6 +631,11 @@ const I18N={
   arch:{en:'Arch / Quonset',es:'Arco / Quonset'},
   wallHeight:{en:'Wall height (0 = Q-Model)',es:'Altura muro (0 = Q-Model)'},
   archPeak:{en:'Peak height',es:'Altura máxima'},
+  archRise:{en:'Arch rise',es:'Altura del arco'},
+  archRiseHint:{en:'Vertical distance from eave to peak, measured on site. Leave = width/2 for a true semicircle; smaller = flatter segmental arch.',es:'Distancia vertical del alero al pico, medida en sitio. Déjalo = ancho/2 para semicírculo; menor = arco segmental más plano.'},
+  corrArchLabel:{en:'Arch corrugation (%)',es:'Corrugado del arco (%)'},
+  corrWallLabel:{en:'Walls corrugation (%)',es:'Corrugado muros/hastiales (%)'},
+  corrWallHint:{en:'Separate factor for end walls & side walls — they are usually flat corrugated sheet (~12%) or smooth (0%), not the deep Quonset profile.',es:'Factor aparte para hastiales y muros laterales — suelen ser lámina corrugada plana (~12%) o lisa (0%), no el perfil profundo Quonset.'},
   archNote:{en:'Arch radius = Width ÷ 2',es:'Radio del arco = Ancho ÷ 2'},
   singleslope:{en:'Single Slope',es:'Pendiente Única'},
   hip:{en:'Hip Roof',es:'Cuatro Aguas'},
@@ -880,6 +885,15 @@ function modAABB(m,px,pz){
 }
 
 const N_ARCH=12;
+/* ---- Arco circular segmental: cuerda w, subida f (archRise; vacío/0 = semicírculo w/2).
+   R = w²/8f + f/2, medio ángulo α = asin((w/2)/R), desarrollo = 2αR.
+   Con f = w/2 se reduce exactamente al semicírculo actual (R=w/2, α=π/2). ---- */
+function archGeom(m){
+  const f=(m.archRise&&m.archRise>0)?Math.min(m.archRise,m.w/2):m.w/2;
+  const R=(m.w*m.w)/(8*f)+f/2;
+  const alpha=Math.asin(Math.min(1,(m.w/2)/R));
+  return {f,R,alpha,arc:2*alpha*R,cy:m.h+f-R};
+}
 function buildGeometry(){
   const faces=[];
   for(let mi=0;mi<state.modules.length;mi++){
@@ -888,7 +902,10 @@ function buildGeometry(){
     const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
     const add=(key,name,cat,verts,areaOvr)=>{
       verts=verts.map(v=>modRotPt(m,v)); // rotación del módulo (isometría: no altera áreas)
-      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,corrPct:m.corrPct||0,
+      // En módulos arch el corrugado profundo aplica solo al arco; muros/hastiales
+      // llevan su propio % (corrWallPct, default 0 — suelen ser lámina plana)
+      const cp=(m.roof==='arch'&&cat!=='roof')?(m.corrWallPct||0):(m.corrPct||0);
+      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,corrPct:cp,
                   verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
     };
     add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
@@ -1015,16 +1032,16 @@ function buildGeometry(){
       add('wW','West Side Wall','wall',[...topW,[x0,y0,z1],[x0,y0,z0]]);
       add('wE','East Side Wall','wall',[[x1,y0,z0],[x1,y0,z1],...topE.slice().reverse()]);
     }else if(m.roof==='arch'){
-      // Arch / Quonset — semicircular cross-section
-      // r = arch radius = width/2; yb = side wall height (0 = Q-Model, >0 = S-Model)
-      const r=m.w/2, yb=m.h;
-      // Arch panels: N_ARCH flat quads approximating the curved surface
-      // Area override = exact analytical value: π·r·L / N per panel
-      const panelExactArea=(Math.PI*r/N_ARCH)*m.l;
+      // Arch / Quonset — arco circular segmental (semicírculo si archRise vacío)
+      // yb = altura muro lateral (0 = Q-Model, >0 = S-Model)
+      const yb=m.h;
+      const {R,alpha,arc,cy}=archGeom(m);
+      // punto i del arco (i=0 alero este → i=N alero oeste), mismo orden que antes
+      const aPt=i=>{const φ=alpha-2*alpha*i/N_ARCH;return [xc+R*Math.sin(φ),cy+R*Math.cos(φ)];};
+      // Área override exacta: desarrollo 2αR × largo, repartido entre N paneles
+      const panelExactArea=(arc/N_ARCH)*m.l;
       for(let i=0;i<N_ARCH;i++){
-        const θ1=Math.PI*i/N_ARCH, θ2=Math.PI*(i+1)/N_ARCH;
-        const ax1=xc+r*Math.cos(θ1),ay1=yb+r*Math.sin(θ1);
-        const ax2=xc+r*Math.cos(θ2),ay2=yb+r*Math.sin(θ2);
+        const [ax1,ay1]=aPt(i),[ax2,ay2]=aPt(i+1);
         add('arch_'+i,'Arch Panel '+(i+1),'roof',
           [[ax1,ay1,z0],[ax2,ay2,z0],[ax2,ay2,z1],[ax1,ay1,z1]],panelExactArea);
       }
@@ -1033,19 +1050,19 @@ function buildGeometry(){
         add('wE','East Side Wall','wall',quad([x1,y0,z0],[x1,y0,z1],[x1,yb,z1],[x1,yb,z0]));
         add('wW','West Side Wall','wall',quad([x0,y0,z0],[x0,y0,z1],[x0,yb,z1],[x0,yb,z0]));
       }
-      // End walls — exact area: π·r²/2 + optional rect w·h
-      const endExact=Math.PI*r*r/2+(yb>0.01?m.w*yb:0);
+      // End walls — área exacta: segmento circular (R²/2)(2α−sin2α) + rect opcional w·h
+      const endExact=(R*R/2)*(2*alpha-Math.sin(2*alpha))+(yb>0.01?m.w*yb:0);
       // North end wall (z=z0): arch from i=0 (right/east) to i=N_ARCH (left/west)
-      // For Q-model: just the semicircle closes along the bottom
+      // For Q-model: just the arch closes along the bottom
       // For S-model: two bottom points first, then arch over, closes down the left side
       const nv=[];
       if(yb>0.01) nv.push([x0,y0,z0],[x1,y0,z0]);
-      for(let i=0;i<=N_ARCH;i++) nv.push([xc+r*Math.cos(Math.PI*i/N_ARCH),yb+r*Math.sin(Math.PI*i/N_ARCH),z0]);
+      for(let i=0;i<=N_ARCH;i++){const [ax,ay]=aPt(i);nv.push([ax,ay,z0]);}
       add('wN','North End Wall','wall',nv,endExact);
       // South end wall (z=z1): reversed winding so normal faces outward (+z)
       const sv=[];
       if(yb>0.01) sv.push([x1,y0,z1],[x0,y0,z1]);
-      for(let i=N_ARCH;i>=0;i--) sv.push([xc+r*Math.cos(Math.PI*i/N_ARCH),yb+r*Math.sin(Math.PI*i/N_ARCH),z1]);
+      for(let i=N_ARCH;i>=0;i--){const [ax,ay]=aPt(i);sv.push([ax,ay,z1]);}
       add('wS','South End Wall','wall',sv,endExact);
     }
   }
@@ -1225,12 +1242,15 @@ function renderControls(){
               <option value="sawtooth" ${m.roof==='sawtooth'?'selected':''}>${t('sawtooth')}</option>
               <option value="arch" ${m.roof==='arch'?'selected':''}>${t('arch')}</option>
             </select></div>
-          <div class="field" title="${t('corrPctHint')}"><label>${t('corrPctLabel')}</label><input type="number" step="1" min="0" value="${m.corrPct||0}" data-i="${i}" data-k="corrPct"></div>
+          <div class="field" title="${t('corrPctHint')}"><label>${m.roof==='arch'?t('corrArchLabel'):t('corrPctLabel')}</label><input type="number" step="1" min="0" value="${m.corrPct||0}" data-i="${i}" data-k="corrPct"></div>
+          <div class="field" style="${m.roof==='arch'?'':'display:none'}" title="${t('corrWallHint')}"><label>${t('corrWallLabel')}</label><input type="number" step="1" min="0" value="${m.corrWallPct||0}" data-i="${i}" data-k="corrWallPct"></div>
           <div class="field" style="${['gable','singleslope','hip','gambrel','monitor','sawtooth'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
             <label>${['singleslope','hip','sawtooth'].includes(m.roof)?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
+          <div class="field" style="${m.roof==='arch'?'':'display:none'}" title="${t('archRiseHint')}">
+            <label>${t('archRise')} (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(archGeom(m).f).toFixed(2)}" data-i="${i}" data-k="archRise"></div>
           <div class="field" style="${m.roof==='arch'?'':'display:none'}" data-archpeak="${i}">
             <label>${t('archPeak')} (${ULIN()})</label>
-            <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--muted);font-family:monospace">${L2D(m.h+m.w/2).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(r=${L2D(m.w/2).toFixed(2)})</span></div>
+            <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--muted);font-family:monospace">${L2D(m.h+archGeom(m).f).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(R=${L2D(archGeom(m).R).toFixed(2)})</span></div>
           </div>
           <div class="field"><label>${t('openings')} (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
           <div class="field"><label>${t('posX')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
@@ -1250,8 +1270,14 @@ function renderControls(){
       }
       else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
       else if(k==='corrPct'){m.corrPct=Math.max(0,+inp.value||0);refresh(false);}
-      else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);}
-      else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);}
+      else if(k==='corrWallPct'){m.corrWallPct=Math.max(0,+inp.value||0);refresh(false);}
+      else if(k==='archRise'){
+        const v=D2L(+inp.value);
+        m.archRise=v>0?v:0; // 0/vacío = semicírculo; archGeom clampa a w/2
+        refresh(false);updateArchPeak(i);
+      }
+      else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);updateArchPeak(i);}
+      else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);if(k==='w')updateArchPeak(i);}
     }
     inp.addEventListener('input',handleChange);
     inp.addEventListener('change',handleChange);
@@ -1263,6 +1289,15 @@ function renderControls(){
       renderControls();refresh(true);
     });
   });
+}
+// Refresca en vivo el display read-only "Altura máxima (R=...)" de un módulo arch
+function updateArchPeak(i){
+  const m=state.modules[i];
+  if(!m||m.roof!=='arch')return;
+  const box=elModules.querySelector(`[data-archpeak="${i}"] div`);
+  if(!box)return;
+  const g=archGeom(m);
+  box.innerHTML=`${L2D(m.h+g.f).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(R=${L2D(g.R).toFixed(2)})</span>`;
 }
 function updateBadges(){
   const T=totals();
@@ -1431,7 +1466,7 @@ function draw(){
   const modCen=new Map();
   for(const m of state.modules){
     let top=m.h;
-    if(m.roof==='arch') top=m.h+m.w/2;
+    if(m.roof==='arch') top=m.h+archGeom(m).f;
     else if(m.roof==='monitor') top=m.h+m.rise*1.6;
     else if(['gable','singleslope','hip','gambrel','sawtooth'].includes(m.roof)) top=m.h+m.rise;
     modCen.set(m.id,[m.px+m.w/2,top/2,m.pz+m.l/2]);
@@ -1685,8 +1720,8 @@ function drawDims(B){
       D([xc,y1,z1],[xc,yr,z1],[od*.7,0,od*.7],lbl(m.rise)+' ridge');
     }
     if(m.roof==='arch'){
-      const xc=(x0+x1)/2, r=m.w/2, yr=m.h+r;
-      D([xc,m.h,z1],[xc,yr,z1],[od*.7,0,od*.7],'r='+lbl(r));
+      const xc=(x0+x1)/2, f=archGeom(m).f;
+      D([xc,m.h,z1],[xc,m.h+f,z1],[od*.7,0,od*.7],lbl(f)+' arc');
     }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      ".git/**",
+      "**/.*",
+      "**/.*/**",
+      "**/node_modules/**",
+      "powerfoam-atl-skill/**",
+      "CNAME"
+    ],
+    "headers": [
+      { "source": "**/*.@(jpg|png|webp|pdf)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=604800" } ] },
+      { "source": "**/*.html", "headers": [ { "key": "Cache-Control", "value": "no-cache" } ] },
+      { "source": "**", "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
+      ] }
+    ]
+  }
+}

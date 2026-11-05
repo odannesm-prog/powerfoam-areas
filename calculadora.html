@@ -1,0 +1,2672 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1220">
+<title>Power Foam ATL · 3D Areas</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0b1220; --panel:#111c30; --panel2:#16233c; --line:#243450;
+    --text:#e6edf7; --muted:#93a3bd; --accent:#ffb547; --accent2:#4f9cff;
+    --green:#3ecf8e; --red:#ff6b6b; --radius:12px;
+    --wall:#c9d4e0; --roof:#5b7fa6; --floor:#8a93a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
+  header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#2e86de,#1a6abf);border-bottom:1px solid var(--line);flex-shrink:0;}
+  header .logo-wrap{height:64px;background:transparent;border-radius:11px;padding:5px 8px;display:flex;align-items:center;flex-shrink:0}
+  header .logo-wrap img{height:54px;width:auto;display:block}
+  header .brand{display:flex;flex-direction:column;gap:1px}
+  header h1{font-size:32px;font-weight:800;letter-spacing:.3px;color:#FFC400;text-shadow:0 1px 8px rgba(255,196,0,.3)}
+  header p{font-size:14px;color:var(--muted);margin-top:2px}
+  header .spacer{flex:1}
+  .unit-toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .unit-toggle button{background:none;border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;}
+  .unit-toggle button.active{background:var(--accent);color:#1a1300}
+  .lang-toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lang-toggle button{background:none;border:none;color:var(--muted);padding:8px 12px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;transition:.15s;}
+  .lang-toggle button.active{background:var(--accent2);color:#fff}
+  .help-btn{background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--muted);width:37px;height:37px;align-self:center;font-size:16px;font-weight:800;cursor:pointer;transition:.15s;flex-shrink:0}
+  .help-btn:hover{color:var(--accent);border-color:var(--accent)}
+  .main{display:flex;flex:1;min-height:0}
+
+  /* ---- Left controls ---- */
+  .controls{width:340px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .controls .head{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .controls .head h2{font-size:14px;font-weight:700;flex:1}
+  .btn{border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px;padding:9px 13px;transition:transform .08s ease,filter .08s ease;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
+  .btn-accent{background:var(--accent);color:#1a1300}
+  .btn-accent:hover{filter:brightness(1.08)}
+  .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{background:#1d2c47}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  /* Universal "pressed" feedback so any tap/click visibly registers — toggled via JS (mousedown/touchstart), not bare :active, to work reliably on mobile Safari */
+  button,.icon-btn,.zone-del,.del,.cl-item{-webkit-tap-highlight-color:transparent;transition:transform .08s ease,filter .08s ease}
+  button.pressed,.icon-btn.pressed,.zone-del.pressed,.del.pressed,.cl-item.pressed{transform:scale(0.93);filter:brightness(0.85)}
+  tr.face.pressed td{background:#1c3050!important}
+  .mod-row.pressed{background:#1c3050}
+  .modules{flex:1;overflow-y:auto;padding:12px}
+  .modules::-webkit-scrollbar{width:9px}
+  .modules::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+  .card .card-head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#15243f;border-bottom:1px solid var(--line);}
+  .card .swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  .card .card-head input.name{background:none;border:none;color:var(--text);font-weight:700;font-size:13px;flex:1;outline:none;min-width:0;}
+  .card .card-head .area-badge{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
+  .card .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 4px}
+  .card .del:hover{color:var(--red)}
+  .card-body{padding:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .field input,.field select{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:7px 9px;font-size:13px;outline:none;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--accent2)}
+  .field.full{grid-column:1/-1}
+  .hint{font-size:11px;color:var(--muted);padding:0 12px 12px;text-align:center;line-height:1.4}
+
+  /* ---- Project info (client + address) ---- */
+  .proj-info{padding:12px 12px 0;display:flex;flex-direction:column;gap:9px}
+  .proj-info .field input{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;outline:none;width:100%}
+  .proj-info .field input:focus{border-color:var(--accent2)}
+  .addr-row{display:flex;gap:6px;align-items:stretch}
+  .addr-row input{flex:1;min-width:0}
+  .icon-btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:pointer;font-size:16px;width:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .icon-btn:hover{background:#1d2c47;border-color:var(--accent2)}
+  .icon-btn.locating{opacity:.55;pointer-events:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .icon-btn.locating{animation:pulse 1s ease-in-out infinite}
+  .icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .client-row{display:flex;gap:6px;align-items:stretch}
+  .client-row input{flex:1;min-width:0}
+  .client-id{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:5px}
+  .client-id b{color:var(--accent2);font-family:monospace;font-weight:700;letter-spacing:.3px}
+
+  /* ---- Share sheet ---- */
+  .share-sheet{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(4,8,16,.6);backdrop-filter:blur(3px)}
+  .share-sheet.open{display:flex}
+  .share-sheet .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:calc(100% - 32px);max-width:380px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .share-sheet .sheet h3{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .share-opt{display:flex;align-items:center;gap:13px;padding:13px 12px;border-radius:11px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-weight:600;width:100%;margin-bottom:9px;transition:.15s;text-align:left}
+  .share-opt:hover{background:#1d2c47;border-color:var(--accent2)}
+  .share-opt .si{font-size:21px;line-height:1;width:26px;text-align:center;flex-shrink:0}
+  .share-opt small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
+  .share-cancel{width:100%;text-align:center;padding:12px;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;margin-top:2px}
+  .share-cancel:hover{color:var(--text)}
+
+  /* ---- Center 3D ---- */
+  .viewport{flex:1;position:relative;min-width:0;background:radial-gradient(circle at 50% 30%,#16223b,#090f1c)}
+  #scene{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+  #scene:active{cursor:grabbing}
+  .overlay{position:absolute;pointer-events:none;font-size:11.5px;color:var(--muted)}
+  .overlay.tl{top:58px;left:14px;line-height:1.7}
+  .overlay.tl b{color:var(--text)}
+  .view-tools{position:absolute;top:12px;right:14px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+  .view-tools button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(17,28,48,.85);color:var(--text);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .view-tools button:hover{background:rgba(36,52,80,.9)}
+  .view-tools button.on{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+
+  /* ---- Module move/rotate toolbar (visible mientras un módulo está en modo mover) ---- */
+  .mod-tools{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(17,28,48,.92);border:1px solid #4f9cff;border-radius:12px;padding:7px 10px;z-index:7;backdrop-filter:blur(6px);pointer-events:auto}
+  .mod-tools .mt-name{font-size:12px;font-weight:700;color:#8ec4ff;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mod-tools button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .mod-tools button:hover{background:#1d2c47}
+  .mod-tools #mtDone{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+
+  /* ---- Selection panel (floating) ---- */
+  .sel-panel{position:absolute;bottom:54px;left:14px;background:rgba(11,18,32,.95);border:1px solid var(--line);border-radius:12px;padding:13px 15px;backdrop-filter:blur(8px);min-width:220px;display:none;pointer-events:auto;}
+  .sel-panel .sp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .sel-panel .sp-count{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;flex:1}
+  .sel-panel .sp-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:6px}
+  .sel-panel .sp-clear:hover{color:var(--red);background:rgba(255,107,107,.1)}
+  .sel-panel .sp-area{font-size:24px;font-weight:800;color:var(--accent);margin-bottom:10px;line-height:1.1}
+  .sel-panel .sp-area small{font-size:13px;font-weight:600;color:var(--muted)}
+  .zone-name-inp{width:100%;background:var(--bg);border:1px solid var(--accent);border-radius:8px;color:var(--text);padding:7px 9px;font-size:13px;outline:none;margin-bottom:6px;}
+  .save-zone-form{margin-top:4px;display:none}
+  .save-zone-form .sf-btns{display:flex;gap:6px}
+
+  .legend{position:absolute;bottom:14px;right:14px;display:flex;gap:14px;background:rgba(11,18,32,.8);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:11.5px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* ---- Right results ---- */
+  .results{width:340px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .results .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .results .head h2{font-size:14px;font-weight:700;flex:1}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;flex-shrink:0}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+  .stat .lbl{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:5px}
+  .stat .lbl i{width:9px;height:9px;border-radius:2px}
+  .stat .val{font-size:21px;font-weight:800;margin-top:5px}
+  .stat .val small{font-size:12px;color:var(--muted);font-weight:600}
+  .stat.total{grid-column:1/-1;background:linear-gradient(135deg,#1a2c4a,#16233c);border-color:#2c4368}
+  .stat.total .val{color:var(--accent);font-size:26px}
+
+  /* Tabs */
+  .tab-bar{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
+  .tab-btn{flex:1;background:none;border:none;color:var(--muted);padding:9px 4px;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+  .tab-content{display:none;flex:1;min-height:0;flex-direction:column}
+  .tab-content.active{display:flex}
+
+  /* Breakdown tab */
+  .breakdown{flex:1;overflow-y:auto;padding:0 14px 14px}
+  .breakdown::-webkit-scrollbar{width:9px}
+  .breakdown::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  table th{text-align:left;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  table th.r,table td.r{text-align:right}
+  table td{padding:6px 4px;border-bottom:1px solid #1a2740}
+  tr.mod-row td{background:#15243f;font-weight:700;color:var(--accent2)}
+  tr.sub td{font-weight:700;color:var(--text)}
+  tr.sel td{background:rgba(255,181,71,.12)}
+  tr.face:hover td{background:#15243f;cursor:pointer}
+  .face .tag{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .zdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:4px;vertical-align:middle}
+
+  /* Zones tab */
+  .zones-wrap{flex:1;overflow-y:auto;padding:12px 14px}
+  .zones-wrap::-webkit-scrollbar{width:9px}
+  .zones-wrap::-webkit-scrollbar-thumb{background:#243450;border-radius:8px}
+  .zones-hint{font-size:12px;color:var(--muted);text-align:center;padding:24px 12px;line-height:1.6}
+  .zones-hint b{color:var(--text);display:block;margin-bottom:4px}
+  .zone-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;border:1px solid transparent;margin-bottom:6px;background:var(--panel2);transition:.15s;}
+  .zone-row:hover{border-color:var(--line);background:#1a2b46}
+  .zone-row.z-active{border-color:rgba(255,181,71,.45);background:rgba(255,181,71,.07)}
+  .zone-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .zone-name-edit{flex:1;font-size:13px;font-weight:600;background:none;border:none;color:var(--text);outline:none;min-width:0;cursor:text}
+  .zone-area{font-size:12.5px;font-weight:700;color:var(--accent);white-space:nowrap}
+  .zone-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:5px}
+  .zone-del:hover{color:var(--red);background:rgba(255,107,107,.1)}
+  .zone-count-badge{background:#1d3055;border:1px solid var(--line);border-radius:20px;padding:2px 8px;font-size:11px;color:var(--accent2);font-weight:700;margin-left:4px}
+  .zones-header{display:flex;align-items:center;gap:6px;padding:2px 0 10px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+
+  .export-row{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+  .export-row .btn{flex:1;justify-content:center}
+
+  /* ---- Simplified results panel ---- */
+  .res-client{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+  .res-client .rc-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .res-client .rc-id{font-size:11.5px;color:var(--accent2);font-family:monospace;font-weight:700;letter-spacing:.3px;margin-bottom:3px}
+  .res-client .rc-addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .res-total-block{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:28px 20px;text-align:center}
+  .res-total-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;font-weight:700}
+  .res-total-val{font-size:54px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:4px}
+  .res-total-unit{font-size:18px;color:var(--muted);font-weight:600;margin-bottom:18px}
+  .res-sub-stats{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center}
+  .res-sub-stats span{font-size:12px;color:var(--muted)}
+  .res-sub-stats span b{color:var(--text);font-weight:700}
+
+  /* Cloud sync UI */
+  .rc-actions{display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .cloud-ind{font-size:11px;font-weight:600;margin-left:auto}
+  .cloud-ind.ok{color:var(--green)}
+  .cloud-ind.err{color:var(--red)}
+  .cl-item{display:flex;flex-direction:column;gap:3px;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:.15s}
+  .cl-item:hover{border-color:var(--accent2);background:#1a2b46}
+  .cl-item .cli-name{font-weight:700;font-size:14px;color:var(--text)}
+  .cl-item .cli-id{font-size:11px;color:var(--accent2);font-family:monospace;font-weight:700}
+  .cl-item .cli-meta{font-size:11.5px;color:var(--muted)}
+  .cl-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;line-height:1.7}
+  .cloud-cfg-instr{font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:12px}
+  .cloud-cfg-instr b{color:var(--text)}
+
+  /* Account / auth UI */
+  .acct-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+  .acct-status{flex:1;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .auth-input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13.5px;padding:10px 12px;margin-bottom:9px;outline:none;box-sizing:border-box}
+  .auth-input:focus{border-color:var(--accent2)}
+  .auth-err{color:var(--red);font-size:12.5px;margin:-3px 0 10px;line-height:1.5}
+  .auth-link{text-align:center;font-size:12.5px;color:var(--accent2);cursor:pointer;padding:8px 0 0;text-decoration:underline}
+  .auth-signed-email{text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;word-break:break-all}
+  .cli-detail-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px}
+  .cli-detail-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .cli-detail-row b{color:var(--text);font-size:13.5px}
+  .cloud-cfg-instr code{font-family:monospace;color:var(--accent2);font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:4px}
+  #firebaseCfgInput{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:monospace;font-size:11.5px;padding:10px;resize:vertical;min-height:120px;margin-bottom:10px}
+  @media (max-width:1200px){.results{width:300px}.controls{width:300px}}
+
+  /* ============ MOBILE NAV — siempre visible, oculto solo en desktop ============ */
+  .mob-hint{display:none}
+  .mobile-nav{
+    display:flex;background:var(--panel);
+    border-top:2px solid var(--line);flex-shrink:0;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mobile-nav button{
+    flex:1;padding:11px 4px 9px;background:none;border:none;
+    color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    transition:color .15s;letter-spacing:.3px;
+  }
+  .mobile-nav button .ico{font-size:24px;line-height:1}
+  .mobile-nav button.active{color:var(--accent)}
+  .mobile-nav button.active .ico{filter:drop-shadow(0 0 5px rgba(255,181,71,.5))}
+
+  /* Ocultar en desktop y restaurar layout */
+  @media(min-width:1025px){
+    .mobile-nav{display:none}
+  }
+
+  /* ============ MOBILE LAYOUT (≤1024px) ============ */
+  @media(max-width:1024px){
+    /* ---- Header ---- */
+    header{padding:7px 12px;gap:10px;flex-wrap:nowrap;min-height:0}
+    header .logo-wrap{height:48px;padding:6px 8px;flex-shrink:0;background:transparent !important;border-radius:10px;box-shadow:none}
+    header .logo-wrap img{height:36px;display:block;background:transparent}
+    header .brand{display:none}
+    .unit-toggle{border-radius:9px}
+    .unit-toggle button{width:40px;height:36px;padding:0;font-size:0;display:flex;align-items:center;justify-content:center}
+    .unit-toggle button::after{font-size:13px;font-weight:800}
+    .unit-toggle button[data-u="m"]::after{content:"m"}
+    .unit-toggle button[data-u="ft"]::after{content:"ft"}
+    .help-btn{width:36px;height:36px;align-self:center;font-size:14px;border-radius:9px}
+
+    /* ---- Layout ---- */
+    .main{flex-direction:column;position:relative;overflow:hidden}
+    .controls,.results{
+      position:absolute;inset:0;width:100%;height:100%;
+      z-index:20;border:none;border-radius:0;
+      transform:translateX(-110%);transition:transform .22s cubic-bezier(.4,0,.2,1);
+    }
+    .results{transform:translateX(110%)}
+    .controls.mob-open{transform:translateX(0)}
+    .results.mob-open{transform:translateX(0)}
+    .viewport{flex:1;width:100%;height:100%}
+
+    /* ---- Controls panel ---- */
+    .controls .head{padding:14px 16px 12px}
+    .controls .head h2{font-size:16px}
+    .btn{min-height:46px;font-size:14px;padding:10px 16px}
+    .btn-sm{min-height:38px;font-size:13px;padding:8px 12px}
+    .card-body{padding:16px}
+    .grid2{gap:12px}
+    .field label{font-size:12px;letter-spacing:.2px}
+    .field input,.field select{min-height:48px;font-size:16px;padding:12px 14px;border-radius:10px}
+    .card .card-head{padding:14px 14px}
+    .card .del{width:40px;height:40px;font-size:20px;display:flex;align-items:center;justify-content:center}
+    .hint{font-size:12px;padding:12px 16px 16px}
+
+    /* ---- Results panel ---- */
+    .results .head{padding:14px 16px}
+    .stats{padding:14px;gap:12px}
+    .stat{padding:14px}
+    .stat .val{font-size:24px}
+    .stat.total .val{font-size:28px}
+    .tab-btn{padding:12px 4px;font-size:13px}
+    table{font-size:13px}
+    table th{font-size:11px;padding:8px 4px}
+    table td{padding:8px 4px}
+    .export-row{padding:14px 16px;gap:10px}
+
+    /* ---- Zone list ---- */
+    .zone-row{padding:9px 10px}
+    .zone-area{font-size:13px}
+
+    /* ---- 3D view ---- */
+    .view-tools{top:10px;right:10px;gap:6px}
+    .view-tools button{width:48px;height:48px;font-size:20px;border-radius:12px}
+    .mod-tools button{width:46px;height:46px;font-size:20px}
+    .overlay.tl{display:none}
+    .mob-hint{
+      display:block;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+      background:rgba(11,18,32,.75);border:1px solid var(--line);border-radius:20px;
+      padding:6px 14px;font-size:11.5px;color:var(--muted);white-space:nowrap;
+      pointer-events:none;backdrop-filter:blur(4px);
+    }
+
+    /* ---- Selection panel ---- */
+    .sel-panel{bottom:76px;left:8px;right:8px;min-width:0;padding:14px 16px}
+    .sel-panel .sp-area{font-size:28px}
+    .legend{bottom:76px;right:8px;padding:7px 10px;font-size:11px;gap:10px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-wrap" style="background:transparent;border-radius:10px;padding:5px 8px;box-shadow:none">
+    <img src="data:image/png;base64,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gEH+1qPYVxixExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsBMQAAAAwE5AAAAAADsBAQAAAOwEBAAAALATEAAAAMBOQAAAAAA7AQEAAADsBAQAAACwExAAAADATkAAAAAAOwEBAAAA7AQEAAAAsAtXnOzDshNX/AAAAABJRU5ErkJggg==" alt="Power Foam ATL">
+  </div>
+  <div class="brand">
+    <h1>Power Foam ATL</h1>
+    <p data-i18n="subtitle">3D Area Calculator · Spray Foam</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="unit-toggle" id="unitToggle">
+    <button data-u="m" data-i18n="unitM">meters (m)</button>
+    <button data-u="ft" class="active" data-i18n="unitFt">feet (ft)</button>
+  </div>
+  <div class="lang-toggle" id="langToggle" title="Language / Idioma">
+    <button data-lang="en">EN</button>
+    <button data-lang="es">ES</button>
+  </div>
+  <button class="help-btn" id="helpBtn" data-i18n-title="helpTitle" title="Quick Start Guide (PDF)">?</button>
+</header>
+
+<div class="main">
+  <!-- Controls -->
+  <aside class="controls">
+    <div class="head">
+      <h2 data-i18n="buildingModules">Building Modules</h2>
+      <button class="btn btn-accent" id="addBtn" data-i18n="addBtn">＋ Add</button>
+    </div>
+    <div class="proj-info">
+      <div class="field">
+        <label data-i18n="client">Client</label>
+        <div class="client-row">
+          <input id="projClient" data-i18n-ph="clientPh" placeholder="Client name" maxlength="80" autocomplete="off">
+          <button class="icon-btn danger" id="clearClientBtn" data-i18n-title="clearClientTitle" title="Clear client">🗑</button>
+        </div>
+        <div class="client-id" id="clientIdRow" style="display:none"><span data-i18n="clientId">Client ID</span>: <b id="clientIdVal"></b></div>
+      </div>
+      <div class="field">
+        <label data-i18n="address">Address</label>
+        <div class="addr-row">
+          <input id="projAddr" data-i18n-ph="addressPh" placeholder="Project address" maxlength="200" autocomplete="off">
+          <button class="icon-btn" id="gpsBtn" data-i18n-title="gpsTitle" title="Capture from GPS">📍</button>
+          <button class="icon-btn" id="mapBtn" data-i18n-title="mapTitle" title="Show in Google Maps">🗺️</button>
+        </div>
+      </div>
+    </div>
+    <div class="modules" id="modules"></div>
+    <div class="hint" data-i18n-html="hint">Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.</div>
+  </aside>
+
+  <!-- Viewport -->
+  <section class="viewport">
+    <canvas id="scene"></canvas>
+    <div class="overlay tl">
+      <div data-i18n-html="ovDrag"><b>Drag</b> to rotate · <b>scroll</b> to zoom</div>
+      <div data-i18n-html="ovClick"><b>Click</b> faces to select / deselect</div>
+    </div>
+    <div class="mob-hint" data-i18n="mobHint">Drag to rotate · Pinch to zoom · Tap faces</div>
+    <div class="view-tools">
+      <button id="resetView" data-i18n-title="tCenter" title="Center view">⌖</button>
+      <button id="zoomIn" data-i18n-title="tZoomIn" title="Zoom in">＋</button>
+      <button id="zoomOut" data-i18n-title="tZoomOut" title="Zoom out">－</button>
+      <button id="lblBtn" class="on" data-i18n-title="tLabels" title="Toggle area labels">#</button>
+    </div>
+
+    <!-- Barra del módulo activo (aparece al mantener presionado un módulo 2s) -->
+    <div class="mod-tools" id="modTools" style="display:none">
+      <span class="mt-name" id="mtName"></span>
+      <button id="mtRotL" data-i18n-title="rotCCW" title="Rotate 90° left">⟲</button>
+      <button id="mtRotR" data-i18n-title="rotCW" title="Rotate 90° right">⟳</button>
+      <button id="mtDone" data-i18n-title="doneBtn" title="Done">✓</button>
+    </div>
+
+    <!-- Floating selection panel -->
+    <div class="sel-panel" id="selPanel">
+      <div class="sp-row">
+        <span class="sp-count" id="spCount">0 faces</span>
+        <button class="sp-clear" id="clearSelBtn" data-i18n="clearBtn" data-i18n-title="tClearSel" title="Clear selection">✕ Clear</button>
+      </div>
+      <div class="sp-area" id="spArea">0.00 <small>ft²</small></div>
+      <div id="saveZoneForm" class="save-zone-form" style="display:none">
+        <input class="zone-name-inp" id="zoneNameInp" data-i18n-ph="zoneNamePh" placeholder="Zone name…" maxlength="40">
+        <div class="sf-btns">
+          <button class="btn btn-accent btn-sm" id="confirmZoneBtn" data-i18n="saveBtn" style="flex:1">✔ Save</button>
+          <button class="btn btn-ghost btn-sm" id="cancelZoneBtn">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--wall)"></i><span data-i18n="walls">Walls</span></span>
+      <span><i style="background:var(--roof)"></i><span data-i18n="roof">Roof</span></span>
+      <span><i style="background:var(--floor)"></i><span data-i18n="floor">Floor</span></span>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <aside class="results">
+    <!-- Account (sign in / signed-in email) + saved projects -->
+    <div class="acct-row" id="acctRow">
+      <span class="acct-status" id="acctStatus" data-i18n="notSignedIn">Not signed in</span>
+      <button class="btn btn-ghost btn-sm" id="newClientBtn" data-i18n-title="newClientTitle" title="Start a new client">➕</button>
+      <button class="btn btn-ghost btn-sm" id="clientListBtn">📋 <span data-i18n="clientsBtn">Clients</span></button>
+      <button class="btn btn-ghost btn-sm" id="accountBtn">👤 <span data-i18n="accountBtn">Sign in</span></button>
+    </div>
+
+    <!-- Client card (hidden from Results per user request; JS refs kept so nothing errors — re-attach elsewhere to reuse) -->
+    <div class="res-client" id="resClient" style="display:none">
+      <div class="rc-name" id="rcName">—</div>
+      <div class="rc-id" id="rcId"></div>
+      <div class="rc-addr" id="rcAddr"></div>
+      <div class="rc-actions">
+        <button class="btn btn-ghost btn-sm" id="cloudSetupBtn">☁ <span data-i18n="cloudSetupBtn">Cloud</span></button>
+        <span class="cloud-ind" id="cloudInd"></span>
+      </div>
+    </div>
+
+    <!-- Total marked area -->
+    <div class="res-total-block">
+      <div class="res-total-lbl" id="resTotalLbl"></div>
+      <div class="res-total-val" id="resTotalVal">—</div>
+      <div class="res-total-unit" id="resTotalUnit">ft²</div>
+      <div class="res-sub-stats" id="resSubStats"></div>
+    </div>
+
+    <!-- Save + Share -->
+    <div class="export-row">
+      <button class="btn btn-ghost" id="saveResultsBtn" data-i18n="saveResultsBtn">💾 Save</button>
+      <button class="btn btn-accent" id="shareBtn" data-i18n="shareBtn">📤 Share</button>
+    </div>
+
+    <!-- Hidden compat: CSV/print still read state directly; these containers just need to exist -->
+    <div style="display:none" aria-hidden="true">
+      <div class="stats" id="stats"></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="sections"></button>
+        <button class="tab-btn" data-tab="zones"><span id="zoneTabBadge">0</span></button>
+      </div>
+      <div class="tab-content active" id="tab-sections">
+        <div class="breakdown"><table><thead><tr><th></th><th class="r"></th></tr></thead><tbody id="breakBody"></tbody></table></div>
+      </div>
+      <div class="tab-content" id="tab-zones">
+        <div class="zones-wrap" id="zonesWrap"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Auth (sign in / sign up / signed in) modal -->
+<div class="share-sheet" id="authSheet">
+  <div class="sheet">
+    <h3>👤 <span id="authTitle" data-i18n="signIn">Sign in</span></h3>
+    <div id="authSignedOutBox">
+      <input type="email" class="auth-input" id="authEmail" autocomplete="username" data-i18n-ph="email" placeholder="Email">
+      <input type="password" class="auth-input" id="authPassword" autocomplete="current-password" data-i18n-ph="password" placeholder="Password">
+      <div class="auth-err" id="authErr" style="display:none"></div>
+      <button class="btn btn-accent" id="authSubmitBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="signIn">Sign in</button>
+      <div class="auth-link" id="authToggleMode" data-i18n="needAccount">Don't have an account? Sign up</div>
+      <div class="auth-link" id="authForgotPw" data-i18n="forgotPassword">Forgot your password?</div>
+    </div>
+    <div id="authSignedInBox" style="display:none">
+      <div class="auth-signed-email" id="authUserEmail"></div>
+      <button class="btn btn-accent" id="authSignOutBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="signOut">Sign out</button>
+    </div>
+    <button class="share-cancel" id="authClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Cloud setup modal -->
+<div class="share-sheet" id="cloudSetupSheet">
+  <div class="sheet">
+    <h3>☁ <span data-i18n="cloudSetupTitle">Cloud Setup</span></h3>
+    <div class="cloud-cfg-instr" id="cloudCfgInstr"></div>
+    <textarea id="firebaseCfgInput" placeholder='{"apiKey":"...","projectId":"..."}'></textarea>
+    <button class="btn btn-accent" id="cloudConnectBtn" style="width:100%;justify-content:center;margin-bottom:9px" data-i18n="cloudConnect">Connect</button>
+    <button class="share-cancel" id="cloudSetupClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Client list modal -->
+<div class="share-sheet" id="clientListSheet">
+  <div class="sheet" style="max-height:85vh;display:flex;flex-direction:column;gap:0">
+    <h3 style="margin-bottom:10px">📋 <span data-i18n="clientsBtn">Clients</span></h3>
+    <input type="search" id="clientSearch" style="background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;padding:9px 12px;margin-bottom:10px;outline:none" data-i18n-ph="cloudSearchPh">
+    <div id="clientListBody" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <div id="clientDetailBody" style="display:none;flex:1;overflow-y:auto;min-height:0"></div>
+    <button class="share-cancel" id="clientListClose" data-i18n="cancel" style="margin-top:10px">Cancel</button>
+  </div>
+</div>
+
+<!-- GPS help modal -->
+<div class="share-sheet" id="gpsHelpSheet">
+  <div class="sheet">
+    <h3 id="gpsHelpTitle" style="margin-bottom:10px">📍</h3>
+    <div id="gpsHelpBody" style="font-size:13.5px;line-height:1.75;color:var(--muted);margin-bottom:16px"></div>
+    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-bottom:9px" id="gpsRetryBtn"></button>
+    <button class="share-cancel" id="gpsHelpClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- NFC write modal -->
+<div class="share-sheet" id="nfcSheet">
+  <div class="sheet" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:8px" id="nfcIcon">📡</div>
+    <h3 id="nfcSheetTitle" style="margin-bottom:8px;justify-content:center"></h3>
+    <p id="nfcSheetMsg" style="font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.6"></p>
+    <button class="share-cancel" id="nfcSheetClose" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Share sheet -->
+<div class="share-sheet" id="shareSheet">
+  <div class="sheet">
+    <h3>📤 <span data-i18n="shareTitle">Share results</span></h3>
+    <button class="share-opt" id="shOptNative" style="display:none"><span class="si">📱</span><span><span data-i18n="shareNative">Share…</span><small data-i18n="shareNativeSub">WhatsApp, Messages, Mail…</small></span></button>
+    <button class="share-opt" id="shOptWa"><span class="si">🟢</span><span>WhatsApp</span></button>
+    <button class="share-opt" id="shOptSms"><span class="si">💬</span><span data-i18n="shareSms">Message / SMS</span></button>
+    <button class="share-opt" id="shOptEmail"><span class="si">✉️</span><span data-i18n="shareEmail">Email</span></button>
+    <button class="share-opt" id="shOptNfc" style="display:none"><span class="si">📡</span><span><span data-i18n="shareNfc">NFC tag</span><small data-i18n="shareNfcSub">Tap a tag to write</small></span></button>
+    <button class="share-opt" id="shOptCsv"><span class="si">📊</span><span data-i18n="shareCsv">Download CSV</span></button>
+    <button class="share-opt" id="shOptCopy"><span class="si">📋</span><span data-i18n="shareCopy">Copy text</span></button>
+    <button class="share-cancel" id="shCancel" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
+<nav class="mobile-nav" id="mobileNav">
+  <button data-mob="building" class="active">
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polyline points="2,9 12,2 22,9"/><rect x="2" y="9" width="20" height="13"/><line x1="7" y1="9" x2="7" y2="22"/><line x1="17" y1="9" x2="17" y2="22"/><rect x="9" y="15" width="6" height="7"/></svg></span><span data-i18n="navBuilding">Building</span>
+  </button>
+  <button data-mob="canvas">
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><polygon points="12,2 21,7 12,12 3,7"/><polyline points="3,7 3,17 12,22 21,17 21,7"/><line x1="12" y1="12" x2="12" y2="22"/></svg></span><span data-i18n="nav3d">3D View</span>
+  </button>
+  <button data-mob="results">
+    <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="4" width="14" height="18" rx="2"/><rect x="9" y="2.5" width="6" height="3.4" rx="1"/><line x1="8.5" y1="11" x2="15.5" y2="11"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18" x2="13" y2="18"/></svg></span><span data-i18n="navResults">Results</span>
+  </button>
+</nav>
+
+<script>
+"use strict";
+/* ====================== I18N (EN / ES) ====================== */
+const I18N={
+  subtitle:{en:'3D Area Calculator · Spray Foam',es:'Calculadora de Áreas 3D · Spray Foam'},
+  unitM:{en:'meters (m)',es:'metros (m)'},
+  unitFt:{en:'feet (ft)',es:'pies (ft)'},
+  buildingModules:{en:'Building Modules',es:'Módulos del Edificio'},
+  addBtn:{en:'＋ Add',es:'＋ Agregar'},
+  hint:{en:'Each module is a rectangular volume. Use <b>X/Z position</b> to form L, T, or compound floor plans.',es:'Cada módulo es un volumen rectangular. Usa <b>posición X/Z</b> para formar plantas en L, T o compuestas.'},
+  ovDrag:{en:'<b>Drag</b> to rotate · <b>scroll</b> to zoom',es:'<b>Arrastra</b> para rotar · <b>scroll</b> para zoom'},
+  ovClick:{en:'<b>Click</b> faces to select / deselect',es:'<b>Clic</b> en caras para seleccionar / deseleccionar'},
+  mobHint:{en:'Drag to rotate · Pinch to zoom · Tap faces',es:'Arrastra para rotar · Pellizca para zoom · Toca caras'},
+  tCenter:{en:'Center view',es:'Centrar vista'},
+  tZoomIn:{en:'Zoom in',es:'Acercar'},
+  tZoomOut:{en:'Zoom out',es:'Alejar'},
+  tLabels:{en:'Toggle area labels',es:'Mostrar/ocultar etiquetas'},
+  tClearSel:{en:'Clear selection',es:'Limpiar selección'},
+  clearBtn:{en:'✕ Clear',es:'✕ Limpiar'},
+  zoneNamePh:{en:'Zone name…',es:'Nombre de zona…'},
+  saveBtn:{en:'✔ Save',es:'✔ Guardar'},
+  saveAsZoneBtn:{en:'＋ Save as Zone',es:'＋ Guardar como Zona'},
+  walls:{en:'Walls',es:'Muros'},
+  roof:{en:'Roof',es:'Techo'},
+  floor:{en:'Floor',es:'Piso'},
+  areaSummary:{en:'Area Summary',es:'Resumen de Áreas'},
+  sections:{en:'Sections',es:'Secciones'},
+  zones:{en:'Zones',es:'Zonas'},
+  section:{en:'Section',es:'Sección'},
+  area:{en:'Area',es:'Área'},
+  printBtn:{en:'🖨 Print',es:'🖨 Imprimir'},
+  navBuilding:{en:'Building',es:'Edificio'},
+  nav3d:{en:'3D View',es:'Vista 3D'},
+  navResults:{en:'Results',es:'Resultados'},
+  removeTitle:{en:'Remove',es:'Eliminar'},
+  width:{en:'Width',es:'Ancho'},
+  length:{en:'Length',es:'Largo'},
+  height:{en:'Height',es:'Alto'},
+  roofType:{en:'Roof type',es:'Tipo de techo'},
+  flat:{en:'Flat',es:'Plano'},
+  gabled:{en:'Gabled',es:'A dos aguas'},
+  ridgeHeight:{en:'Ridge height',es:'Altura de cumbrera'},
+  openings:{en:'Openings',es:'Aberturas'},
+  posX:{en:'Position X',es:'Posición X'},
+  posZ:{en:'Position Z',es:'Posición Z'},
+  module:{en:'Module',es:'Módulo'},
+  mainBody:{en:'Main Body',es:'Cuerpo Principal'},
+  zone:{en:'Zone',es:'Zona'},
+  faceSel1:{en:'face selected',es:'cara seleccionada'},
+  faceSelN:{en:'faces selected',es:'caras seleccionadas'},
+  wallsNet:{en:'Walls (net)',es:'Muros (neto)'},
+  openingsNeg:{en:'Openings (−)',es:'Aberturas (−)'},
+  totalSurface:{en:'Total surface area (walls + roof + floor)',es:'Área total de superficie (muros + techo + piso)'},
+  openingsDeducted:{en:'↳ Openings (deducted)',es:'↳ Aberturas (descontadas)'},
+  noZones:{en:'No saved zones',es:'Sin zonas guardadas'},
+  selectFacesHint:{en:'Select faces in the 3D view and press',es:'Selecciona caras en la vista 3D y presiona'},
+  savedZones:{en:'Saved Zones',es:'Zonas Guardadas'},
+  csvType:{en:'Type',es:'Tipo'},
+  zoneTotal:{en:'Zone total',es:'Total de zona'},
+  typeWall:{en:'Wall',es:'Muro'},
+  arch:{en:'Arch / Quonset',es:'Arco / Quonset'},
+  wallHeight:{en:'Wall height (0 = Q-Model)',es:'Altura muro (0 = Q-Model)'},
+  archPeak:{en:'Peak height',es:'Altura máxima'},
+  archRise:{en:'Arch rise',es:'Altura del arco'},
+  archRiseHint:{en:'Vertical distance from eave to peak, measured on site. Leave = width/2 for a true semicircle; smaller = flatter segmental arch.',es:'Distancia vertical del alero al pico, medida en sitio. Déjalo = ancho/2 para semicírculo; menor = arco segmental más plano.'},
+  corrArchLabel:{en:'Arch corrugation (%)',es:'Corrugado del arco (%)'},
+  corrWallLabel:{en:'Walls corrugation (%)',es:'Corrugado muros/hastiales (%)'},
+  corrWallHint:{en:'Separate factor for end walls & side walls — they are usually flat corrugated sheet (~12%) or smooth (0%), not the deep Quonset profile.',es:'Factor aparte para hastiales y muros laterales — suelen ser lámina corrugada plana (~12%) o lisa (0%), no el perfil profundo Quonset.'},
+  archNote:{en:'Arch radius = Width ÷ 2',es:'Radio del arco = Ancho ÷ 2'},
+  singleslope:{en:'Single Slope',es:'Pendiente Única'},
+  hip:{en:'Hip Roof',es:'Cuatro Aguas'},
+  gambrel:{en:'Gambrel',es:'Gambrel (Granero)'},
+  monitor:{en:'Monitor',es:'Monitor (Clerestory)'},
+  lowWallHt:{en:'Low wall height',es:'Altura muro bajo'},
+  highWallHt:{en:'High wall height',es:'Altura muro alto'},
+  rise:{en:'Rise',es:'Alzada'},
+  corrPctLabel:{en:'Corrugation factor (%)',es:'Factor de corrugado (%)'},
+  corrPctHint:{en:'Extra surface for corrugated panels — applies to walls & roof, not floor. Shown as ridges in the 3D view.',es:'Superficie extra por panel corrugado — aplica a muros y techo, no al piso. Se muestra como ondulado en la vista 3D.'},
+  sawtooth:{en:'Sawtooth',es:'Diente de Sierra'},
+  client:{en:'Client',es:'Cliente'},
+  clientPh:{en:'Client name',es:'Nombre del cliente'},
+  address:{en:'Address',es:'Dirección'},
+  addressPh:{en:'Project address',es:'Dirección del proyecto'},
+  gpsTitle:{en:'Capture address from GPS',es:'Capturar dirección desde GPS'},
+  mapTitle:{en:'Show in Google Maps',es:'Ver en Google Maps'},
+  gpsNoSupport:{en:'GPS is not available on this device',es:'GPS no disponible en este dispositivo'},
+  gpsDenied:{en:'Location permission denied',es:'Permiso de ubicación denegado'},
+  gpsError:{en:'Could not get location',es:'No se pudo obtener la ubicación'},
+  gpsTimeout:{en:'GPS timed out. Make sure Location Services are ON for Safari and try outdoors.',es:'El GPS tardó demasiado. Verifica que Localización esté activada para Safari e intenta al aire libre.'},
+  gpsInsecure:{en:'GPS needs a secure (https) connection',es:'El GPS requiere conexión segura (https)'},
+  gpsHelpDeniedTitle:{en:'Location Blocked',es:'Ubicación Bloqueada'},
+  gpsHelpDeniedIos:{en:'Safari doesn\'t have permission to access your location.<br><br><b>Option 1 — from Safari:</b><br>Tap the <b>aA</b> icon in the address bar → <b>Website Settings</b> → <b>Location → Allow</b><br><br><b>Option 2 — from Settings:</b><br>Settings → Privacy &amp; Security → Location Services → Safari → <b>While Using</b><br><br>Then come back and tap 📍 again.',es:'Safari no tiene permiso para acceder a tu ubicación.<br><br><b>Opción 1 — desde Safari:</b><br>Toca el ícono <b>aA</b> en la barra de dirección → <b>Ajustes del sitio web</b> → <b>Ubicación → Permitir</b><br><br><b>Opción 2 — desde Configuración:</b><br>Configuración → Privacidad y seguridad → Localización → Safari → <b>Al usar</b><br><br>Luego regresa y toca 📍 de nuevo.'},
+  gpsHelpDeniedAndroid:{en:'Your browser blocked location access.<br><br>Tap the <b>lock icon</b> in the address bar → <b>Permissions → Location → Allow</b><br><br>Then tap 📍 again.',es:'El navegador bloqueó el acceso a ubicación.<br><br>Toca el <b>ícono de candado</b> en la barra de dirección → <b>Permisos → Ubicación → Permitir</b><br><br>Luego toca 📍 de nuevo.'},
+  gpsHelpTimeTitle:{en:'GPS Timed Out',es:'GPS Tardó Demasiado'},
+  gpsHelpTimeMsg:{en:'Could not get your location. Make sure:<br>• <b>Location Services</b> is ON for Safari in Settings<br>• You are <b>outdoors or near a window</b> (GPS needs sky visibility)<br><br>Tap <b>Try Again</b> to retry.',es:'No se pudo obtener la ubicación. Verifica:<br>• <b>Localización</b> esté activada para Safari en Configuración<br>• Estar <b>al aire libre o cerca de una ventana</b> (el GPS necesita cielo)<br><br>Toca <b>Intentar de nuevo</b> para reintentar.'},
+  gpsRetry:{en:'Try Again',es:'Intentar de nuevo'},
+  mapNoAddr:{en:'Enter an address or capture GPS first',es:'Ingresa una dirección o captura el GPS primero'},
+  clientId:{en:'Client ID',es:'ID de Cliente'},
+  clearClientTitle:{en:'Clear client',es:'Borrar cliente'},
+  newClientTitle:{en:'Start a new client',es:'Empezar un cliente nuevo'},
+  clearClientConfirm:{en:'Clear client, address and ID?',es:'¿Borrar cliente, dirección e ID?'},
+  saveResultsBtn:{en:'💾 Save',es:'💾 Guardar'},
+  noClient:{en:'No client',es:'Sin cliente'},
+  totalMarked:{en:'Total Area',es:'Área Total'},
+  totalZones:{en:'Zones Total',es:'Total de Zonas'},
+  selectedArea:{en:'Selected Area',es:'Área Seleccionada'},
+  shareCsv:{en:'Download CSV',es:'Descargar CSV'},
+  clientsBtn:{en:'Clients',es:'Clientes'},
+  cloudSetupBtn:{en:'Cloud',es:'Nube'},
+  cloudSetupTitle:{en:'Cloud Sync — Firebase',es:'Sincronización Nube — Firebase'},
+  cloudCfgInstr:{en:'<b>1.</b> Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent2)">console.firebase.google.com</a><br><b>2.</b> Create a project → Add web app<br><b>3.</b> Copy the <code>firebaseConfig</code> object and paste it below as JSON.<br><b>4.</b> In Firestore → Rules, set: <code>allow read, write: if true;</code>',es:'<b>1.</b> Ve a <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent2)">console.firebase.google.com</a><br><b>2.</b> Crea un proyecto → Agrega app web<br><b>3.</b> Copia el objeto <code>firebaseConfig</code> y pégalo abajo como JSON.<br><b>4.</b> En Firestore → Reglas, escribe: <code>allow read, write: if true;</code>'},
+  cloudConnect:{en:'Connect',es:'Conectar'},
+  cloudConnected:{en:'☁ Connected',es:'☁ Conectado'},
+  cloudError:{en:'☁ Error',es:'☁ Error'},
+  cloudSaved:{en:'✓ Saved to cloud',es:'✓ Guardado en nube'},
+  cloudSaving:{en:'Saving…',es:'Guardando…'},
+  noCloudClients:{en:'No clients saved to cloud yet.',es:'No hay clientes guardados en la nube aún.'},
+  cloudNotCfg:{en:'Cloud not configured. Tap ☁ Cloud to set up.',es:'Nube no configurada. Toca ☁ Nube para configurar.'},
+  cloudSearchPh:{en:'Search by name, address or ID…',es:'Buscar por nombre, dirección o ID…'},
+  loadClientBtn:{en:'Load',es:'Cargar'},
+  deleteClientBtn:{en:'🗑 Delete',es:'🗑 Eliminar'},
+  deleteClientConfirm:{en:'Delete this client permanently? This cannot be undone.',es:'¿Eliminar este cliente permanentemente? Esta acción no se puede deshacer.'},
+  deleteClientError:{en:'Could not delete — try again.',es:'No se pudo eliminar — intenta de nuevo.'},
+  cloudCfgBad:{en:'Invalid config — paste the full firebaseConfig JSON object.',es:'Configuración inválida — pega el objeto JSON completo de firebaseConfig.'},
+  accountBtn:{en:'Sign in',es:'Iniciar sesión'},
+  notSignedIn:{en:'Not signed in',es:'Sin iniciar sesión'},
+  signIn:{en:'Sign in',es:'Iniciar sesión'},
+  signUp:{en:'Create account',es:'Crear cuenta'},
+  signOut:{en:'Sign out',es:'Cerrar sesión'},
+  email:{en:'Email',es:'Correo electrónico'},
+  password:{en:'Password',es:'Contraseña'},
+  backBtn:{en:'← Back',es:'← Volver'},
+  loadThisProject:{en:'📂 Load this project',es:'📂 Cargar este proyecto'},
+  loadOverwriteWarn:{en:'Loading will replace the building you\'re currently editing.',es:'Cargar reemplazará el edificio que estás editando ahora.'},
+  savedOnLbl:{en:'Saved',es:'Guardado'},
+  modulesLbl:{en:'Modules',es:'Módulos'},
+  zonesLbl:{en:'Zones',es:'Zonas'},
+  totalAreaLbl:{en:'Total area',es:'Área total'},
+  needAccount:{en:"Don't have an account? Sign up",es:'¿No tienes cuenta? Crear una'},
+  haveAccount:{en:'Already have an account? Sign in',es:'¿Ya tienes cuenta? Iniciar sesión'},
+  forgotPassword:{en:'Forgot your password?',es:'¿Olvidaste tu contraseña?'},
+  resetPwSent:{en:'Password reset email sent — check your inbox.',es:'Correo de recuperación enviado — revisa tu bandeja.'},
+  resetPwNeedEmail:{en:'Enter your email above first.',es:'Ingresa tu correo arriba primero.'},
+  pleaseSignIn:{en:'Sign in to see your saved clients.',es:'Inicia sesión para ver tus clientes guardados.'},
+  authErrGeneric:{en:'Something went wrong. Try again.',es:'Algo salió mal. Intenta de nuevo.'},
+  authErrEmailInUse:{en:'That email is already registered — try signing in instead.',es:'Ese correo ya está registrado — intenta iniciar sesión.'},
+  authErrInvalidEmail:{en:'That email address looks invalid.',es:'Ese correo no parece válido.'},
+  authErrWeakPw:{en:'Password must be at least 6 characters.',es:'La contraseña debe tener al menos 6 caracteres.'},
+  authErrWrongPw:{en:'Wrong email or password.',es:'Correo o contraseña incorrectos.'},
+  authErrUserNotFound:{en:"No account with that email — try creating one.",es:'No hay cuenta con ese correo — prueba crear una.'},
+  authErrTooMany:{en:'Too many attempts — wait a bit and try again.',es:'Demasiados intentos — espera un momento e intenta de nuevo.'},
+  authErrNotEnabled:{en:'Sign-in isn\'t enabled yet for this project — enable Email/Password in the Firebase Console under Authentication → Sign-in method.',es:'El inicio de sesión aún no está habilitado para este proyecto — actívalo en Firebase Console, en Authentication → Sign-in method → Email/Password.'},
+  shareBtn:{en:'📤 Share',es:'📤 Compartir'},
+  shareTitle:{en:'Save / Share',es:'Guardar / Compartir'},
+  shareNative:{en:'Share…',es:'Compartir…'},
+  shareNativeSub:{en:'WhatsApp, Messages, Mail…',es:'WhatsApp, Mensajes, Correo…'},
+  shareSms:{en:'Message / SMS',es:'Mensaje / SMS'},
+  shareEmail:{en:'Email',es:'Correo'},
+  shareNfc:{en:'NFC tag',es:'Etiqueta NFC'},
+  shareNfcSub:{en:'Tap a tag to write',es:'Acerca una etiqueta para escribir'},
+  shareCopy:{en:'Copy text',es:'Copiar texto'},
+  cancel:{en:'Cancel',es:'Cancelar'},
+  copied:{en:'Copied to clipboard',es:'Copiado al portapapeles'},
+  nfcNoSupport:{en:'NFC writing is only available on Android Chrome',es:'Escribir NFC solo está disponible en Android Chrome'},
+  nfcPrompt:{en:'Tap an NFC tag now…',es:'Acerca una etiqueta NFC ahora…'},
+  nfcWritten:{en:'✓ Written to NFC tag',es:'✓ Escrito en la etiqueta NFC'},
+  nfcError:{en:'Could not write the NFC tag',es:'No se pudo escribir la etiqueta NFC'},
+  nfcReadyTitle:{en:'Ready to write',es:'Listo para escribir'},
+  nfcReadyMsg:{en:'Approach an NFC tag to the back of the phone.\nIf the tag has content it will be erased and rewritten.',es:'Acerca una etiqueta NFC a la parte trasera del teléfono.\nSi la etiqueta tiene contenido será borrado y reescrito.'},
+  nfcWritingTitle:{en:'Writing…',es:'Escribiendo…'},
+  nfcWritingMsg:{en:'Keep the tag in place…',es:'No quites la etiqueta…'},
+  nfcOkTitle:{en:'✓ Tag written',es:'✓ Etiqueta escrita'},
+  nfcOkMsg:{en:'Anyone who taps this tag will open the location directly in Maps.',es:'Quien toque esta etiqueta abrirá la ubicación directamente en Maps.'},
+  nfcErrTitle:{en:'Write failed',es:'Error al escribir'},
+  nfcErrMsg:{en:'Make sure the tag is writable (not locked) and try again.',es:'Verifica que la etiqueta no esté bloqueada e intenta de nuevo.'},
+  shareSubject:{en:'Power Foam ATL — Area report',es:'Power Foam ATL — Reporte de áreas'},
+  location:{en:'Location',es:'Ubicación'},
+  helpTitle:{en:'Quick Start Guide (PDF)',es:'Guía de inicio rápido (PDF)'},
+  rotCCW:{en:'Rotate 90° left',es:'Rotar 90° a la izquierda'},
+  rotCW:{en:'Rotate 90° right',es:'Rotar 90° a la derecha'},
+  doneBtn:{en:'Done',es:'Listo'}
+};
+const FACE_ES={
+  'Floor':'Piso','Roof':'Techo','North Wall':'Muro Norte','South Wall':'Muro Sur',
+  'East Wall':'Muro Este','West Wall':'Muro Oeste','Roof (East slope)':'Techo (vertiente Este)',
+  'Roof (West slope)':'Techo (vertiente Oeste)','North Gable':'Hastial Norte','South Gable':'Hastial Sur',
+  'North End Wall':'Hastial Norte','South End Wall':'Hastial Sur',
+  'East Side Wall':'Muro Lateral Este','West Side Wall':'Muro Lateral Oeste',
+  'Roof (Arch)':'Techo (Arco)',
+  'High End Wall':'Muro Extremo Alto','Low End Wall':'Muro Extremo Bajo',
+  'Left Side Wall':'Muro Lateral Izquierdo','Right Side Wall':'Muro Lateral Derecho',
+  'North Hip':'Hip Norte','South Hip':'Hip Sur','East Hip':'Hip Este','West Hip':'Hip Oeste',
+  'Lower Left Roof':'Techo Inf. Izq.','Upper Left Roof':'Techo Sup. Izq.',
+  'Lower Right Roof':'Techo Inf. Der.','Upper Right Roof':'Techo Sup. Der.',
+  'North Gable End':'Hastial Norte','South Gable End':'Hastial Sur',
+  'Monitor Roof (Left)':'Techo Monitor Izq.','Monitor Roof (Right)':'Techo Monitor Der.',
+  'Monitor Top (Left slope)':'Monitor Sup. Izq.','Monitor Top (Right slope)':'Monitor Sup. Der.',
+  'Monitor Left Wall':'Muro Monitor Izq.','Monitor Right Wall':'Muro Monitor Der.'
+};
+let LANG=(localStorage.getItem('pf_lang')==='es')?'es':'en';
+function t(k){const e=I18N[k];return e?(e[LANG]||e.en):k;}
+function tf(name){
+  if(LANG==='es'){
+    if(FACE_ES[name]) return FACE_ES[name];
+    const m=name.match(/^Arch Panel (\d+)$/);
+    if(m) return 'Panel de Arco '+m[1];
+    const ms=name.match(/^Sawtooth Slope (\d+)$/);
+    if(ms) return 'Vertiente Diente '+ms[1];
+    const mc=name.match(/^Clerestory Glazing (\d+)$/);
+    if(mc) return 'Acristalado '+mc[1];
+    return name;
+  }
+  return name;
+}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{el.title=t(el.dataset.i18nTitle);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
+  document.querySelectorAll('#langToggle button').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG));
+}
+function setLang(l){
+  LANG=(l==='es')?'es':'en';
+  localStorage.setItem('pf_lang',LANG);
+  applyLang();
+  renderControls();renderResults();renderZones();updateSelPanel();
+}
+/* ====================== CONFIG / STATE ====================== */
+const FT=0.3048, M2_FT2=0.092903;
+const COL={wall:'#c9d4e0',roof:'#5b7fa6',floor:'#8a93a0',gable:'#bcc8d6'};
+const MOD_COLORS=['#ffb547','#4f9cff','#3ecf8e','#ff6b6b','#b07cff','#ff9f4f','#5fd0d6'];
+const ZONE_COLORS=['#ff6b6b','#4fc3f7','#a5d6a7','#ffd54f','#ce93d8','#80cbc4','#ffab91','#b0bec5','#f48fb1','#80deea'];
+
+const state={
+  unit:'ft',
+  modules:[],
+  selection: new Set(),
+  zones:[],
+  activeZoneId:null,
+  showLabels:true,
+  project:{client:'',address:'',lat:null,lng:null,id:''},
+  cam:{az:0.78,el:0.55,r:30,tx:0,ty:0,tz:0},
+  _faces:[],
+  _faceMap: new Map(),
+};
+let nextId=1, nextZoneId=1;
+
+function newModule(opts={}){
+  return Object.assign({
+    id:nextId++,
+    name:t('module')+' '+(state.modules.length+1),
+    w:8,l:12,h:3,
+    roof:'flat',
+    rise:1.5,
+    corrPct:0,
+    px:0,pz:0,
+    rot:0,
+    openings:0,
+  },opts);
+}
+
+/* ====================== UNIT CONVERSIONS ====================== */
+function L2D(m){return state.unit==='m'?m:m/FT;}
+function D2L(v){return state.unit==='m'?v:v*FT;}
+function A2D(m2){return state.unit==='m'?m2:m2/M2_FT2;}
+function D2La(v){return state.unit==='m'?v:v*M2_FT2;}
+const ULIN=()=>state.unit==='m'?'m':'ft';
+const UAREA=()=>state.unit==='m'?'m²':'ft²';
+function fmt(n){return Math.round(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function hexRgb(h){const n=parseInt(h.slice(1),16);return`${(n>>16)&255},${(n>>8)&255},${n&255}`;}
+
+/* ====================== GEOMETRY ====================== */
+function quad(a,b,c,d){return[a,b,c,d];}
+function polyArea(v){
+  let nx=0,ny=0,nz=0;
+  for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];
+    nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  return Math.sqrt(nx*nx+ny*ny+nz*nz)/2;
+}
+function centroid(v){let x=0,y=0,z=0;for(const p of v){x+=p[0];y+=p[1];z+=p[2];}return[x/v.length,y/v.length,z/v.length];}
+function normal(v){
+  let nx=0,ny=0,nz=0;
+  for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];
+    nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  const m=Math.hypot(nx,ny,nz)||1;return[nx/m,ny/m,nz/m];
+}
+
+/* ---- Rotación de módulo (pasos de 90° alrededor de su centro; el footprint
+   queda siempre alineado a los ejes, así el test AABB y el painter siguen válidos) ---- */
+function modRot(m){return (((m.rot||0)%360)+360)%360;}
+function modRotPt(m,p){
+  const r=modRot(m);if(!r)return p;
+  const cx=m.px+m.w/2,cz=m.pz+m.l/2,dx=p[0]-cx,dz=p[2]-cz;
+  if(r===90)  return [cx+dz,p[1],cz-dx];
+  if(r===180) return [cx-dx,p[1],cz-dz];
+  return [cx-dz,p[1],cz+dx];
+}
+function modRotVec(m,v){
+  const r=modRot(m);if(!r)return v;
+  if(r===90)  return [v[2],v[1],-v[0]];
+  if(r===180) return [-v[0],v[1],-v[2]];
+  return [-v[2],v[1],v[0]];
+}
+// Footprint en el plano XZ considerando la rotación (para solape, grid y encuadre)
+function modAABB(m,px,pz){
+  if(px===undefined)px=m.px;
+  if(pz===undefined)pz=m.pz;
+  const r=modRot(m);
+  if(r===90||r===270){
+    const cx=px+m.w/2,cz=pz+m.l/2;
+    return {x0:cx-m.l/2,x1:cx+m.l/2,z0:cz-m.w/2,z1:cz+m.w/2};
+  }
+  return {x0:px,x1:px+m.w,z0:pz,z1:pz+m.l};
+}
+
+const N_ARCH=12;
+/* ---- Arco circular segmental: cuerda w, subida f (archRise; vacío/0 = semicírculo w/2).
+   R = w²/8f + f/2, medio ángulo α = asin((w/2)/R), desarrollo = 2αR.
+   Con f = w/2 se reduce exactamente al semicírculo actual (R=w/2, α=π/2). ---- */
+function archGeom(m){
+  const f=(m.archRise&&m.archRise>0)?Math.min(m.archRise,m.w/2):m.w/2;
+  const R=(m.w*m.w)/(8*f)+f/2;
+  const alpha=Math.asin(Math.min(1,(m.w/2)/R));
+  return {f,R,alpha,arc:2*alpha*R,cy:m.h+f-R};
+}
+function buildGeometry(){
+  const faces=[];
+  for(let mi=0;mi<state.modules.length;mi++){
+    const m=state.modules[mi];
+    const color=MOD_COLORS[mi%MOD_COLORS.length];
+    const x0=m.px,x1=m.px+m.w,z0=m.pz,z1=m.pz+m.l,y0=0,y1=m.h,xc=(x0+x1)/2;
+    const add=(key,name,cat,verts,areaOvr)=>{
+      verts=verts.map(v=>modRotPt(m,v)); // rotación del módulo (isometría: no altera áreas)
+      // En módulos arch el corrugado profundo aplica solo al arco; muros/hastiales
+      // llevan su propio % (corrWallPct, default 0 — suelen ser lámina plana)
+      const cp=(m.roof==='arch'&&cat!=='roof')?(m.corrWallPct||0):(m.corrPct||0);
+      faces.push({id:m.id+':'+key,mid:m.id,mi,mname:m.name,name,cat,corrPct:cp,
+                  verts,area:areaOvr!==undefined?areaOvr:polyArea(verts),modColor:color});
+    };
+    add('floor','Floor','floor',quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]));
+    if(m.roof==='flat'){
+      add('roof','Roof','roof',quad([x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]));
+      add('wN','North Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      add('wS','South Wall','wall', quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+    }else if(m.roof==='gable'){
+      const yr=y1+Math.max(0.01,m.rise);
+      add('rE','Roof (East slope)','roof', quad([x1,y1,z0],[x1,y1,z1],[xc,yr,z1],[xc,yr,z0]));
+      add('rW','Roof (West slope)','roof', quad([x0,y1,z0],[x0,y1,z1],[xc,yr,z1],[xc,yr,z0]));
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+      add('wN','North Wall','wall', quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      add('gN','North Gable','wall',[[x0,y1,z0],[x1,y1,z0],[xc,yr,z0]]);
+      add('wS','South Wall','wall', quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      add('gS','South Gable','wall', [[x0,y1,z1],[x1,y1,z1],[xc,yr,z1]]);
+    }else if(m.roof==='singleslope'){
+      // Single Slope / Lean-to: h=low wall height, rise=extra height on high end (z=z0)
+      const yHi=y1+Math.max(0.01,m.rise);
+      // Roof panel: planar parallelogram — polyArea gives exact area
+      add('rf','Roof','roof',[[x0,yHi,z0],[x1,yHi,z0],[x1,y1,z1],[x0,y1,z1]]);
+      // End walls
+      add('wHi','High End Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,yHi,z0],[x0,yHi,z0]));
+      add('wLo','Low End Wall','wall', quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      // Side walls: trapezoids (polyArea exact for planar quads)
+      add('wE','East Side Wall','wall',[[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,yHi,z0]]);
+      add('wW','West Side Wall','wall',[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,yHi,z0]]);
+    }else if(m.roof==='hip'){
+      // Hip Roof (four slopes meeting at a ridge)
+      const yr=y1+Math.max(0.01,m.rise);
+      const r=Math.min(m.w,m.l)/2; // hip setback = half the shorter dimension
+      const rz0=z0+r, rz1=z1-r;
+      if(rz1>rz0+0.01){
+        // Building is longer than wide — has a horizontal ridge
+        add('rfN','North Hip','roof',[[x0,y1,z0],[x1,y1,z0],[xc,yr,rz0]]);
+        add('rfS','South Hip','roof',[[x1,y1,z1],[x0,y1,z1],[xc,yr,rz1]]);
+        add('rfE','East Hip','roof', [[x1,y1,z0],[x1,y1,z1],[xc,yr,rz1],[xc,yr,rz0]]);
+        add('rfW','West Hip','roof',  [[x0,y1,z0],[xc,yr,rz0],[xc,yr,rz1],[x0,y1,z1]]);
+      }else{
+        // Square or wider-than-long: 4 triangular faces meeting at a point
+        const zc=(z0+z1)/2;
+        add('rfN','North Hip','roof',[[x0,y1,z0],[x1,y1,z0],[xc,yr,zc]]);
+        add('rfS','South Hip','roof',[[x1,y1,z1],[x0,y1,z1],[xc,yr,zc]]);
+        add('rfE','East Hip','roof', [[x1,y1,z0],[x1,y1,z1],[xc,yr,zc]]);
+        add('rfW','West Hip','roof',  [[x0,y1,z1],[x0,y1,z0],[xc,yr,zc]]);
+      }
+      add('wN','North Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      add('wS','South Wall','wall',quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]));
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+    }else if(m.roof==='gambrel'){
+      // Gambrel / Barn: two slopes per side. Fixed proportions: break at 25% width, 40% rise.
+      const br=Math.max(0.01,m.rise)*0.4, yr=y1+Math.max(0.01,m.rise);
+      const bx=m.w/4, xbL=x0+bx, xbR=x1-bx, yBr=y1+br;
+      // 4 roof panels
+      add('rlL','Lower Left Roof','roof', [[x0,y1,z0],[x0,y1,z1],[xbL,yBr,z1],[xbL,yBr,z0]]);
+      add('ruL','Upper Left Roof','roof', [[xbL,yBr,z0],[xbL,yBr,z1],[xc,yr,z1],[xc,yr,z0]]);
+      add('rlR','Lower Right Roof','roof',[[x1,y1,z0],[xbR,yBr,z0],[xbR,yBr,z1],[x1,y1,z1]]);
+      add('ruR','Upper Right Roof','roof',[[xc,yr,z0],[xbR,yBr,z0],[xbR,yBr,z1],[xc,yr,z1]]);
+      // Side walls (rectangles below eave)
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+      // End walls: full polygon ground → gambrel profile (7-point)
+      add('gN','North Gable End','wall',[
+        [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[xbR,yBr,z0],[xc,yr,z0],[xbL,yBr,z0],[x0,y1,z0]]);
+      add('gS','South Gable End','wall',[
+        [x1,y0,z1],[x0,y0,z1],[x0,y1,z1],[xbL,yBr,z1],[xc,yr,z1],[xbR,yBr,z1],[x1,y1,z1]]);
+    }else if(m.roof==='monitor'){
+      // Monitor / Clerestory: main gable roof with raised center section (1/3 of width).
+      // The center section sits on clerestory walls above the main roof break.
+      const yr=y1+Math.max(0.01,m.rise);    // main gable ridge / clerestory base height
+      const mw=m.w/3;                        // monitor width = 1/3 of building width
+      const xmL=xc-mw/2, xmR=xc+mw/2;     // monitor left/right edges
+      const yTop=yr+Math.max(0.01,m.rise)*0.6; // monitor peak (60% of main rise above clerestory)
+      // Main roof — two slopes broken at monitor edges
+      add('rfL','Monitor Roof (Left)','roof', [[x0,y1,z0],[x0,y1,z1],[xmL,yr,z1],[xmL,yr,z0]]);
+      add('rfR','Monitor Roof (Right)','roof',[[xmR,yr,z0],[xmR,yr,z1],[x1,y1,z1],[x1,y1,z0]]);
+      // Monitor top — mini gable on the raised center section
+      add('mtL','Monitor Top (Left slope)','roof', [[xmL,yr,z0],[xmL,yr,z1],[xc,yTop,z1],[xc,yTop,z0]]);
+      add('mtR','Monitor Top (Right slope)','roof',[[xc,yTop,z0],[xc,yTop,z1],[xmR,yr,z1],[xmR,yr,z0]]);
+      // Monitor clerestory side walls (vertical, at xmL and xmR, above main roof break)
+      const monH=yTop-yr; // clerestory wall height
+      add('mwL','Monitor Left Wall','wall', [[xmL,yr,z0],[xmL,yr,z1],[xmL,yr+monH*0.4,z1],[xmL,yr+monH*0.4,z0]]);
+      add('mwR','Monitor Right Wall','wall',[[xmR,yr,z0],[xmR,yr+monH*0.4,z0],[xmR,yr+monH*0.4,z1],[xmR,yr,z1]]);
+      // Main side walls
+      add('wE','East Wall','wall',  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]));
+      add('wW','West Wall','wall',  quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]));
+      // End walls: complex polygon covering full profile
+      add('wN','North Wall','wall',[
+        [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[xmR,yr,z0],[xmR,yr+monH*0.4,z0],[xc,yTop,z0],[xmL,yr+monH*0.4,z0],[xmL,yr,z0],[x0,y1,z0]]);
+      add('wS','South Wall','wall',[
+        [x1,y0,z1],[x0,y0,z1],[x0,y1,z1],[xmL,yr,z1],[xmL,yr+monH*0.4,z1],[xc,yTop,z1],[xmR,yr+monH*0.4,z1],[xmR,yr,z1],[x1,y1,z1]]);
+    }else if(m.roof==='sawtooth'){
+      // Sawtooth / Diente de sierra: N teeth repeating along the length (z).
+      // Each tooth = a gentle roof slope (low→high) ending in a vertical glazed
+      // riser. All risers face +z. Classic factory roof for north-light glazing.
+      const yr=y1+Math.max(0.01,m.rise);
+      const N=Math.max(2,Math.min(10,Math.round(m.l/Math.max(m.w,0.01))));
+      const d=m.l/N;
+      for(let i=0;i<N;i++){
+        const za=z0+i*d, zb=za+d;
+        // Sloped roof panel (rises from y1 at za to yr at zb)
+        add('saw_'+i,'Sawtooth Slope '+(i+1),'roof',
+          [[x0,y1,za],[x1,y1,za],[x1,yr,zb],[x0,yr,zb]]);
+        // Internal vertical glazed riser between this tooth and the next (not the last)
+        if(i<N-1)
+          add('clr_'+i,'Clerestory Glazing '+(i+1),'wall',
+            [[x0,y1,zb],[x1,y1,zb],[x1,yr,zb],[x0,yr,zb]]);
+      }
+      // North end wall (z=z0): low rectangle y0..y1
+      add('wN','North End Wall','wall',quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]));
+      // South end wall (z=z1): full rectangle y0..yr (includes last riser face)
+      add('wS','South End Wall','wall',quad([x0,y0,z1],[x1,y0,z1],[x1,yr,z1],[x0,yr,z1]));
+      // Side walls: sawtooth-profile polygons (planar at x0 / x1)
+      const topW=[[x0,y1,z0]], topE=[[x1,y1,z0]];
+      for(let i=1;i<=N;i++){
+        const zT=z0+i*d;
+        topW.push([x0,yr,zT]); topE.push([x1,yr,zT]);
+        if(i<N){ topW.push([x0,y1,zT]); topE.push([x1,y1,zT]); }
+      }
+      add('wW','West Side Wall','wall',[...topW,[x0,y0,z1],[x0,y0,z0]]);
+      add('wE','East Side Wall','wall',[[x1,y0,z0],[x1,y0,z1],...topE.slice().reverse()]);
+    }else if(m.roof==='arch'){
+      // Arch / Quonset — arco circular segmental (semicírculo si archRise vacío)
+      // yb = altura muro lateral (0 = Q-Model, >0 = S-Model)
+      const yb=m.h;
+      const {R,alpha,arc,cy}=archGeom(m);
+      // punto i del arco (i=0 alero este → i=N alero oeste), mismo orden que antes
+      const aPt=i=>{const φ=alpha-2*alpha*i/N_ARCH;return [xc+R*Math.sin(φ),cy+R*Math.cos(φ)];};
+      // Área override exacta: desarrollo 2αR × largo, repartido entre N paneles
+      const panelExactArea=(arc/N_ARCH)*m.l;
+      for(let i=0;i<N_ARCH;i++){
+        const [ax1,ay1]=aPt(i),[ax2,ay2]=aPt(i+1);
+        add('arch_'+i,'Arch Panel '+(i+1),'roof',
+          [[ax1,ay1,z0],[ax2,ay2,z0],[ax2,ay2,z1],[ax1,ay1,z1]],panelExactArea);
+      }
+      // S-Model side walls (when wall height > 0)
+      if(yb>0.01){
+        add('wE','East Side Wall','wall',quad([x1,y0,z0],[x1,y0,z1],[x1,yb,z1],[x1,yb,z0]));
+        add('wW','West Side Wall','wall',quad([x0,y0,z0],[x0,y0,z1],[x0,yb,z1],[x0,yb,z0]));
+      }
+      // End walls — área exacta: segmento circular (R²/2)(2α−sin2α) + rect opcional w·h
+      const endExact=(R*R/2)*(2*alpha-Math.sin(2*alpha))+(yb>0.01?m.w*yb:0);
+      // North end wall (z=z0): arch from i=0 (right/east) to i=N_ARCH (left/west)
+      // For Q-model: just the arch closes along the bottom
+      // For S-model: two bottom points first, then arch over, closes down the left side
+      const nv=[];
+      if(yb>0.01) nv.push([x0,y0,z0],[x1,y0,z0]);
+      for(let i=0;i<=N_ARCH;i++){const [ax,ay]=aPt(i);nv.push([ax,ay,z0]);}
+      add('wN','North End Wall','wall',nv,endExact);
+      // South end wall (z=z1): reversed winding so normal faces outward (+z)
+      const sv=[];
+      if(yb>0.01) sv.push([x1,y0,z1],[x0,y0,z1]);
+      for(let i=N_ARCH;i>=0;i--){const [ax,ay]=aPt(i);sv.push([ax,ay,z1]);}
+      add('wS','South End Wall','wall',sv,endExact);
+    }
+  }
+  state._faces=faces;
+  state._faceMap=new Map(faces.map(f=>[f.id,f]));
+}
+
+function rebuildZoneAreas(){
+  for(const z of state.zones){
+    z.area=[...z.faceIds].reduce((s,fid)=>{
+      const f=state._faceMap.get(fid);return s+(f?f.area:0);
+    },0);
+  }
+}
+function cleanSelection(){
+  for(const fid of state.selection)
+    if(!state._faceMap.has(fid)) state.selection.delete(fid);
+}
+
+/* ====================== TOTALS ====================== */
+function isArchPanel(f){ return /^Arch Panel \d+$/.test(f.name); }
+// Factor de corrugado manual por módulo (%). No aplica al piso.
+function corrFactor(f){ return f.cat==='floor'?1:1+(f.corrPct||0)/100; }
+function totals(){
+  let wall=0,roof=0,floor=0,open=0;
+  const perMod={};
+  for(const m of state.modules) perMod[m.id]={name:m.name,wall:0,roof:0,floor:0,open:m.openings||0,faces:[]};
+  for(const f of state._faces){
+    if(!perMod[f.mid]) continue;
+    perMod[f.mid].faces.push(f);
+    const a=f.area*corrFactor(f);
+    if(f.cat==='wall'){wall+=a;perMod[f.mid].wall+=a;}
+    else if(f.cat==='roof'){roof+=a;perMod[f.mid].roof+=a;}
+    else{floor+=a;perMod[f.mid].floor+=a;}
+  }
+  for(const m of state.modules) open+=(m.openings||0);
+  const wallNet=Math.max(0,wall-open);
+  const total=wallNet+roof+floor;
+  return{wall,wallNet,roof,floor,open,perMod,total};
+}
+// Suma de área (con factor de corrugado) de un conjunto de IDs de cara.
+function sumFaceIds(fids){
+  let s=0;
+  for(const fid of fids){const f=state._faceMap.get(fid);if(f)s+=f.area*corrFactor(f);}
+  return s;
+}
+// Suma de área (con factor de corrugado) de los paneles de arco de un módulo.
+function archArea(mid){
+  return state._faces.reduce((s,f)=>s+(f.mid===mid&&isArchPanel(f)?f.area*corrFactor(f):0),0);
+}
+function zoneDispArea(z){ return sumFaceIds(z.faceIds); }
+
+/* ====================== SELECTION ====================== */
+function toggleFace(fid){
+  if(fid===null) return;
+  const _f=state._faceMap.get(fid);
+  if(_f && /^Arch Panel \d+$/.test(_f.name)){
+    // Arch group — select/deselect all panels of this module at once
+    const archIds=[...state._faceMap.values()]
+      .filter(ff=>ff.mid===_f.mid&&/^Arch Panel \d+$/.test(ff.name))
+      .map(ff=>ff.id);
+    const wasOn=state.selection.has(fid);
+    archIds.forEach(id=>wasOn?state.selection.delete(id):state.selection.add(id));
+  } else {
+    if(state.selection.has(fid)) state.selection.delete(fid);
+    else state.selection.add(fid);
+  }
+  updateSelPanel();renderResults();draw();
+  const tr=elBreak.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
+  // Solo hacer scroll si el panel Results esta visible; en movil esta fuera de
+  // pantalla y scrollIntoView desplazaria el viewport revelando otra ventana.
+  if(tr){
+    const resVisible=window.innerWidth>1024||document.querySelector('.results').classList.contains('mob-open');
+    if(resVisible) tr.scrollIntoView({block:'nearest'});
+  }
+}
+function clearSelection(){
+  state.selection.clear();state.activeZoneId=null;
+  updateSelPanel();renderResults();renderZones();draw();
+}
+function updateSelPanel(){
+  const count=state.selection.size;
+  const panel=document.getElementById('selPanel');
+  if(count===0){panel.style.display='none';return;}
+  panel.style.display='block';
+  document.getElementById('spCount').textContent=count+' '+t(count===1?'faceSel1':'faceSelN');
+  const adjArea=sumFaceIds(state.selection);
+  document.getElementById('spArea').innerHTML=fmt(A2D(adjArea))+' <small>'+UAREA()+'</small>';
+}
+
+/* ====================== ZONES ====================== */
+function showSaveForm(){
+  const form=document.getElementById('saveZoneForm');
+  form.style.display='block';
+  const inp=document.getElementById('zoneNameInp');
+  inp.value=t('zone')+' '+(state.zones.length+1);
+  inp.focus();inp.select();
+}
+function hideSaveForm(){
+  document.getElementById('saveZoneForm').style.display='none';
+}
+function confirmSaveZone(){
+  if(state.selection.size===0){hideSaveForm();return;}
+  const name=(document.getElementById('zoneNameInp').value.trim())||(t('zone')+' '+(state.zones.length+1));
+  const color=ZONE_COLORS[state.zones.length%ZONE_COLORS.length];
+  const faceIds=new Set(state.selection);
+  const area=[...faceIds].reduce((s,fid)=>{const f=state._faceMap.get(fid);return s+(f?f.area:0);},0);
+  state.zones.push({id:nextZoneId++,name,color,faceIds,area});
+  hideSaveForm();renderZones();renderResults();draw();
+  switchTab('zones');
+}
+
+function renderZones(){
+  const wrap=document.getElementById('zonesWrap');
+  document.getElementById('zoneTabBadge').textContent=state.zones.length;
+  if(state.zones.length===0){
+    wrap.innerHTML='<div class="zones-hint"><b>'+t('noZones')+'</b>'+t('selectFacesHint')+'<br>"'+t('saveAsZoneBtn').replace('＋ ','')+'"</div>';
+    return;
+  }
+  wrap.innerHTML='<div class="zones-header">'+t('savedZones')+' <span class="zone-count-badge">'+state.zones.length+'</span></div>';
+  state.zones.forEach((z,zi)=>{
+    const div=document.createElement('div');
+    div.className='zone-row'+(state.activeZoneId===z.id?' z-active':'');
+    div.innerHTML=`
+      <span class="zone-dot" style="background:${z.color}"></span>
+      <input class="zone-name-edit" value="${esc(z.name)}" data-zi="${zi}" title="Edit name">
+      <span class="zone-area">${fmt(A2D(zoneDispArea(z)))} ${UAREA()}</span>
+      <button class="zone-del" data-zdel="${zi}" title="Delete zone">✕</button>`;
+    wrap.appendChild(div);
+    div.addEventListener('click',e=>{
+      if(e.target.classList.contains('zone-del')||e.target.classList.contains('zone-name-edit')) return;
+      if(state.activeZoneId===z.id){
+        state.activeZoneId=null;state.selection.clear();
+      }else{
+        state.activeZoneId=z.id;state.selection=new Set(z.faceIds);
+      }
+      updateSelPanel();renderResults();renderZones();draw();
+    });
+    div.querySelector('.zone-name-edit').addEventListener('input',e=>{z.name=e.target.value;});
+    div.querySelector('[data-zdel]').addEventListener('click',()=>{
+      if(state.activeZoneId===z.id){state.activeZoneId=null;state.selection.clear();}
+      state.zones.splice(zi,1);
+      updateSelPanel();renderResults();renderZones();draw();
+    });
+  });
+}
+
+/* ====================== RENDER: CONTROLS ====================== */
+const elModules=document.getElementById('modules');
+function renderControls(){
+  elModules.innerHTML='';
+  state.modules.forEach((m,i)=>{
+    const pm0=totals().perMod[m.id];
+    const tot=pm0?pm0.wall+pm0.roof+pm0.floor:0;
+    const color=MOD_COLORS[i%MOD_COLORS.length];
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`
+      <div class="card-head">
+        <span class="swatch" style="background:${color}"></span>
+        <input class="name" value="${m.name.replace(/"/g,'&quot;')}" data-i="${i}" data-k="name">
+        <span class="area-badge">${fmt(A2D(tot))} ${UAREA()}</span>
+        <button class="del" data-del="${i}" title="${t('removeTitle')}">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div class="field"><label>${t('width')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.w).toFixed(2)}" data-i="${i}" data-k="w"></div>
+          <div class="field"><label>${t('length')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.l).toFixed(2)}" data-i="${i}" data-k="l"></div>
+          <div class="field"><label>${m.roof==='arch'?t('wallHeight'):m.roof==='singleslope'?t('lowWallHt'):t('height')} (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(m.h).toFixed(2)}" data-i="${i}" data-k="h"></div>
+          <div class="field"><label>${t('roofType')}</label>
+            <select data-i="${i}" data-k="roof">
+              <option value="flat" ${m.roof==='flat'?'selected':''}>${t('flat')}</option>
+              <option value="gable" ${m.roof==='gable'?'selected':''}>${t('gabled')}</option>
+              <option value="singleslope" ${m.roof==='singleslope'?'selected':''}>${t('singleslope')}</option>
+              <option value="hip" ${m.roof==='hip'?'selected':''}>${t('hip')}</option>
+              <option value="gambrel" ${m.roof==='gambrel'?'selected':''}>${t('gambrel')}</option>
+              <option value="monitor" ${m.roof==='monitor'?'selected':''}>${t('monitor')}</option>
+              <option value="sawtooth" ${m.roof==='sawtooth'?'selected':''}>${t('sawtooth')}</option>
+              <option value="arch" ${m.roof==='arch'?'selected':''}>${t('arch')}</option>
+            </select></div>
+          <div class="field" title="${t('corrPctHint')}"><label>${m.roof==='arch'?t('corrArchLabel'):t('corrPctLabel')}</label><input type="number" step="1" min="0" value="${m.corrPct||0}" data-i="${i}" data-k="corrPct"></div>
+          <div class="field" style="${m.roof==='arch'?'':'display:none'}" title="${t('corrWallHint')}"><label>${t('corrWallLabel')}</label><input type="number" step="1" min="0" value="${m.corrWallPct||0}" data-i="${i}" data-k="corrWallPct"></div>
+          <div class="field" style="${['gable','singleslope','hip','gambrel','monitor','sawtooth'].includes(m.roof)?'':'display:none'}" data-rise="${i}">
+            <label>${['singleslope','hip','sawtooth'].includes(m.roof)?t('rise'):t('ridgeHeight')} (${ULIN()})</label><input type="number" step="0.1" min="0.1" value="${L2D(m.rise).toFixed(2)}" data-i="${i}" data-k="rise"></div>
+          <div class="field" style="${m.roof==='arch'?'':'display:none'}" title="${t('archRiseHint')}">
+            <label>${t('archRise')} (${ULIN()})</label><input type="number" step="0.1" min="0" value="${L2D(archGeom(m).f).toFixed(2)}" data-i="${i}" data-k="archRise"></div>
+          <div class="field" style="${m.roof==='arch'?'':'display:none'}" data-archpeak="${i}">
+            <label>${t('archPeak')} (${ULIN()})</label>
+            <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--muted);font-family:monospace">${L2D(m.h+archGeom(m).f).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(R=${L2D(archGeom(m).R).toFixed(2)})</span></div>
+          </div>
+          <div class="field"><label>${t('openings')} (${UAREA()})</label><input type="number" step="0.1" min="0" value="${A2D(m.openings).toFixed(2)}" data-i="${i}" data-k="openings"></div>
+          <div class="field"><label>${t('posX')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.px).toFixed(2)}" data-i="${i}" data-k="px"></div>
+          <div class="field"><label>${t('posZ')} (${ULIN()})</label><input type="number" step="0.1" value="${L2D(m.pz).toFixed(2)}" data-i="${i}" data-k="pz"></div>
+        </div>
+      </div>`;
+    elModules.appendChild(card);
+  });
+  elModules.querySelectorAll('input,select').forEach(inp=>{
+    function handleChange(){
+      const i=+inp.dataset.i,k=inp.dataset.k,m=state.modules[i];
+      if(!m)return;
+      if(k==='name'){m.name=inp.value;refresh(false);updateBadges();}
+      else if(k==='roof'){
+        m.roof=inp.value;
+        renderControls();refresh(false);
+      }
+      else if(k==='openings'){m.openings=Math.max(0,D2La(+inp.value));refresh(false);}
+      else if(k==='corrPct'){m.corrPct=Math.max(0,+inp.value||0);refresh(false);}
+      else if(k==='corrWallPct'){m.corrWallPct=Math.max(0,+inp.value||0);refresh(false);}
+      else if(k==='archRise'){
+        const v=D2L(+inp.value);
+        m.archRise=v>0?v:0; // 0/vacío = semicírculo; archGeom clampa a w/2
+        refresh(false);updateArchPeak(i);
+      }
+      else if(k==='h'){const canZero=['arch','singleslope'].includes(m.roof);m[k]=canZero?Math.max(0,D2L(+inp.value)):Math.max(0.01,D2L(+inp.value));refresh(false);updateArchPeak(i);}
+      else{m[k]=k==='px'||k==='pz'?D2L(+inp.value):Math.max(0.01,D2L(+inp.value));refresh(false);if(k==='w')updateArchPeak(i);}
+    }
+    inp.addEventListener('input',handleChange);
+    inp.addEventListener('change',handleChange);
+  });
+  elModules.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      state.modules.splice(+b.dataset.del,1);
+      if(state.modules.length===0) state.modules.push(newModule());
+      renderControls();refresh(true);
+    });
+  });
+}
+// Refresca en vivo el display read-only "Altura máxima (R=...)" de un módulo arch
+function updateArchPeak(i){
+  const m=state.modules[i];
+  if(!m||m.roof!=='arch')return;
+  const box=elModules.querySelector(`[data-archpeak="${i}"] div`);
+  if(!box)return;
+  const g=archGeom(m);
+  box.innerHTML=`${L2D(m.h+g.f).toFixed(2)} ${ULIN()} &nbsp;<span style="font-size:10px;opacity:.7">(R=${L2D(g.R).toFixed(2)})</span>`;
+}
+function updateBadges(){
+  const T=totals();
+  elModules.querySelectorAll('.card').forEach((card,i)=>{
+    const m=state.modules[i];if(!m)return; // tarjetas obsoletas si aún no corre renderControls
+    const pm=T.perMod[m.id];
+    const tot=pm?pm.wall+pm.roof+pm.floor:0;
+    const b=card.querySelector('.area-badge');if(b)b.textContent=fmt(A2D(tot))+' '+UAREA();
+  });
+}
+
+/* ====================== RENDER: RESULTS ====================== */
+const elStats=document.getElementById('stats'),elBreak=document.getElementById('breakBody');
+function updateSimpleResults(S){
+  const p=state.project;
+  // Client card
+  document.getElementById('rcName').textContent=p.client||t('noClient');
+  const idEl=document.getElementById('rcId');
+  idEl.textContent=p.id?t('clientId')+': '+p.id:'';
+  idEl.style.display=p.id?'':'none';
+  const addrEl=document.getElementById('rcAddr');
+  addrEl.textContent=p.address||'';
+  addrEl.style.display=p.address?'':'none';
+  // Priority: selected faces → zones → SPF-applicable → overall building total
+  let markedVal,markedLbl;
+  const selTotal=sumFaceIds(state.selection);
+  if(selTotal>0.001){
+    markedVal=selTotal; markedLbl=t('selectedArea');
+  }else if(state.zones.length>0){
+    markedVal=state.zones.reduce((s,z)=>s+zoneDispArea(z),0); markedLbl=t('totalZones');
+  }else{
+    markedVal=S.total; markedLbl=t('totalMarked');
+  }
+  document.getElementById('resTotalLbl').textContent=markedLbl;
+  document.getElementById('resTotalVal').textContent=fmt(A2D(markedVal));
+  document.getElementById('resTotalUnit').textContent=UAREA();
+  // Sub breakdown
+  const U=UAREA(),L=v=>fmt(A2D(v));
+  const sub=[
+    `<span><b>${L(S.wallNet)}</b> ${t('wallsNet').toLowerCase()} ${U}</span>`,
+    `<span><b>${L(S.roof)}</b> ${t('roof').toLowerCase()} ${U}</span>`,
+  ];
+  if(S.floor>0.001) sub.push(`<span><b>${L(S.floor)}</b> ${t('floor').toLowerCase()} ${U}</span>`);
+  document.getElementById('resSubStats').innerHTML=sub.join('');
+}
+function renderResults(){
+  const S=totals();
+  updateSimpleResults(S);
+  elStats.innerHTML=`
+    <div class="stat"><div class="lbl"><i style="background:var(--wall)"></i>${t('wallsNet')}</div>
+      <div class="val">${fmt(A2D(S.wallNet))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--roof)"></i>${t('roof')}</div>
+      <div class="val">${fmt(A2D(S.roof))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl"><i style="background:var(--floor)"></i>${t('floor')}</div>
+      <div class="val">${fmt(A2D(S.floor))} <small>${UAREA()}</small></div></div>
+    <div class="stat"><div class="lbl">${t('openingsNeg')}</div>
+      <div class="val">${fmt(A2D(S.open))} <small>${UAREA()}</small></div></div>
+    <div class="stat total"><div class="lbl">${t('totalSurface')}</div>
+      <div class="val">${fmt(A2D(S.total))} <small>${UAREA()}</small></div></div>`;
+
+  let rows='';
+  state.modules.forEach(m=>{
+    const pm=S.perMod[m.id];
+    rows+=`<tr class="mod-row"><td>${esc(m.name)}</td><td class="r">${fmt(A2D(pm.wall+pm.roof+pm.floor))} ${UAREA()}</td></tr>`;
+    pm.faces.forEach(f=>{
+      if(isArchPanel(f)) return; // paneles del arco se agrupan abajo
+      const c=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
+      const isSel=state.selection.has(f.id);
+      const zoneDots=state.zones.filter(z=>z.faceIds.has(f.id))
+        .map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      const cfp=Math.round((corrFactor(f)-1)*100);
+      const corrBdg=cfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${cfp}%</span>`:'';
+      rows+=`<tr class="face${isSel?' sel':''}" data-fid="${f.id}">
+        <td><span class="tag" style="background:${c}"></span>${esc(tf(f.name))}${zoneDots}</td>
+        <td class="r">${fmt(A2D(f.area*corrFactor(f)))}${corrBdg}</td></tr>`;
+    });
+    // Arco: una sola fila con el area total (en vez de 12 paneles)
+    const archFaces=pm.faces.filter(isArchPanel);
+    if(archFaces.length>0){
+      const archA=archArea(m.id);
+      const allSel=archFaces.every(f=>state.selection.has(f.id));
+      const azones=new Set();
+      archFaces.forEach(f=>state.zones.filter(z=>z.faceIds.has(f.id)).forEach(z=>azones.add(z)));
+      const azDots=[...azones].map(z=>`<span class="zdot" style="background:${z.color}" title="${esc(z.name)}"></span>`).join('');
+      const acfp=Math.round((corrFactor(archFaces[0])-1)*100);
+      const archCorrBdg=acfp>0?` <span style="font-size:10px;color:var(--accent);font-weight:700">+${acfp}%</span>`:'';
+      rows+=`<tr class="face${allSel?' sel':''}" data-fid="${archFaces[0].id}">
+        <td><span class="tag" style="background:${COL.roof}"></span>${esc(tf('Roof (Arch)'))}${azDots}</td>
+        <td class="r">${fmt(A2D(archA))}${archCorrBdg}</td></tr>`;
+    }
+    if(pm.open>0)
+      rows+=`<tr class="sub"><td>${t('openingsDeducted')}</td><td class="r" style="color:var(--red)">−${fmt(A2D(pm.open))}</td></tr>`;
+  });
+  elBreak.innerHTML=rows;
+  elBreak.querySelectorAll('tr.face').forEach(tr=>{
+    tr.addEventListener('click',()=>toggleFace(tr.dataset.fid));
+  });
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ====================== 3D ENGINE ====================== */
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=window.devicePixelRatio||1;
+  const r=canvas.parentElement.getBoundingClientRect();
+  W=r.width;H=r.height;
+  canvas.width=W*DPR;canvas.height=H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+
+function vsub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function vnorm(a){const m=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/m,a[1]/m,a[2]/m];}
+
+function camBasis(){
+  const c=state.cam,ce=Math.cos(c.el),se=Math.sin(c.el),ca=Math.cos(c.az),sa=Math.sin(c.az);
+  const target=[c.tx,c.ty,c.tz];
+  const eye=[target[0]+c.r*ce*sa,target[1]+c.r*se,target[2]+c.r*ce*ca];
+  const f=vnorm(vsub(target,eye));
+  const r=vnorm(cross(f,[0,1,0]));
+  const up=cross(r,f);
+  const focal=(H/2)/Math.tan((50*Math.PI/180)/2);
+  return{eye,f,r,up,focal,cx:W/2,cy:H/2};
+}
+function project(p,B){
+  const d=vsub(p,B.eye),cz=dot(d,B.f);
+  if(cz<0.05)return null;
+  const cx=dot(d,B.r),cy=dot(d,B.up);
+  return{x:B.cx+(cx/cz)*B.focal,y:B.cy-(cy/cz)*B.focal,z:cz};
+}
+// Inverse of project(): casts a ray from the camera through a screen point and
+// intersects it with the y=0 ground plane — used to drag modules on the floor plan.
+function screenToGround(sx,sy,B){
+  const nx=(sx-B.cx)/B.focal,ny=(B.cy-sy)/B.focal;
+  const dir=[
+    B.f[0]+B.r[0]*nx+B.up[0]*ny,
+    B.f[1]+B.r[1]*nx+B.up[1]*ny,
+    B.f[2]+B.r[2]*nx+B.up[2]*ny
+  ];
+  if(Math.abs(dir[1])<1e-6)return null;
+  const t=-B.eye[1]/dir[1];
+  if(t<0)return null;
+  return[B.eye[0]+dir[0]*t,B.eye[1]+dir[1]*t,B.eye[2]+dir[2]*t];
+}
+function shadeHex(hex,k){
+  const n=parseInt(hex.slice(1),16);
+  return`rgb(${Math.min(255,((n>>16)&255)*k)|0},${Math.min(255,((n>>8)&255)*k)|0},${Math.min(255,(n&255)*k)|0})`;
+}
+let _visible=[];
+
+function draw(){
+  if(!W)return;
+  ctx.clearRect(0,0,W,H);
+  const B=camBasis();
+  const target=[state.cam.tx,state.cam.ty,state.cam.tz];
+  const light=vnorm([0.5,0.92,0.4]);
+  drawGrid(B);
+
+  // Normales orientadas respecto al centro DE SU MÓDULO, no al target global de cámara:
+  // con módulos separados el target cae fuera de cada volumen y el culling borraba
+  // caras válidas (el módulo lejano se veía roto, solo techo sin muros).
+  const modCen=new Map();
+  for(const m of state.modules){
+    let top=m.h;
+    if(m.roof==='arch') top=m.h+archGeom(m).f;
+    else if(m.roof==='monitor') top=m.h+m.rise*1.6;
+    else if(['gable','singleslope','hip','gambrel','sawtooth'].includes(m.roof)) top=m.h+m.rise;
+    modCen.set(m.id,[m.px+m.w/2,top/2,m.pz+m.l/2]);
+  }
+  const drawables=[];
+  for(const f of state._faces){
+    const proj=f.verts.map(v=>project(v,B));
+    if(proj.some(p=>p===null))continue;
+    let n=normal(f.verts);
+    const cen=centroid(f.verts);
+    const mc=modCen.get(f.mid)||target;
+    if(dot(n,vsub(cen,mc))<0) n=[-n[0],-n[1],-n[2]];
+    if(dot(n,vsub(B.eye,cen))<=0) continue;
+    const depth=proj.reduce((s,p)=>s+p.z,0)/proj.length;
+    drawables.push({f,proj,n,cen,depth});
+  }
+  // Painter's algorithm can't resolve occlusion BETWEEN two separate solids with a single
+  // global face sort (their faces interleave and paint over each other at some camera angles),
+  // so draw module-by-module: order whole modules far→near by centroid distance to the eye,
+  // and only sort faces by depth WITHIN each module. Overlap is prevented on drag, so
+  // non-interpenetrating modules always sort correctly this way.
+  const modDist=new Map();
+  for(const m of state.modules){
+    const cx=m.px+m.w/2, cy=m.h/2, cz=m.pz+m.l/2;
+    modDist.set(m.id, Math.hypot(cx-B.eye[0], cy-B.eye[1], cz-B.eye[2]));
+  }
+  drawables.sort((a,b)=>{
+    const dm=(modDist.get(b.f.mid)||0)-(modDist.get(a.f.mid)||0);
+    if(Math.abs(dm)>0.001) return dm;   // farther module drawn first
+    return b.depth-a.depth;             // then farther face within the same module
+  });
+
+  _visible=[];
+  const faceZone=new Map();
+  for(const z of state.zones)
+    for(const fid of z.faceIds) faceZone.set(fid,z);
+
+  for(const d of drawables){
+    const f=d.f;
+    const base=f.cat==='wall'?(f.name.includes('Gable')?COL.gable:COL.wall):f.cat==='roof'?COL.roof:COL.floor;
+    const k=0.5+0.55*Math.max(0,dot(d.n,light));
+    const isSel=state.selection.has(f.id);
+    const zone=faceZone.get(f.id);
+    const isDragged=(_dragModuleId!=null&&f.mid===_dragModuleId)||(_activeModuleId!=null&&f.mid===_activeModuleId);
+
+    ctx.beginPath();
+    d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath();
+
+    if(isDragged){
+      ctx.fillStyle='rgba(79,156,255,0.75)';ctx.fill();
+      ctx.lineWidth=2.5;ctx.strokeStyle='#4f9cff';ctx.stroke();
+    }else if(isSel){
+      ctx.fillStyle='rgba(255,181,71,0.88)';ctx.fill();
+      ctx.lineWidth=2.5;ctx.strokeStyle='#ffb547';ctx.stroke();
+    }else{
+      ctx.fillStyle=shadeHex(base,k);ctx.fill();
+      if(zone){
+        ctx.fillStyle=`rgba(${hexRgb(zone.color)},0.22)`;ctx.fill();
+        ctx.lineWidth=2.2;ctx.strokeStyle=zone.color;ctx.stroke();
+      }else if(!isArchPanel(f)){
+        ctx.lineWidth=1;ctx.strokeStyle='rgba(10,16,28,0.45)';ctx.stroke();
+      }
+    }
+    _visible.push({f,poly:d.proj,depth:d.depth});
+
+    // Corrugation texture — parallel ridges clipped to face polygon, auto-shown when the module has a corrugation factor
+    if(corrFactor(f)>1){
+      ctx.save();
+      ctx.beginPath();
+      d.proj.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+      ctx.closePath();
+      ctx.clip();
+      // Direction: walls=vertical(Y), arch=tangential around arch, roofs=up-the-slope
+      let wDir;
+      if(f.cat==='wall'){wDir=[0,1,0];}
+      else if(isArchPanel(f)){
+        // tangente a lo largo de la curva = primer borde del quad (v0→v1),
+        // ya rotado por buildGeometry — válido con cualquier rot del módulo
+        const v0=f.verts[0],v1=f.verts[1];
+        const ex=v1[0]-v0[0],ey=v1[1]-v0[1],ez=v1[2]-v0[2],el=Math.hypot(ex,ey,ez)||1;
+        wDir=[ex/el,ey/el,ez/el];
+      }else{
+        const nu=d.n[1];
+        const ux=-nu*d.n[0],uy=1-nu*d.n[1],uz=-nu*d.n[2],ul=Math.hypot(ux,uy,uz);
+        wDir=ul>0.05?[ux/ul,uy/ul,uz/ul]:[0,0,1];
+      }
+      const pA=project(d.cen,B);
+      const pB=project([d.cen[0]+wDir[0],d.cen[1]+wDir[1],d.cen[2]+wDir[2]],B);
+      if(pA&&pB){
+        const dx=pB.x-pA.x, dy=pB.y-pA.y, len=Math.hypot(dx,dy);
+        if(len>0.5){
+          const ux=dx/len, uy=dy/len;
+          const px=-uy, py=ux;
+          const xs=d.proj.map(p=>p.x), ys=d.proj.map(p=>p.y);
+          const cx=(Math.min(...xs)+Math.max(...xs))/2;
+          const cy=(Math.min(...ys)+Math.max(...ys))/2;
+          const span=(Math.max(...xs)-Math.min(...xs))*Math.abs(px)+(Math.max(...ys)-Math.min(...ys))*Math.abs(py);
+          const step=Math.max(5,Math.min(20,span/14));
+          const drawLn=(ox,oy)=>{
+            const ts=[];
+            if(Math.abs(ux)>0.01){ts.push((Math.min(...xs)-ox)/ux,(Math.max(...xs)-ox)/ux);}
+            if(Math.abs(uy)>0.01){ts.push((Math.min(...ys)-oy)/uy,(Math.max(...ys)-oy)/uy);}
+            if(ts.length<2)return;
+            const t0=Math.min(...ts),t1=Math.max(...ts);
+            ctx.beginPath();ctx.moveTo(ox+ux*t0,oy+uy*t0);ctx.lineTo(ox+ux*t1,oy+uy*t1);ctx.stroke();
+          };
+          ctx.strokeStyle=isSel?'rgba(100,50,0,0.28)':'rgba(0,0,0,0.22)';
+          ctx.lineWidth=1.0;
+          for(let s=0;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);if(s)drawLn(cx-px*s,cy-py*s);}
+          ctx.strokeStyle=isSel?'rgba(255,220,80,0.20)':'rgba(255,255,255,0.16)';
+          ctx.lineWidth=0.6;
+          for(let s=step/2;s<=span/2+step;s+=step){drawLn(cx+px*s,cy+py*s);drawLn(cx-px*s,cy-py*s);}
+        }
+      }
+      ctx.restore();
+    }
+
+    if(state.showLabels && !isArchPanel(f)){
+      const c=project(d.cen,B);
+      if(c&&f.area>0.3){
+        const area=fmt(A2D(f.area*corrFactor(f)))+' '+UAREA();
+        if(isSel){
+          faceLbl(c.x,c.y,area,null,'#ffd98a','rgba(8,13,24,0.85)');
+        }else if(zone){
+          const zn=zone.name.length>13?zone.name.slice(0,12)+'…':zone.name;
+          faceLbl(c.x,c.y,zn,area,zone.color,`rgba(${hexRgb(zone.color)},0.18)`);
+        }else{
+          faceLbl(c.x,c.y,area,null,'#dfe8f5','rgba(8,13,24,0.72)');
+        }
+      }
+    }
+  }
+  // Arco: una sola etiqueta de area total por modulo (en vez de 12 paneles)
+  if(state.showLabels){
+    for(const m of state.modules){
+      if(m.roof!=='arch') continue;
+      const af=drawables.filter(d=>d.f.mid===m.id && isArchPanel(d.f));
+      if(!af.length) continue;
+      const pts=af.flatMap(d=>d.proj);
+      const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      const area=fmt(A2D(archArea(m.id)))+' '+UAREA();
+      const sel=state._faces.some(f=>f.mid===m.id && isArchPanel(f) && state.selection.has(f.id));
+      if(sel) faceLbl(cx,cy,area,null,'#ffd98a','rgba(8,13,24,0.9)');
+      else faceLbl(cx,cy,area,null,'#dfe8f5','rgba(8,13,24,0.82)');
+    }
+  }
+  // Zone summary banners — drawn on top of all faces
+  if(state.showLabels && state.zones.length>0){
+    for(const z of state.zones){
+      const vf=drawables.filter(d=>z.faceIds.has(d.f.id));
+      if(!vf.length) continue;
+      const pts=vf.flatMap(d=>d.proj);
+      const minY=Math.min(...pts.map(p=>p.y));
+      const avgX=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      zoneLbl(avgX,minY-24,z.name,fmt(A2D(zoneDispArea(z)))+' '+UAREA(),z.color);
+    }
+  }
+  // Dimension annotations
+  if(state.showLabels) drawDims(B);
+}
+function faceLbl(cx,cy,line1,line2,textColor,bgColor){
+  ctx.font='600 11px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';
+  const w1=ctx.measureText(line1).width;
+  let w2=0;if(line2){ctx.font='600 10px Segoe UI';w2=ctx.measureText(line2).width;}
+  const tw=Math.max(w1,w2),h=line2?30:18;
+  ctx.fillStyle=bgColor;rRect(cx-tw/2-6,cy-h/2,tw+12,h,5);ctx.fill();
+  ctx.font='600 11px Segoe UI';ctx.fillStyle=textColor;
+  ctx.textBaseline=line2?'top':'middle';
+  ctx.fillText(line1,cx,line2?cy-h/2+3:cy);
+  if(line2){ctx.font='600 10px Segoe UI';ctx.fillStyle=textColor;ctx.textBaseline='top';ctx.fillText(line2,cx,cy-h/2+17);}
+}
+function zoneLbl(cx,cy,name,area,color){
+  ctx.font='700 12px Segoe UI';ctx.textAlign='center';
+  const nw=ctx.measureText(name).width;
+  ctx.font='600 11px Segoe UI';
+  const aw=ctx.measureText(area).width;
+  const tw=Math.max(nw,aw)+24,th=40;
+  // shadow
+  ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=8;
+  ctx.fillStyle='rgba(8,13,24,0.92)';rRect(cx-tw/2,cy-th/2,tw,th,10);ctx.fill();
+  ctx.shadowBlur=0;
+  // colored top stripe
+  ctx.strokeStyle=color;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-tw/2+10,cy-th/2+1.5);ctx.lineTo(cx+tw/2-10,cy-th/2+1.5);ctx.stroke();
+  // zone name
+  ctx.font='700 12px Segoe UI';ctx.fillStyle=color;ctx.textBaseline='top';
+  ctx.fillText(name,cx,cy-th/2+7);
+  // area
+  ctx.font='600 11px Segoe UI';ctx.fillStyle='#e6edf7';
+  ctx.fillText(area,cx,cy-th/2+23);
+}
+/* ---- CAD dimension line ---- */
+function dim3d(A,B3,off,txt,Cam){
+  const o=off;
+  const a =project([A[0]+o[0], A[1]+o[1], A[2]+o[2]],Cam);
+  const b =project([B3[0]+o[0],B3[1]+o[1],B3[2]+o[2]],Cam);
+  const ae=project(A, Cam);
+  const be=project(B3,Cam);
+  if(!a||!b||!ae||!be) return;
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+  if(len<22) return;                        // too short to label
+  const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+  const ux=dx/len,uy=dy/len, px=-uy*5,py=ux*5;
+  ctx.save();
+  // extension lines (dashed)
+  ctx.strokeStyle='rgba(130,190,255,0.55)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(ae.x,ae.y); ctx.lineTo(a.x,a.y);
+  ctx.moveTo(be.x,be.y); ctx.lineTo(b.x,b.y);
+  ctx.stroke();
+  // dimension line (solid)
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(130,190,255,0.75)'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  // tick marks at ends
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(a.x+px,a.y+py); ctx.lineTo(a.x-px,a.y-py);
+  ctx.moveTo(b.x+px,b.y+py); ctx.lineTo(b.x-px,b.y-py);
+  ctx.stroke();
+  // label
+  ctx.font='600 10.5px Segoe UI'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const tw=ctx.measureText(txt).width+10;
+  ctx.fillStyle='rgba(8,14,28,0.92)';
+  ctx.fillRect(mx-tw/2,my-8,tw,16);
+  ctx.fillStyle='#8ec4ff'; ctx.fillText(txt,mx,my);
+  ctx.restore();
+}
+
+function drawDims(B){
+  for(const m of state.modules){
+    const x0=m.px, x1=m.px+m.w, z0=m.pz, z1=m.pz+m.l, y1=m.h;
+    // offset: scale with building so labels don't sit on the surface
+    const od=Math.max(1.8,(m.w+m.l)*0.07);
+    const u=ULIN();
+    const lbl=v=>L2D(v).toLocaleString('en-US',{maximumFractionDigits:1})+' '+u;
+    // Las cotas se calculan en el espacio sin rotar y se transforman con la
+    // rotación del módulo (puntos Y offsets), así siguen pegadas a sus aristas físicas.
+    const D=(a,b,off,txt)=>dim3d(modRotPt(m,a),modRotPt(m,b),modRotVec(m,off),txt,B);
+    // Width  → front bottom edge, offset toward viewer (+z)
+    D([x0,0,z1],[x1,0,z1], [0,0,od],      lbl(m.w));
+    // Length → right bottom edge, offset to the right (+x)
+    D([x1,0,z0],[x1,0,z1], [od,0,0],      lbl(m.l));
+    // Height → right-front vertical edge, offset corner (+x+z)
+    D([x1,0,z1],[x1,y1,z1],[od*.7,0,od*.7],lbl(m.h));
+    // Gable ridge height → center-front vertical from eave to peak
+    if(m.roof==='gable'){
+      const xc=(x0+x1)/2, yr=y1+m.rise;
+      D([xc,y1,z1],[xc,yr,z1],[od*.7,0,od*.7],lbl(m.rise)+' ridge');
+    }
+    if(m.roof==='arch'){
+      const xc=(x0+x1)/2, f=archGeom(m).f;
+      D([xc,m.h,z1],[xc,m.h+f,z1],[od*.7,0,od*.7],lbl(f)+' arc');
+    }
+  }
+}
+function rRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function drawGrid(B){
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+  for(const m of state.modules){const bb=modAABB(m);minX=Math.min(minX,bb.x0);maxX=Math.max(maxX,bb.x1);minZ=Math.min(minZ,bb.z0);maxZ=Math.max(maxZ,bb.z1);}
+  if(!isFinite(minX))return;
+  const pad=Math.max(4,(maxX-minX+maxZ-minZ)/4);
+  const x0=Math.floor(minX-pad),x1=Math.ceil(maxX+pad),z0=Math.floor(minZ-pad),z1=Math.ceil(maxZ+pad);
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(95,130,180,0.16)';
+  for(let x=x0;x<=x1;x++) seg([x,0,z0],[x,0,z1],B);
+  for(let z=z0;z<=z1;z++) seg([x0,0,z],[x1,0,z],B);
+}
+function seg(a,b,B){
+  const p=project(a,B),q=project(b,B);
+  if(!p||!q)return;
+  ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+}
+
+function pointInPoly(px,py,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+    if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))inside=!inside;
+  }
+  return inside;
+}
+function pickAt(px,py){
+  for(let i=_visible.length-1;i>=0;i--)
+    if(pointInPoly(px,py,_visible[i].poly))return _visible[i].f.id;
+  return null;
+}
+
+/* ====================== 3D INTERACTION ====================== */
+// AABB overlap test on the floor plan (XZ) — blocks dragging one module on top of
+// another, which used to render as broken/interpenetrating geometry (painter's-algorithm
+// depth sort can't resolve overlapping solids). A small eps lets modules sit flush.
+function modulesOverlap(m,px,pz,eps=0.05){
+  const a=modAABB(m,px,pz);
+  for(const other of state.modules){
+    if(other.id===m.id)continue;
+    const b=modAABB(other);
+    if(a.x0<b.x1-eps&&a.x1>b.x0+eps&&a.z0<b.z1-eps&&a.z1>b.z0+eps)return true;
+  }
+  return false;
+}
+let drag=null,rafPending=false;
+// Long-press (2s) on a module, then drag to reposition it on the floor plan (px/pz).
+let dragTimer=null,dragCandidate=null,modDrag=null,_dragModuleId=null;
+// Módulo "activo" (modo mover): persiste tras soltar — permite re-arrastrar sin
+// esperar 2s y muestra la barra de rotación #modTools.
+let _activeModuleId=null;
+const LONGPRESS_MS=2000,LONGPRESS_CANCEL_PX=8;
+function setActiveModule(mid){
+  _activeModuleId=mid;
+  const bar=document.getElementById('modTools');
+  if(mid==null){bar.style.display='none';}
+  else{
+    const m=state.modules.find(mm=>mm.id===mid);
+    document.getElementById('mtName').textContent=m?m.name:'';
+    bar.style.display='flex';
+  }
+  scheduleDraw();
+}
+function rotateActive(dir){
+  const m=state.modules.find(mm=>mm.id===_activeModuleId);
+  if(!m)return;
+  const old=m.rot||0;
+  m.rot=(((old+dir*90)%360)+360)%360;
+  if(modulesOverlap(m,m.px,m.pz)){ // la rotación chocaría con otro módulo → cancelar
+    m.rot=old;
+    if(navigator.vibrate)navigator.vibrate(60);
+    return;
+  }
+  renderControls();refresh(true);
+}
+function scheduleDraw(){if(!rafPending){rafPending=true;requestAnimationFrame(()=>{rafPending=false;draw();});}}
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  drag={x:e.clientX,y:e.clientY,az:state.cam.az,el:state.cam.el,moved:false};
+  try{canvas.setPointerCapture(e.pointerId);}catch(err){}
+  clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;
+  const rect=canvas.getBoundingClientRect();
+  const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+  const fid=pickAt(sx,sy);
+  const f=fid?state._faceMap.get(fid):null;
+  if(_activeModuleId!=null){
+    if(f&&f.mid===_activeModuleId){
+      // Módulo ya activo: re-arrastre inmediato, sin esperar los 2s
+      const m=state.modules.find(mm=>mm.id===_activeModuleId);
+      const g=screenToGround(sx,sy,camBasis());
+      if(m&&g){
+        modDrag={mid:m.id,px0:m.px,pz0:m.pz,gx0:g[0],gz0:g[2]};
+        _dragModuleId=m.id;
+        scheduleDraw();
+        return;
+      }
+    }else{
+      setActiveModule(null); // tocó fuera del módulo activo → salir del modo mover
+    }
+  }
+  if(f){
+    dragCandidate={mid:f.mid};
+    dragTimer=setTimeout(()=>{
+      dragTimer=null;
+      if(!dragCandidate||!drag||drag.moved)return; // moved already — this was a rotate/tap, not a hold
+      const m=state.modules.find(mm=>mm.id===dragCandidate.mid);
+      if(!m)return;
+      const g=screenToGround(sx,sy,camBasis());
+      if(!g)return;
+      modDrag={mid:m.id,px0:m.px,pz0:m.pz,gx0:g[0],gz0:g[2]};
+      _dragModuleId=m.id;
+      setActiveModule(m.id);
+      if(navigator.vibrate)navigator.vibrate(25);
+      scheduleDraw();
+    },LONGPRESS_MS);
+  }
+});
+canvas.addEventListener('pointermove',e=>{
+  e.preventDefault();
+  if(!drag)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(dragTimer&&Math.abs(dx)+Math.abs(dy)>LONGPRESS_CANCEL_PX){clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;}
+  if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+  if(modDrag){
+    const rect=canvas.getBoundingClientRect();
+    const g=screenToGround(e.clientX-rect.left,e.clientY-rect.top,camBasis());
+    if(g){
+      const m=state.modules.find(mm=>mm.id===modDrag.mid);
+      if(m){
+        // Try both axes together, then each alone, so sliding along one wall while
+        // blocked on the other still feels natural (like dragging furniture).
+        const wantPx=modDrag.px0+(g[0]-modDrag.gx0);
+        const wantPz=modDrag.pz0+(g[2]-modDrag.gz0);
+        if(!modulesOverlap(m,wantPx,wantPz)){m.px=wantPx;m.pz=wantPz;}
+        else if(!modulesOverlap(m,wantPx,m.pz)){m.px=wantPx;}
+        else if(!modulesOverlap(m,m.px,wantPz)){m.pz=wantPz;}
+        buildGeometry();
+      }
+    }
+    scheduleDraw();
+    return; // repositioning a module — don't also rotate the camera
+  }
+  state.cam.az=drag.az-dx*0.008;
+  state.cam.el=Math.max(-1.45,Math.min(1.45,drag.el+dy*0.008));
+  scheduleDraw();
+});
+canvas.addEventListener('pointerup',e=>{
+  clearTimeout(dragTimer);dragTimer=null;dragCandidate=null;
+  if(modDrag){
+    const mv=state.modules.find(mm=>mm.id===modDrag.mid);
+    const didMove=mv&&(Math.abs(mv.px-modDrag.px0)>0.001||Math.abs(mv.pz-modDrag.pz0)>0.001);
+    modDrag=null;_dragModuleId=null;drag=null;
+    // Re-encuadrar al soltar SOLO si se movió: si se arrastró lejos quedaría fuera
+    // de cámara; un simple tap sobre el módulo activo no debe saltar la vista.
+    renderControls();refresh(!!didMove);
+    return;
+  }
+  if(drag&&!drag.moved){
+    const r=canvas.getBoundingClientRect();
+    toggleFace(pickAt(e.clientX-r.left,e.clientY-r.top));
+  }
+  drag=null;
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  state.cam.r=Math.max(3,Math.min(400,state.cam.r*(e.deltaY>0?1.1:0.9)));
+  scheduleDraw();
+},{passive:false});
+let pinch=null;
+function dist2(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);}
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){e.preventDefault();pinch=dist2(e.touches);}
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===2&&pinch){e.preventDefault();const d=dist2(e.touches);state.cam.r=Math.max(3,Math.min(400,state.cam.r*pinch/d));pinch=d;scheduleDraw();}
+},{passive:false});
+canvas.addEventListener('touchend',()=>{pinch=null;});
+
+function frameView(){
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,maxY=0;
+  for(const m of state.modules){
+    const bb=modAABB(m);
+    minX=Math.min(minX,bb.x0);maxX=Math.max(maxX,bb.x1);
+    minZ=Math.min(minZ,bb.z0);maxZ=Math.max(maxZ,bb.z1);
+    let extra=0;
+    if(m.roof==='arch') extra=m.w/2;
+    else if(m.roof==='monitor') extra=m.rise*1.6;
+    else if(['gable','singleslope','hip','gambrel','sawtooth'].includes(m.roof)) extra=m.rise;
+    maxY=Math.max(maxY,m.h+extra);
+  }
+  if(!isFinite(minX))return;
+  state.cam.tx=(minX+maxX)/2;state.cam.ty=maxY/2;state.cam.tz=(minZ+maxZ)/2;
+  const diag=Math.hypot(maxX-minX,maxY,maxZ-minZ);
+  const aspectPad=W&&H?Math.max(1,H/Math.max(1,W))*0.35:0;
+  state.cam.r=Math.max(6,diag*(2.0+aspectPad));
+}
+
+/* ====================== TABS ====================== */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+name));
+}
+document.querySelector('.tab-bar').addEventListener('click',e=>{
+  const b=e.target.closest('.tab-btn');if(!b)return;
+  switchTab(b.dataset.tab);
+});
+
+/* ====================== GLOBAL REFRESH ====================== */
+function refresh(reframe){
+  buildGeometry();rebuildZoneAreas();cleanSelection();
+  // Si el módulo activo (modo mover) fue eliminado, cerrar la barra de rotación
+  if(_activeModuleId!=null&&!state.modules.some(m=>m.id===_activeModuleId)) setActiveModule(null);
+  if(reframe)frameView();
+  renderResults();renderZones();updateBadges();updateSelPanel();draw();
+}
+
+/* ====================== TOOLBAR ====================== */
+document.getElementById('addBtn').addEventListener('click',()=>{
+  const last=state.modules[state.modules.length-1];
+  state.modules.push(newModule({px:last?last.px+last.w+1:0}));
+  renderControls();refresh(true);
+});
+document.getElementById('unitToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  state.unit=b.dataset.u;
+  document.querySelectorAll('#unitToggle button').forEach(x=>x.classList.toggle('active',x===b));
+  renderControls();refresh(false);updateSelPanel();
+});
+document.getElementById('resetView').addEventListener('click',()=>{state.cam.az=0.78;state.cam.el=0.55;frameView();draw();});
+document.getElementById('zoomIn').addEventListener('click',()=>{state.cam.r=Math.max(3,state.cam.r*0.85);draw();});
+document.getElementById('zoomOut').addEventListener('click',()=>{state.cam.r=Math.min(400,state.cam.r*1.15);draw();});
+document.getElementById('lblBtn').addEventListener('click',e=>{
+  state.showLabels=!state.showLabels;e.currentTarget.classList.toggle('on',state.showLabels);draw();
+});
+document.getElementById('clearSelBtn').addEventListener('click',clearSelection);
+document.getElementById('mtRotL').addEventListener('click',()=>rotateActive(-1));
+document.getElementById('mtRotR').addEventListener('click',()=>rotateActive(1));
+document.getElementById('mtDone').addEventListener('click',()=>setActiveModule(null));
+document.getElementById('confirmZoneBtn').addEventListener('click',confirmSaveZone);
+document.getElementById('cancelZoneBtn').addEventListener('click',hideSaveForm);
+document.getElementById('zoneNameInp').addEventListener('keydown',e=>{
+  if(e.key==='Enter')confirmSaveZone();
+  if(e.key==='Escape')hideSaveForm();
+});
+document.getElementById('shOptCsv').addEventListener('click',()=>{exportCSV();closeShareSheet();});
+
+/* ====================== PROJECT INFO (client + address + GPS) ====================== */
+function saveProject(){try{localStorage.setItem('pf_project',JSON.stringify(state.project));}catch(e){}}
+function loadProject(){
+  try{const p=JSON.parse(localStorage.getItem('pf_project')||'{}');
+    state.project.client=p.client||'';state.project.address=p.address||'';
+    state.project.id=p.id||'';
+    state.project.lat=(typeof p.lat==='number')?p.lat:null;
+    state.project.lng=(typeof p.lng==='number')?p.lng:null;
+  }catch(e){}
+  const c=document.getElementById('projClient'),a=document.getElementById('projAddr');
+  if(c)c.value=state.project.client;if(a)a.value=state.project.address;
+  updateClientId();
+}
+// ID de cliente para seguimiento: PF-AAMMDD-XXXX
+function genClientId(){
+  const d=new Date(),p2=n=>String(n).padStart(2,'0');
+  const stamp=String(d.getFullYear()).slice(2)+p2(d.getMonth()+1)+p2(d.getDate());
+  const rnd=Math.random().toString(36).slice(2,6).toUpperCase();
+  return 'PF-'+stamp+'-'+rnd;
+}
+function updateClientId(){
+  const row=document.getElementById('clientIdRow'),val=document.getElementById('clientIdVal');
+  if(!row||!val)return;
+  if(state.project.id){val.textContent=state.project.id;row.style.display='flex';}
+  else{row.style.display='none';}
+}
+function clearClient(){
+  if((state.project.client||state.project.address||state.project.id)&&!confirm(t('clearClientConfirm')))return;
+  state.project={client:'',address:'',lat:null,lng:null,id:''};
+  document.getElementById('projClient').value='';
+  document.getElementById('projAddr').value='';
+  updateClientId();saveProject();renderResults();
+}
+function showGpsHelp(errCode){
+  const ios=isIOS();
+  document.getElementById('gpsHelpTitle').textContent=
+    errCode===1?t('gpsHelpDeniedTitle'):t('gpsHelpTimeTitle');
+  document.getElementById('gpsHelpBody').innerHTML=
+    errCode===1?(ios?t('gpsHelpDeniedIos'):t('gpsHelpDeniedAndroid')):t('gpsHelpTimeMsg');
+  document.getElementById('gpsRetryBtn').textContent=t('gpsRetry');
+  document.getElementById('gpsHelpSheet').classList.add('open');
+}
+function closeGpsHelp(){document.getElementById('gpsHelpSheet').classList.remove('open');}
+document.getElementById('gpsRetryBtn').addEventListener('click',()=>{closeGpsHelp();captureGPS();});
+document.getElementById('gpsHelpClose').addEventListener('click',closeGpsHelp);
+document.getElementById('gpsHelpSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGpsHelp();});
+
+function captureGPS(){
+  const btn=document.getElementById('gpsBtn'),addrInp=document.getElementById('projAddr');
+  if(!navigator.geolocation){alert(t('gpsNoSupport'));return;}
+  if(window.isSecureContext===false){alert(t('gpsInsecure'));return;}
+  btn.classList.add('locating');
+  const onOk=pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    state.project.lat=lat;state.project.lng=lng;
+    const fallback=lat.toFixed(6)+', '+lng.toFixed(6);
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&lat='+lat+'&lon='+lng,
+          {headers:{'Accept':'application/json'}})
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(d=>{const addr=(d&&d.display_name)?d.display_name:fallback;
+        state.project.address=addr;addrInp.value=addr;saveProject();renderResults();})
+      .catch(()=>{state.project.address=fallback;addrInp.value=fallback;saveProject();renderResults();})
+      .finally(()=>btn.classList.remove('locating'));
+  };
+  const onErr=(err,canRetry)=>{
+    if(canRetry && err && err.code===3){
+      navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,false),
+        {enableHighAccuracy:false,timeout:25000,maximumAge:60000});
+      return;
+    }
+    btn.classList.remove('locating');
+    const code=err&&err.code;
+    if(code===1||code===3) showGpsHelp(code);
+    else alert(t('gpsError'));
+  };
+  navigator.geolocation.getCurrentPosition(onOk,e=>onErr(e,true),
+    {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+// iOS Safari blocks window.open() with a features string as a popup → anchor click is reliable.
+function openUrl(url){
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+}
+// iPhone/iPad → open the native Apple Maps app; everything else → Google Maps.
+function isIOS(){
+  return /iP(hone|ad|od)/.test(navigator.userAgent)
+    || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints>1); // iPadOS reports as Mac
+}
+// Universal redirect link for sharing — device-agnostic, single tap opens the right Maps app.
+function shareMapLink(){
+  const p=state.project;
+  const base='https://odannesm-prog.github.io/powerfoam-areas/maps.html';
+  if(p.lat!=null&&p.lng!=null){
+    const q=encodeURIComponent((p.address||'').split(',')[0].trim()||'Power Foam ATL');
+    return base+'?lat='+p.lat+'&lng='+p.lng+'&q='+q;
+  }
+  if((p.address||'').trim()){
+    return base+'?q='+encodeURIComponent(p.address.trim());
+  }
+  return '';
+}
+// Platform-aware maps deep link: Apple Maps on iOS (opens the Maps app directly), Google elsewhere.
+function mapsLink(){
+  const p=state.project,ios=isIOS();
+  if(p.lat!=null&&p.lng!=null){
+    const label=encodeURIComponent((p.address||'').split(',')[0].trim()||t('address'));
+    return ios?'https://maps.apple.com/?ll='+p.lat+','+p.lng+'&q='+label
+             :'https://www.google.com/maps?q='+p.lat+','+p.lng;
+  }
+  if((p.address||'').trim()){
+    const q=encodeURIComponent(p.address.trim());
+    return ios?'https://maps.apple.com/?q='+q
+             :'https://www.google.com/maps/search/?api=1&query='+q;
+  }
+  return '';
+}
+function openInMaps(){
+  const url=mapsLink();
+  if(!url){alert(t('mapNoAddr'));return;}
+  openUrl(url);
+}
+document.getElementById('projClient').addEventListener('input',e=>{
+  state.project.client=e.target.value;
+  // auto-assign a tracking ID the first time a client name is entered
+  if(e.target.value.trim()&&!state.project.id){state.project.id=genClientId();updateClientId();}
+  saveProject();renderResults();
+});
+document.getElementById('projAddr').addEventListener('input',e=>{
+  state.project.address=e.target.value;
+  // manual edits invalidate stored GPS coords so Maps uses the typed text
+  state.project.lat=null;state.project.lng=null;saveProject();renderResults();
+});
+document.getElementById('gpsBtn').addEventListener('click',captureGPS);
+document.getElementById('mapBtn').addEventListener('click',openInMaps);
+document.getElementById('clearClientBtn').addEventListener('click',clearClient);
+document.getElementById('newClientBtn').addEventListener('click',clearClient);
+
+/* ====================== SHARE RESULTS (native / WhatsApp / SMS / email / NFC / copy) ====================== */
+function buildShareText(){
+  const S=totals(),p=state.project,U=UAREA(),L=v=>fmt(A2D(v));
+  const lines=['Power Foam ATL — '+t('areaSummary')];
+  if(p.client||p.id) lines.push(t('client')+': '+(p.client||'-')+(p.id?'  ['+p.id+']':''));
+  if(p.address) lines.push(t('address')+': '+p.address);
+  lines.push('────────────');
+  lines.push(t('wallsNet')+': '+L(S.wallNet)+' '+U);
+  lines.push(t('roof')+': '+L(S.roof)+' '+U);
+  lines.push(t('floor')+': '+L(S.floor)+' '+U);
+  lines.push(t('totalSurface').replace(/\s*\(.*$/,'')+': '+L(S.total)+' '+U);
+  if(state.zones.length){
+    lines.push('────────────');
+    state.zones.forEach(z=>lines.push('• '+z.name+': '+L(zoneDispArea(z))+' '+U));
+  }
+  const link=shareMapLink();
+  if(link) lines.push('📍 '+t('location')+': '+link);
+  return lines.join('\n');
+}
+function openShareSheet(){
+  document.getElementById('shOptNative').style.display=navigator.share?'flex':'none';
+  document.getElementById('shOptNfc').style.display=('NDEFReader' in window)?'flex':'none';
+  document.getElementById('shareSheet').classList.add('open');
+}
+function closeShareSheet(){document.getElementById('shareSheet').classList.remove('open');}
+async function shareNative(){
+  const text=buildShareText();
+  const link=shareMapLink();
+  const payload={title:t('shareSubject'),text};
+  if(link) payload.url=link; // universal redirect → iOS opens Apple Maps, Android opens Google Maps
+  try{await navigator.share(payload);}catch(e){}
+  closeShareSheet();
+}
+function shareWhatsApp(){openUrl('https://wa.me/?text='+encodeURIComponent(buildShareText()));closeShareSheet();}
+function shareSms(){
+  // sms: body param syntax differs slightly across platforms; this form works on both iOS & Android
+  openUrl('sms:?&body='+encodeURIComponent(buildShareText()));closeShareSheet();
+}
+function shareEmail(){
+  openUrl('mailto:?subject='+encodeURIComponent(t('shareSubject'))+'&body='+encodeURIComponent(buildShareText()));
+  closeShareSheet();
+}
+function openNfcSheet(icon,title,msg,closeable){
+  document.getElementById('nfcIcon').textContent=icon;
+  document.getElementById('nfcSheetTitle').textContent=title;
+  document.getElementById('nfcSheetMsg').textContent=msg;
+  document.getElementById('nfcSheetClose').style.display=closeable?'':'none';
+  document.getElementById('nfcSheet').classList.add('open');
+}
+function closeNfcSheet(){document.getElementById('nfcSheet').classList.remove('open');}
+document.getElementById('nfcSheetClose').addEventListener('click',closeNfcSheet);
+document.getElementById('nfcSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeNfcSheet();});
+
+async function shareNFC(){
+  if(!('NDEFReader' in window)){alert(t('nfcNoSupport'));return;}
+  closeShareSheet();
+  const url=shareMapLink();
+  const newRecord=url
+    ?{recordType:'url',data:url}
+    :{recordType:'text',data:buildShareText().split('\n').slice(0,6).join('\n')};
+
+  const ctrl=new AbortController();
+  // Wire cancel button to abort the write operation
+  document.getElementById('nfcSheetClose').onclick=()=>{ctrl.abort();closeNfcSheet();};
+
+  openNfcSheet('📡',t('nfcReadyTitle'),t('nfcReadyMsg'),true);
+
+  try{
+    const ndef=new NDEFReader();
+    // write() puts Chrome in WRITE-mode foreground dispatch — Android NFC system is bypassed
+    // and does NOT dispatch the tag's existing content. overwrite:true erases whatever is on
+    // the tag and replaces it in a single tap.
+    await ndef.write({records:[newRecord]},{overwrite:true,signal:ctrl.signal});
+    openNfcSheet('✅',t('nfcOkTitle'),t('nfcOkMsg'),true);
+  }catch(e){
+    if(e.name==='AbortError')return;
+    // Surface the actual error to help diagnose tag compatibility issues
+    const detail=e&&e.message?e.message:'';
+    openNfcSheet('❌',t('nfcErrTitle'),(detail||t('nfcErrMsg')),true);
+  }
+  document.getElementById('nfcSheetClose').onclick=null;
+}
+function copyShare(){
+  const text=buildShareText();
+  const done=()=>{alert(t('copied'));closeShareSheet();};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>{fallbackCopy(text);done();});
+  }else{fallbackCopy(text);done();}
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  ta.remove();
+}
+/* ====================== CLOUD SYNC (Firebase Firestore) ====================== */
+let _db=null;
+function _loadFbCfg(){try{const r=localStorage.getItem('pf_firebase_cfg');return r?JSON.parse(r):null;}catch(e){return null;}}
+function _saveFbCfg(c){localStorage.setItem('pf_firebase_cfg',JSON.stringify(c));}
+function _setCloudInd(state2,msg){
+  const el=document.getElementById('cloudInd');if(!el)return;
+  el.textContent=msg;el.className='cloud-ind'+(state2==='ok'?' ok':state2==='err'?' err':'');
+}
+async function _loadScript(src){
+  return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+}
+let _authUser=null;
+async function initFirebaseCloud(cfg){
+  try{
+    if(!window.firebase){
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+      await _loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
+    }
+    if(firebase.apps.length){firebase.apps.forEach(a=>a.delete());}
+    firebase.initializeApp(cfg);
+    _db=firebase.firestore();
+    await _db.collection('pf_clients').limit(1).get(); // connectivity test
+    firebase.auth().onAuthStateChanged(u=>{_authUser=u;updateAuthUI();});
+    _setCloudInd('ok',t('cloudConnected'));
+    return true;
+  }catch(e){_db=null;_setCloudInd('err',t('cloudError'));return false;}
+}
+function projectSnapshot(){
+  const S=totals();
+  return {id:state.project.id,client:state.project.client,address:state.project.address,
+    lat:state.project.lat,lng:state.project.lng,
+    modules:state.modules,unit:state.unit,
+    zones:state.zones.map(z=>({id:z.id,name:z.name,color:z.color,area:z.area,faceIds:[...z.faceIds]})),
+    savedAt:new Date().toISOString(),totalArea:S.total,ownerUid:_authUser?_authUser.uid:null};
+}
+async function saveToCloud(){
+  if(!_db||!_authUser||!state.project.id||!state.project.client)return false;
+  try{
+    // Guard against overwriting a different client that happens to share this ID
+    // (e.g. the user typed a new client's name without clearing the previous one first).
+    const ref=_db.collection('pf_clients').doc(state.project.id);
+    const existing=await ref.get();
+    if(existing.exists&&existing.data().client&&existing.data().client!==state.project.client){
+      state.project.id=genClientId();
+      updateClientId();
+      saveProject();
+    }
+    await _db.collection('pf_clients').doc(state.project.id).set(projectSnapshot());
+    return true;
+  }catch(e){return false;}
+}
+async function loadClientsCloud(search){
+  if(!_db||!_authUser)return null;
+  try{
+    const qs=await _db.collection('pf_clients').where('ownerUid','==',_authUser.uid).limit(60).get();
+    let items=qs.docs.map(d=>d.data());
+    items.sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||'')); // sorted client-side, no composite index needed
+    if(search){const s=search.toLowerCase();items=items.filter(c=>((c.client||'')+(c.address||'')+(c.id||'')).toLowerCase().includes(s));}
+    return items;
+  }catch(e){return null;}
+}
+async function deleteClientCloud(id){
+  if(!_db||!_authUser||!id)return false;
+  try{await _db.collection('pf_clients').doc(id).delete();return true;}
+  catch(e){return false;}
+}
+/* ---- Email/password auth ---- */
+function _authErrorMsg(code){
+  const map={
+    'auth/email-already-in-use':t('authErrEmailInUse'),
+    'auth/invalid-email':t('authErrInvalidEmail'),
+    'auth/weak-password':t('authErrWeakPw'),
+    'auth/wrong-password':t('authErrWrongPw'),
+    'auth/invalid-credential':t('authErrWrongPw'),
+    'auth/user-not-found':t('authErrUserNotFound'),
+    'auth/too-many-requests':t('authErrTooMany'),
+    'auth/configuration-not-found':t('authErrNotEnabled'),
+    'auth/operation-not-allowed':t('authErrNotEnabled'),
+  };
+  return map[code]||t('authErrGeneric');
+}
+function updateAuthUI(){
+  const signedIn=!!_authUser;
+  document.getElementById('acctStatus').textContent=signedIn?_authUser.email:t('notSignedIn');
+  const outBox=document.getElementById('authSignedOutBox'),inBox=document.getElementById('authSignedInBox');
+  if(outBox)outBox.style.display=signedIn?'none':'';
+  if(inBox)inBox.style.display=signedIn?'':'none';
+  if(signedIn)document.getElementById('authUserEmail').textContent=_authUser.email;
+}
+async function authSignIn(email,pw){
+  try{await firebase.auth().signInWithEmailAndPassword(email,pw);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
+}
+async function authSignUp(email,pw){
+  try{await firebase.auth().createUserWithEmailAndPassword(email,pw);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
+}
+async function authSignOut(){try{await firebase.auth().signOut();}catch(e){}}
+async function authResetPassword(email){
+  try{await firebase.auth().sendPasswordResetEmail(email);return{ok:true};}
+  catch(e){return{ok:false,msg:_authErrorMsg(e.code)};}
+}
+function restoreProject(snap){
+  state.project={client:snap.client||'',address:snap.address||'',lat:snap.lat||null,lng:snap.lng||null,id:snap.id||''};
+  state.modules=snap.modules||[];state.unit=snap.unit||'ft';
+  state.zones=(snap.zones||[]).map(z=>({id:z.id||(String(nextZoneId++)),name:z.name||'Zone',color:z.color||'#4f9cff',area:z.area||0,faceIds:new Set(z.faceIds||[])}));
+  state.selection=new Set();
+  document.getElementById('projClient').value=state.project.client;
+  document.getElementById('projAddr').value=state.project.address;
+  updateClientId();
+  document.querySelectorAll('#unitToggle button').forEach(b=>b.classList.toggle('active',b.dataset.u===state.unit));
+  saveProject();refresh(true);closeClientList();
+}
+
+/* Auth modal */
+let _authMode='signin';
+function _setAuthMode(mode){
+  _authMode=mode;
+  document.getElementById('authTitle').textContent=mode==='signin'?t('signIn'):t('signUp');
+  document.getElementById('authSubmitBtn').textContent=mode==='signin'?t('signIn'):t('signUp');
+  document.getElementById('authToggleMode').textContent=mode==='signin'?t('needAccount'):t('haveAccount');
+  document.getElementById('authForgotPw').style.display=mode==='signin'?'':'none';
+  document.getElementById('authErr').style.display='none';
+}
+function openAuth(){
+  document.getElementById('authEmail').value='';
+  document.getElementById('authPassword').value='';
+  _setAuthMode('signin');
+  updateAuthUI();
+  document.getElementById('authSheet').classList.add('open');
+}
+function closeAuth(){document.getElementById('authSheet').classList.remove('open');}
+document.getElementById('accountBtn').addEventListener('click',openAuth);
+document.getElementById('authClose').addEventListener('click',closeAuth);
+document.getElementById('authSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAuth();});
+document.getElementById('authToggleMode').addEventListener('click',()=>_setAuthMode(_authMode==='signin'?'signup':'signin'));
+document.getElementById('authSubmitBtn').addEventListener('click',async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPassword').value;
+  const errEl=document.getElementById('authErr');
+  errEl.style.display='none';
+  if(!email||!pw){errEl.textContent=t('authErrGeneric');errEl.style.display='';return;}
+  if(!_db){errEl.textContent=t('cloudError');errEl.style.display='';return;}
+  const btn=document.getElementById('authSubmitBtn');btn.textContent='…';
+  const res=_authMode==='signin'?await authSignIn(email,pw):await authSignUp(email,pw);
+  btn.textContent=_authMode==='signin'?t('signIn'):t('signUp');
+  if(res.ok){closeAuth();renderResults();}
+  else{errEl.textContent=res.msg;errEl.style.display='';}
+});
+document.getElementById('authForgotPw').addEventListener('click',async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  const errEl=document.getElementById('authErr');
+  if(!email){errEl.textContent=t('resetPwNeedEmail');errEl.style.display='';return;}
+  const res=await authResetPassword(email);
+  errEl.style.display='';
+  errEl.style.color=res.ok?'var(--green)':'var(--red)';
+  errEl.textContent=res.ok?t('resetPwSent'):res.msg;
+});
+document.getElementById('authSignOutBtn').addEventListener('click',async()=>{await authSignOut();closeAuth();renderResults();});
+
+/* Cloud setup modal */
+function openCloudSetup(){
+  document.getElementById('cloudCfgInstr').innerHTML=t('cloudCfgInstr');
+  const cur=_loadFbCfg();
+  document.getElementById('firebaseCfgInput').value=cur?JSON.stringify(cur,null,2):'';
+  document.getElementById('cloudSetupSheet').classList.add('open');
+}
+function closeCloudSetup(){document.getElementById('cloudSetupSheet').classList.remove('open');}
+document.getElementById('cloudSetupBtn').addEventListener('click',openCloudSetup);
+document.getElementById('cloudSetupClose').addEventListener('click',closeCloudSetup);
+document.getElementById('cloudSetupSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCloudSetup();});
+document.getElementById('cloudConnectBtn').addEventListener('click',async()=>{
+  let raw=document.getElementById('firebaseCfgInput').value.trim();
+  // accept both {apiKey:...} and the full firebase.initializeApp({...}) pattern
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m){alert(t('cloudCfgBad'));return;}
+  let cfg;try{cfg=JSON.parse(m[0]);}catch(e){alert(t('cloudCfgBad'));return;}
+  if(!cfg.projectId){alert(t('cloudCfgBad'));return;}
+  _saveFbCfg(cfg);
+  document.getElementById('cloudConnectBtn').textContent='…';
+  const ok=await initFirebaseCloud(cfg);
+  document.getElementById('cloudConnectBtn').setAttribute('data-i18n','cloudConnect');
+  document.getElementById('cloudConnectBtn').textContent=t('cloudConnect');
+  if(ok) closeCloudSetup();
+});
+
+/* Client list modal */
+async function openClientList(){
+  document.getElementById('clientListSheet').classList.add('open');
+  document.getElementById('clientSearch').value='';
+  showClientListView();
+  await renderClientList('');
+}
+function closeClientList(){document.getElementById('clientListSheet').classList.remove('open');}
+document.getElementById('clientListBtn').addEventListener('click',openClientList);
+document.getElementById('clientListClose').addEventListener('click',closeClientList);
+document.getElementById('clientListSheet').addEventListener('click',e=>{if(e.target===e.currentTarget)closeClientList();});
+document.getElementById('clientSearch').addEventListener('input',e=>renderClientList(e.target.value));
+async function renderClientList(search){
+  const body=document.getElementById('clientListBody');
+  body.innerHTML='<div class="cl-empty">…</div>';
+  if(!_db){body.innerHTML='<div class="cl-empty">'+t('cloudNotCfg')+'</div>';return;}
+  if(!_authUser){body.innerHTML='<div class="cl-empty">'+t('pleaseSignIn')+'</div>';return;}
+  const items=await loadClientsCloud(search);
+  if(!items||items.length===0){body.innerHTML='<div class="cl-empty">'+t('noCloudClients')+'</div>';return;}
+  body.innerHTML=items.map(c=>{
+    const d=c.savedAt?c.savedAt.slice(0,10):'';
+    const area=c.totalArea?fmt(A2D(c.totalArea))+' '+UAREA():'';
+    return`<div class="cl-item" data-cid="${esc(c.id||'')}">
+      <div class="cli-name">${esc(c.client||'—')}</div>
+      <div class="cli-id">${esc(c.id||'')}</div>
+      <div class="cli-meta">${esc(c.address||'')}${area?' · '+area:''}${d?' · '+d:''}</div>
+    </div>`;
+  }).join('');
+  body.querySelectorAll('.cl-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const cid=el.dataset.cid;
+      const snap=items.find(c=>c.id===cid);
+      if(snap) showClientDetail(snap);
+    });
+  });
+}
+/* ---- Explore a saved client: view details before overwriting the current building ---- */
+let _clientDetailSnap=null;
+function showClientListView(){
+  document.getElementById('clientListBody').style.display='';
+  document.getElementById('clientSearch').style.display='';
+  document.getElementById('clientDetailBody').style.display='none';
+}
+function showClientDetail(snap){
+  _clientDetailSnap=snap;
+  document.getElementById('clientListBody').style.display='none';
+  document.getElementById('clientSearch').style.display='none';
+  const detail=document.getElementById('clientDetailBody');
+  detail.style.display='';
+  const d=snap.savedAt?snap.savedAt.slice(0,10):'—';
+  const area=snap.totalArea?fmt(A2D(snap.totalArea))+' '+UAREA():'—';
+  const mods=(snap.modules||[]).length;
+  const zones=(snap.zones||[]).length;
+  detail.innerHTML=`
+    <div class="cli-detail">
+      <div class="cli-detail-name">${esc(snap.client||'—')}</div>
+      ${snap.id?`<div class="cli-id">${esc(snap.id)}</div>`:''}
+      ${snap.address?`<div class="cli-meta" style="margin-bottom:10px">${esc(snap.address)}</div>`:''}
+      <div class="cli-detail-row"><span>${t('totalAreaLbl')}</span><b>${area}</b></div>
+      <div class="cli-detail-row"><span>${t('modulesLbl')}</span><b>${mods}</b></div>
+      <div class="cli-detail-row"><span>${t('zonesLbl')}</span><b>${zones}</b></div>
+      <div class="cli-detail-row"><span>${t('savedOnLbl')}</span><b>${d}</b></div>
+      <div class="auth-err" style="color:var(--muted);margin-top:10px">${t('loadOverwriteWarn')}</div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin:12px 0 8px" id="clientDetailBack">${t('backBtn')}</button>
+      <button class="btn btn-accent" style="width:100%;justify-content:center;margin-bottom:8px" id="clientDetailLoad">${t('loadThisProject')}</button>
+      <button class="btn" style="width:100%;justify-content:center;background:rgba(255,107,107,.12);color:var(--red);border:1px solid rgba(255,107,107,.35)" id="clientDetailDelete">${t('deleteClientBtn')}</button>
+    </div>`;
+  document.getElementById('clientDetailBack').addEventListener('click',showClientListView);
+  document.getElementById('clientDetailLoad').addEventListener('click',()=>{if(_clientDetailSnap)restoreProject(_clientDetailSnap);});
+  document.getElementById('clientDetailDelete').addEventListener('click',async()=>{
+    if(!_clientDetailSnap||!confirm(t('deleteClientConfirm')))return;
+    const btn=document.getElementById('clientDetailDelete');btn.textContent='…';
+    const ok=await deleteClientCloud(_clientDetailSnap.id);
+    if(ok){showClientListView();renderClientList(document.getElementById('clientSearch').value);}
+    else{btn.textContent=t('deleteClientError');setTimeout(()=>{btn.textContent=t('deleteClientBtn');},1800);}
+  });
+}
+
+/* Save: cloud if configured (client set), otherwise fall back to CSV download */
+document.getElementById('saveResultsBtn').addEventListener('click',async()=>{
+  if(_db&&_authUser&&state.project.id&&state.project.client){
+    _setCloudInd('','…');
+    const ok=await saveToCloud();
+    _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
+    setTimeout(()=>{if(_db)_setCloudInd('ok',t('cloudConnected'));},3000);
+    if(!ok) exportCSV();
+  }else{
+    exportCSV();
+  }
+});
+/* Save to cloud on Guardar, then open share sheet */
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+  if(_db&&_authUser&&state.project.id&&state.project.client){
+    _setCloudInd('','…');
+    const ok=await saveToCloud();
+    _setCloudInd(ok?'ok':'err',ok?t('cloudSaved'):t('cloudError'));
+    setTimeout(()=>{if(_db)_setCloudInd('ok',t('cloudConnected'));},3000);
+  }
+  openShareSheet();
+});
+
+document.getElementById('shareSheet').addEventListener('click',e=>{if(e.target.id==='shareSheet')closeShareSheet();});
+document.getElementById('shCancel').addEventListener('click',closeShareSheet);
+document.getElementById('shOptNative').addEventListener('click',shareNative);
+document.getElementById('shOptWa').addEventListener('click',shareWhatsApp);
+document.getElementById('shOptSms').addEventListener('click',shareSms);
+document.getElementById('shOptEmail').addEventListener('click',shareEmail);
+document.getElementById('shOptNfc').addEventListener('click',shareNFC);
+document.getElementById('shOptCopy').addEventListener('click',copyShare);
+
+function exportCSV(){
+  const S=totals();
+  let rows=[];
+  if((state.project.client||'').trim()) rows.push([t('client'),state.project.client]);
+  if((state.project.id||'').trim()) rows.push([t('clientId'),state.project.id]);
+  if((state.project.address||'').trim()) rows.push([t('address'),state.project.address]);
+  if(rows.length) rows.push([]);
+  const aHdr=t('area')+' ('+UAREA()+')';
+  const hasCorr=state._faces.some(f=>corrFactor(f)>1);
+  rows.push(hasCorr
+    ? [t('module'),t('section'),t('csvType'),aHdr,'+%']
+    : [t('module'),t('section'),t('csvType'),aHdr]);
+  const R=v=>String(Math.round(A2D(v))); // área redondeada para CSV
+  for(const f of state._faces){
+    const type=f.cat==='wall'?t('typeWall'):f.cat==='roof'?t('roof'):t('floor');
+    const cfp=Math.round((corrFactor(f)-1)*100);
+    rows.push(hasCorr
+      ? [f.mname,tf(f.name),type,R(f.area*corrFactor(f)),cfp>0?'+'+cfp+'%':'—']
+      : [f.mname,tf(f.name),type,R(f.area)]);
+  }
+  rows.push([]);
+  rows.push(['','',t('wallsNet'),R(S.wallNet)]);
+  rows.push(['','',t('roof'),R(S.roof)]);
+  rows.push(['','',t('floor'),R(S.floor)]);
+  rows.push(['','',t('openings'),R(S.open)]);
+  rows.push(['','','TOTAL',R(S.total)]);
+  if(state.zones.length>0){
+    rows.push([]);
+    rows.push(['=== '+t('savedZones').toUpperCase()+' ===','','','']);
+    for(const z of state.zones){
+      rows.push([z.name,'',t('zoneTotal'),R(zoneDispArea(z))]);
+      for(const fid of z.faceIds){
+        const f=state._faceMap.get(fid);if(!f)continue;
+        rows.push(['↳'+z.name,f.mname+' · '+tf(f.name),'',R(f.area*corrFactor(f))]);
+      }
+    }
+  }
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='building_areas.csv';a.click();
+}
+
+/* ====================== FIREBASE AUTO-INIT ====================== */
+(function(){
+  const DEFAULT_CFG={"apiKey":"AIzaSyBCzCYxZzk9rtysvQKpsxuNqW4TyA-y5bw","authDomain":"powerfoamatl-fa47b.firebaseapp.com","projectId":"powerfoamatl-fa47b","storageBucket":"powerfoamatl-fa47b.firebasestorage.app","messagingSenderId":"644916808640","appId":"1:644916808640:web:41885575a8f93926cf5625","measurementId":"G-WXFPMYGWC4"};
+  if(!localStorage.getItem('pf_firebase_cfg')){
+    localStorage.setItem('pf_firebase_cfg',JSON.stringify(DEFAULT_CFG));
+  }
+  const cfg=_loadFbCfg();
+  if(cfg&&cfg.projectId) initFirebaseCloud(cfg);
+})();
+
+/* ====================== PRESS FEEDBACK ====================== */
+(function(){
+  const SEL='button,.icon-btn,.zone-del,.del,.cl-item,tr.face,tr.mod-row';
+  function press(e){
+    const el=e.target.closest(SEL);
+    if(el)el.classList.add('pressed');
+  }
+  function unpress(){
+    document.querySelectorAll('.pressed').forEach(el=>el.classList.remove('pressed'));
+  }
+  document.addEventListener('mousedown',press,true);
+  document.addEventListener('touchstart',press,{passive:true,capture:true});
+  document.addEventListener('mouseup',unpress,true);
+  document.addEventListener('touchend',unpress,true);
+  document.addEventListener('touchcancel',unpress,true);
+})();
+
+/* ====================== INIT ====================== */
+document.getElementById('langToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  setLang(b.dataset.lang);
+});
+document.getElementById('helpBtn').addEventListener('click',()=>{
+  const url=LANG==='es'?'guia-inicio-rapido-es.pdf':'quick-start-guide-en.pdf';
+  // anchor click en vez de window.open: confiable en iOS Safari
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+});
+state.modules.push(newModule({name:t('mainBody'),w:10,l:14,h:3.2,roof:'gable',rise:2.2}));
+buildGeometry();
+applyLang();
+loadProject();
+renderControls();
+frameView();
+renderResults();
+renderZones();
+resize();
+
+/* ====================== MOBILE NAV ====================== */
+(function(){
+  /* Fix height on phones where 100vh includes browser chrome */
+  function fixHeight(){document.body.style.height=window.innerHeight+'px';}
+  if(!CSS.supports('height','100dvh')){fixHeight();window.addEventListener('resize',fixHeight);}
+
+  const MOBILE=()=>window.innerWidth<=1024;
+  const ctrlEl=document.querySelector('.controls');
+  const resEl=document.querySelector('.results');
+  const navBtns=document.querySelectorAll('#mobileNav button');
+
+  function setMobTab(tab){
+    ctrlEl.classList.toggle('mob-open',tab==='building');
+    resEl.classList.toggle('mob-open',tab==='results');
+    navBtns.forEach(b=>b.classList.toggle('active',b.dataset.mob===tab));
+    if(tab==='canvas') setTimeout(()=>draw(),50);
+  }
+
+  navBtns.forEach(b=>b.addEventListener('click',()=>setMobTab(b.dataset.mob)));
+
+  /* ---- Swipe to change panel ---- */
+  const TABS=['building','canvas','results'];
+  function currentTab(){
+    if(ctrlEl.classList.contains('mob-open')) return 'building';
+    if(resEl.classList.contains('mob-open')) return 'results';
+    return 'canvas';
+  }
+  function swipeTab(dir){
+    const idx=TABS.indexOf(currentTab());
+    const next=TABS[Math.max(0,Math.min(TABS.length-1,idx+dir))];
+    if(next!==currentTab()) setMobTab(next);
+  }
+  // Swipe con 2 dedos — escuchar en el body entero (capture phase para recibir antes del canvas)
+  let sw2X=null,sw2Y=null,sw2Active=false,sw2Fired=false;
+  const SW2_THRESH=45;
+  function sw2Start(e){
+    if(!MOBILE()||e.touches.length!==2) return;
+    sw2Active=true; sw2Fired=false;
+    sw2X=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    sw2Y=(e.touches[0].clientY+e.touches[1].clientY)/2;
+  }
+  function sw2Move(e){
+    if(!sw2Active||sw2Fired||e.touches.length!==2) return;
+    const cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    const dx=cx-sw2X, dy=cy-sw2Y;
+    // Disparar en cuanto se cruza el umbral horizontal (antes de que el navegador cancele)
+    if(Math.abs(dx)>=SW2_THRESH && Math.abs(dx)>Math.abs(dy)){
+      sw2Fired=true;
+      swipeTab(dx<0?1:-1);
+    }
+  }
+  function sw2Reset(){sw2Active=false;sw2X=null;sw2Y=null;}
+  document.addEventListener('touchstart',sw2Start,{passive:true,capture:true});
+  document.addEventListener('touchmove',sw2Move,{passive:true,capture:true});
+  document.addEventListener('touchend',sw2Reset,{passive:true,capture:true});
+  document.addEventListener('touchcancel',sw2Reset,{passive:true,capture:true});
+
+  if(MOBILE()) setMobTab('building');
+  window.addEventListener('resize',()=>{
+    if(!MOBILE()){
+      ctrlEl.classList.remove('mob-open');
+      resEl.classList.remove('mob-open');
+    } else {
+      setMobTab('building');
+    }
+    resize();
+  });
+
+  /* Hint text for mobile */
+  const hint=document.querySelector('.overlay.tl');
+  if(hint&&MOBILE()){
+    hint.style.display='none';
+  }
+})();
+</script>
+</body>
+</html>
